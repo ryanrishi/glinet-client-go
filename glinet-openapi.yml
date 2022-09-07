@@ -1,0 +1,87 @@
+openapi: 3.0.3
+info:
+  title: GL.iNet API
+  version: 3.0.1
+  description: |-
+    The GL.iNet API is organized around REST. Our API has predictable resource-oriented URLs, accepts form-encoded request bodies, and returns JSON-encoded responses.
+externalDocs:
+  url: https://dev.gl-inet.com/api/
+servers:
+  - url: https://192.168.8.1
+tags:
+  - name: router
+paths:
+  /router/login:
+    post:
+      summary: Log in to the router. No login permission required.
+      operationId: routerLogin
+      tags:
+        - router
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RouterLogin'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RouterLogin'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RouterLoginResponse'
+  /router/hello:
+    get:
+      summary: Check router is connected and configured. No login permission required.
+      operationId: getRouterHello
+      tags:
+        - router
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RouterHello'
+components:
+  schemas:
+    RouterHello:
+      type: object
+      properties:
+        code:
+          type: integer
+    RouterLogin:
+      type: object
+      properties:
+        pwd:
+          type: string
+    RouterLoginResponse:
+      type: object
+      properties:
+        code:
+          type: number
+          enum:
+            - 0
+            - -1
+            - -4
+            - -5
+            - -6
+            - -9
+          description: >
+            Code:
+              * `0` success
+              * `-1` invalid user, permission denied or not logged in
+              * `-4` invalid parameter, value or format
+              * `-5` no parameter found
+              * `-6` time out
+              * `-9` wrong password
+        token:
+          type: string
+  securitySchemes:
+    token:
+      type: apiKey
+      name: Authorization
+      in: header
+
