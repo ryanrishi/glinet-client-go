@@ -26,20 +26,27 @@ type challengeResponse struct {
 
 type RPCTransport struct {
 	// TODO parameterize this since all requests will have this structure (is my Java showing?)
-	ID      string                     `json:"id"`
-	JSONRPC string                     `json:"jsonrpc"`
-	Result  ChallengeTransportResponse `json:"result"`
+	ID      string            `json:"id"`
+	JSONRPC string            `json:"jsonrpc"`
+	Result  challengeResponse `json:"result"`
 }
 
-func (s *DigestService) Login(ctx context.Context, username string) (*Response, error) {
+func (s *DigestService) Challenge(ctx context.Context, username string) (*challengeResponse, *Response, error) {
 	req, err := s.client.NewRequest("challenge", &challengeRequest{
 		Username: username,
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
+	c := new(challengeResponse)
+	resp, err := s.client.Do(ctx, req, c)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return c, resp, nil
 }
 
 //func (cr *ChallengeRequest) Execute() (resp *http.Response, err error) {

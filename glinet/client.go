@@ -29,6 +29,7 @@ const (
 	MD5 AlgoType = iota
 	SHA256
 	SHA512
+	UKNOWN
 )
 
 func GetAlgoType(code int) (AlgoType, error) {
@@ -40,7 +41,7 @@ func GetAlgoType(code int) (AlgoType, error) {
 	case 6:
 		return SHA512, nil
 	default:
-		return nil, errors.New("unknown type")
+		return UKNOWN, errors.New("unknown type")
 	}
 }
 
