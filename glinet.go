@@ -25,7 +25,8 @@ type Client struct {
 var errNonNilContext = errors.New("ctx must not be nil")
 
 type service struct {
-	client *Client
+	client  *Client
+	context context.Context
 }
 
 func NewClient() *Client {
@@ -33,16 +34,13 @@ func NewClient() *Client {
 
 	c := &Client{BaseURL: baseUrl, UserAgent: defaultUserAgent}
 	c.common.client = c
+	c.common.context = context.TODO()
 	c.Digest = (*DigestService)(&c.common)
 
 	return c
 }
 
-func (c *Client) Call(ctx context.Context, method string, params, result interface{}) error {
-	if ctx == nil {
-		return errNonNilContext
-	}
-
+func (c *Client) Call(method string, params, result interface{}) error {
 	buf, _ := json2.EncodeClientRequest(method, params)
 	body := bytes.NewBuffer(buf)
 	res, err := http.Post(c.BaseURL.String(), "application/json", body)
@@ -57,34 +55,3 @@ func (c *Client) Call(ctx context.Context, method string, params, result interfa
 
 	return nil
 }
-
-//func (c *Client) NewRequest(method string, params interface{}) (*http.Request, error) {
-//	var buf io.ReadWriter
-//
-//	buf = &bytes.Buffer{}
-//	enc := json.NewEncoder(buf)
-//	enc.SetEscapeHTML(false)
-//	err := enc.Encode(&jsonRcpRequest{
-//		JSONRPC: "2.0",
-//		ID:      1,
-//		Method:  method,
-//		Params:  params,
-//	})
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	req, err := http.NewRequest("POST", c.BaseURL.String(), buf)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	req.Header.Set("Content-Type", "application/json")
-//	req.Header.Set("Accept", "application/json")
-//
-//	if c.UserAgent != "" {
-//		req.Header.Set("User-Agent", c.UserAgent)
-//	}
-//
-//	return req, nil
-//}

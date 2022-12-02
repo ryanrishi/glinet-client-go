@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/ryanrishi/glinet-client-go"
@@ -10,7 +9,7 @@ import (
 
 func main() {
 	c := glinet.NewClient()
-	challenge, err := c.Digest.Challenge(context.Background(), "root")
+	challenge, err := c.Digest.Challenge("root")
 	if err != nil {
 		fmt.Println(fmt.Errorf("Error: %v\n", err).Error())
 		return
