@@ -24,29 +24,29 @@ type challengeResponse struct {
 	Nonce     string `json:"nonce"`
 }
 
-type RPCTransport struct {
-	// TODO parameterize this since all requests will have this structure (is my Java showing?)
-	ID      string            `json:"id"`
-	JSONRPC string            `json:"jsonrpc"`
-	Result  challengeResponse `json:"result"`
-}
+//type challengeResponse struct {
+//	ID      int               `json:"id"`
+//	JSONRPC string            `json:"jsonrpc"`
+//	Result  challengeResponse `json:"result"`
+//}
 
-func (s *DigestService) Challenge(ctx context.Context, username string) (*challengeResponse, *Response, error) {
-	req, err := s.client.NewRequest("challenge", &challengeRequest{
-		Username: username,
-	})
+//type RPCTransport struct {
+//	// TODO parameterize this since all requests will have this structure (is my Java showing?)
+//	ID      string            `json:"id"`
+//	JSONRPC string            `json:"jsonrpc"`
+//	Result  challengeResponse `json:"result"`
+//}
+
+func (s *DigestService) Challenge(ctx context.Context, username string) (*challengeResponse, error) {
+	requestBody := challengeRequest{Username: username}
+	var responseBody challengeResponse
+	err := s.client.client.Call("challenge", &requestBody, &responseBody)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	c := new(challengeResponse)
-	resp, err := s.client.Do(ctx, req, c)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return c, resp, nil
+	return &responseBody, nil
 }
 
 //func (cr *ChallengeRequest) Execute() (resp *http.Response, err error) {
