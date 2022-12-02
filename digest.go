@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"github.com/GehirnInc/crypt/md5_crypt"
 )
 
 type DigestService service
@@ -24,7 +25,8 @@ type loginRequest struct {
 }
 
 type loginResponse struct {
-	Sid string `json:"sid"`
+	Username string `json:"username"`
+	Sid      string `json:"sid"`
 }
 
 func (s *DigestService) Challenge(username string) (*challengeResponse, error) {
@@ -45,20 +47,23 @@ func (s *DigestService) Login(username string, password []byte) (*loginResponse,
 		return nil, err
 	}
 
-	hasher := md5.New()
-	hasher.Write(password)
-	hasher.Write([]byte(challenge.Salt))
-	sum := hasher.Sum(nil)
-	unixHash := make([]byte, len(sum)*2)
-	hex.Encode(unixHash, hasher.Sum(nil))
+	md5PasswordHash, err := md5_crypt.New().Generate(password, []byte(fmt.Sprintf("$1$%s", challenge.Salt)))
+	if err != nil {
+		return nil, err
+	}
 
-	loginToBeHashed := md5.New().Sum([]byte(fmt.Sprintf("%s:%s:%s", username, unixHash, challenge.Nonce)))
-	// loginHash example f62915b3ed48049e9d25dae6338b5dc9
-	loginHash := make([]byte, len(loginToBeHashed)*2)
-	hex.Encode(loginHash, loginToBeHashed)
-	request := loginRequest{Username: username, Hash: string(loginHash)}
+	// call challenge again because it sometimes times out
+	challenge, err = s.Challenge(username)
+	if err != nil {
+		return nil, err
+	}
+
+	loginHash := md5.Sum([]byte(fmt.Sprintf("%s:%s:%s", username, md5PasswordHash, challenge.Nonce)))
+	digest := make([]byte, hex.EncodedLen(len(loginHash)))
+	hex.Encode(digest, loginHash[:])
+	request := loginRequest{Username: username, Hash: string(digest)}
 	var res loginResponse
-	err = s.client.Call("login", &request, res)
+	err = s.client.Call("login", &request, &res)
 	if err != nil {
 		return nil, err
 	}

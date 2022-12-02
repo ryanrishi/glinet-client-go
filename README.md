@@ -1,15 +1,21 @@
 glinet-client-go
 ===
+A Go client to access GL.iNet routers. Based on v4 firmware.
 
 
 ## Usage
-
 ```go
 import glinet "github.com/ryanrishi/glinet-client-go"
 ```
 
+## Run examples
+Most examples require authentication. Set `GLINET_USERNAME` and `GLINET_PASSWORD` environment variables.
+
+If running through GoLand, I recommend using the [EnvFile plugin](https://plugins.jetbrains.com/plugin/7861-envfile).
+
+
 ## Authentication Overview
-```
+```sh
 $ curl -XPOST http://192.168.8.1/rpc -d '{"jsonrpc": "2.0", "id": 1, "method": "challenge", "params": {"username": "root"}}'
 {"id":1,"jsonrpc":"2.0","result":{"salt":"1Aa2BbC3","alg":1,"nonce":"asdflkjasdflkj"}}
 $ openssl passwd -1 -salt $salt $GLINET_PASSWORD | tee >hash
