@@ -19,7 +19,7 @@ type challengeResponse struct {
 func (s *DigestService) Challenge(ctx context.Context, username string) (*challengeResponse, error) {
 	requestBody := challengeRequest{Username: username}
 	var responseBody challengeResponse
-	err := s.client.Call("challenge", &requestBody, &responseBody)
+	err := s.client.Call(ctx, "challenge", &requestBody, &responseBody)
 
 	if err != nil {
 		return nil, err

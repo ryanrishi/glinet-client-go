@@ -2,6 +2,7 @@ package glinet
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"github.com/gorilla/rpc/v2/json2"
 	"net/http"
@@ -37,7 +38,11 @@ func NewClient() *Client {
 	return c
 }
 
-func (c *Client) Call(method string, params, result interface{}) error {
+func (c *Client) Call(ctx context.Context, method string, params, result interface{}) error {
+	if ctx == nil {
+		return errNonNilContext
+	}
+
 	buf, _ := json2.EncodeClientRequest(method, params)
 	body := bytes.NewBuffer(buf)
 	res, err := http.Post(c.BaseURL.String(), "application/json", body)
