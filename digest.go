@@ -32,7 +32,7 @@ type loginResponse struct {
 func (s *DigestService) Challenge(username string) (*challengeResponse, error) {
 	requestBody := challengeRequest{Username: username}
 	var responseBody challengeResponse
-	err := s.client.Call("challenge", &requestBody, &responseBody)
+	err := s.client.CallWithInterface("challenge", &requestBody, &responseBody)
 
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func (s *DigestService) Login(username string, password []byte) (*loginResponse,
 	hex.Encode(digest, loginHash[:])
 	request := loginRequest{Username: username, Hash: string(digest)}
 	var res loginResponse
-	err = s.client.Call("login", &request, &res)
+	err = s.client.CallWithInterface("login", &request, &res)
 	if err != nil {
 		return nil, err
 	}

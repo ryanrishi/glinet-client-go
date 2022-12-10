@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	c := glinet.NewClient()
+	c := glinet.NewClientUnauthenticated()
 	challenge, err := c.Digest.Challenge("root")
 	if err != nil {
 		fmt.Println(fmt.Errorf("Error: %v\n", err).Error())
