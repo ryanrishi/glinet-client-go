@@ -20,8 +20,10 @@ type Client struct {
 	BaseURL   *url.URL
 	UserAgent string
 	common    service // Reuse a single struct instead of allocating one for each service on the heap.
-	Digest    *DigestService
 	Sid       string
+
+	Digest *DigestService
+	System *SystemService
 }
 
 type NewClientParams struct {
@@ -43,6 +45,7 @@ func NewClient(params *NewClientParams) *Client {
 	c.common.client = c
 	c.common.context = context.TODO()
 	c.Digest = (*DigestService)(&c.common)
+	c.System = (*SystemService)(&c.common)
 
 	login, err := c.Digest.Login(params.Username, params.Password)
 	if err != nil {
@@ -62,6 +65,7 @@ func NewClientUnauthenticated() *Client {
 	c.common.client = c
 	c.common.context = context.TODO()
 	c.Digest = (*DigestService)(&c.common)
+	c.System = (*SystemService)(&c.common)
 
 	return c
 }

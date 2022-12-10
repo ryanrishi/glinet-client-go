@@ -1,19 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/ryanrishi/glinet-client-go"
 	"log"
 	"os"
 )
-
-type system struct {
-	LanIP string `json:"lan_ip"`
-}
-
-type systemStatus struct {
-	System system `json:"system"`
-}
 
 func main() {
 	params := &glinet.NewClientParams{
@@ -22,13 +15,11 @@ func main() {
 	}
 
 	client := glinet.NewClient(params)
-	var res systemStatus
-	reqParams := []string{client.Sid, "system", "get_status"}
-	err := client.CallWithStringSlice("call", reqParams, &res)
+	res, err := client.System.GetStatus()
 	if err != nil {
 		log.Fatal("Error calling system get_status: ", err)
 	}
 
 	buf, _ := json.Marshal(res)
-	log.Print(buf)
+	log.Printf("system get_status:\t%s", bytes.NewBuffer(buf))
 }
