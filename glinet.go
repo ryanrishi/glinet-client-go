@@ -22,8 +22,10 @@ type Client struct {
 	common    service // Reuse a single struct instead of allocating one for each service on the heap.
 	Sid       string
 
-	Digest *DigestService
-	System *SystemService
+	// services
+	AdGuard *AdGuardService
+	Digest  *DigestService
+	System  *SystemService
 }
 
 type NewClientParams struct {
@@ -44,6 +46,9 @@ func NewClient(params *NewClientParams) *Client {
 	c := &Client{BaseURL: baseUrl, UserAgent: defaultUserAgent}
 	c.common.client = c
 	c.common.context = context.TODO()
+
+	// services
+	c.AdGuard = (*AdGuardService)(&c.common)
 	c.Digest = (*DigestService)(&c.common)
 	c.System = (*SystemService)(&c.common)
 
@@ -64,6 +69,9 @@ func NewClientUnauthenticated() *Client {
 	c := &Client{BaseURL: baseUrl, UserAgent: defaultUserAgent}
 	c.common.client = c
 	c.common.context = context.TODO()
+
+	// services
+	c.AdGuard = (*AdGuardService)(&c.common)
 	c.Digest = (*DigestService)(&c.common)
 	c.System = (*SystemService)(&c.common)
 
@@ -82,6 +90,17 @@ func (c *Client) CallWithStringSlice(method string, params []string, result inte
 }
 
 func (c *Client) CallWithInterface(method string, params, result interface{}) error {
+	buf, _ := json2.EncodeClientRequest(method, params)
+	err := c.call(buf, result)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Client) CallWithInterfaceSlice(method string, params []interface{}, result interface{}) error {
 	buf, _ := json2.EncodeClientRequest(method, params)
 	err := c.call(buf, result)
 
