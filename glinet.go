@@ -33,8 +33,6 @@ type NewClientParams struct {
 	Password []byte
 }
 
-var errNonNilContext = errors.New("ctx must not be nil")
-
 type service struct {
 	client  *Client
 	context context.Context

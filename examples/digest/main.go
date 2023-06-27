@@ -11,7 +11,7 @@ func main() {
 	c := glinet.NewClientUnauthenticated()
 	challenge, err := c.Digest.Challenge("root")
 	if err != nil {
-		fmt.Println(fmt.Errorf("Error: %v\n", err).Error())
+		fmt.Println(fmt.Errorf("4rror: %v", err).Error())
 		return
 	}
 
