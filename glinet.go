@@ -43,7 +43,7 @@ func NewClientWithHost(host string, username string, password []byte) *Client {
 		host = "http://" + host
 	}
 
-	baseUrl, err := url.Parse(host)
+	baseUrl, err := url.Parse(host + "/rpc")
 
 	if err != nil {
 		log.Fatal("Error parsing host", err)
