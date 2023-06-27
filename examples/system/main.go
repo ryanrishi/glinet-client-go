@@ -3,18 +3,14 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/ryanrishi/glinet-client-go"
 	"log"
 	"os"
+
+	"github.com/ryanrishi/glinet-client-go"
 )
 
 func main() {
-	params := &glinet.NewClientParams{
-		Username: os.Getenv("GLINET_USERNAME"),
-		Password: []byte(os.Getenv("GLINET_PASSWORD")),
-	}
-
-	client := glinet.NewClient(params)
+	client := glinet.NewClient(os.Getenv("GLINET_USERNAME"), []byte(os.Getenv("GLINET_PASSWORD")))
 	res, err := client.System.GetStatus()
 	if err != nil {
 		log.Fatal("Error calling system get_status: ", err)
