@@ -3,7 +3,6 @@ package glinet
 import (
 	"bytes"
 	"context"
-	"errors"
 	"github.com/gorilla/rpc/v2/json2"
 	"log"
 	"net/http"
