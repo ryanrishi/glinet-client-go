@@ -3,7 +3,6 @@ package glinet
 import (
 	"bytes"
 	"context"
-	"errors"
 	"github.com/gorilla/rpc/v2/json2"
 	"log"
 	"net/http"
@@ -32,8 +31,6 @@ type NewClientParams struct {
 	Username string
 	Password []byte
 }
-
-var errNonNilContext = errors.New("ctx must not be nil")
 
 type service struct {
 	client  *Client
