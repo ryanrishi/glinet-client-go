@@ -3,15 +3,17 @@ package glinet
 import (
 	"bytes"
 	"context"
-	"github.com/gorilla/rpc/v2/json2"
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
+
+	"github.com/gorilla/rpc/v2/json2"
 )
 
 const (
-	Version          = "v0.0.3"
-	defaultBaseUrl   = "http://192.168.8.1/rpc"
+	Version          = "v0.0.4"
+	defaultBaseUrl   = "http://192.168.8.1"
 	defaultUserAgent = "glinet-client-go" + "/" + Version
 )
 
@@ -27,18 +29,25 @@ type Client struct {
 	System  *SystemService
 }
 
-type NewClientParams struct {
-	Username string
-	Password []byte
-}
-
 type service struct {
 	client  *Client
 	context context.Context
 }
 
-func NewClient(params *NewClientParams) *Client {
-	baseUrl, _ := url.Parse(defaultBaseUrl)
+func NewClient(username string, password []byte) *Client {
+	return NewClientWithHost(defaultBaseUrl, username, password)
+}
+
+func NewClientWithHost(host string, username string, password []byte) *Client {
+	if !strings.HasPrefix(host, "http") {
+		host = "http://" + host
+	}
+
+	baseUrl, err := url.Parse(host + "/rpc")
+
+	if err != nil {
+		log.Fatal("Error parsing host", err)
+	}
 
 	c := &Client{BaseURL: baseUrl, UserAgent: defaultUserAgent}
 	c.common.client = c
@@ -49,13 +58,12 @@ func NewClient(params *NewClientParams) *Client {
 	c.Digest = (*DigestService)(&c.common)
 	c.System = (*SystemService)(&c.common)
 
-	login, err := c.Digest.Login(params.Username, params.Password)
+	login, err := c.Digest.Login(username, password)
 	if err != nil {
 		log.Fatal("Error logging in: ", err)
 	}
 
 	c.Sid = login.Sid
-	params.Password = nil
 
 	return c
 }

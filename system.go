@@ -49,10 +49,29 @@ type GetSystemStatusResponse struct {
 	} `json:"system"`
 }
 
+type GetSystemTimezoneConfigResponse struct {
+	Zonename            string `json:"zonename"`
+	TZOffset            string `json:"tzoffset"`
+	AutoTimezoneEnabled bool   `json:"autotimezone_enabled"`
+	Localtime           int    `json:"localtime"`
+	Timezone            string `json:"timezone"`
+}
+
 func (s *SystemService) GetStatus() (*GetSystemStatusResponse, error) {
 	var res GetSystemStatusResponse
 
 	err := s.client.CallWithStringSlice("call", []string{s.client.Sid, "system", "get_status"}, &res)
+	if err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+func (s *SystemService) GetTimezoneConfig() (*GetSystemTimezoneConfigResponse, error) {
+	var res GetSystemTimezoneConfigResponse
+
+	err := s.client.CallWithStringSlice("call", []string{s.client.Sid, "system", "get_timezone_config"}, &res)
 	if err != nil {
 		return nil, err
 	}

@@ -3,9 +3,10 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/ryanrishi/glinet-client-go"
 	"log"
 	"os"
+
+	"github.com/ryanrishi/glinet-client-go"
 )
 
 func main() {
