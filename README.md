@@ -5,7 +5,7 @@ glinet-client-go
 [![Go Report Card](https://goreportcard.com/badge/github.com/ryanrishi/glinet-client-go)](https://goreportcard.com/report/github.com/ryanrishi/glinet-client-go)
 
 
-A Go client to access GL.iNet routers. Based on v4 firmware.
+A Go client to access [GL.iNet](https://www.gl-inet.com/) routers. Based on [v4 firmware](https://dev.gl-inet.com/router-4.x-api/).
 
 
 ## Usage
