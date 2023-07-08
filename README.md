@@ -9,9 +9,17 @@ A Go client to access [GL.iNet](https://www.gl-inet.com/) routers. Based on [v4 
 
 
 ## Usage
-```go
-import glinet "github.com/ryanrishi/glinet-client-go"
-```
+
+### Installing
+Use `go get` to retrieve the SDK to add it to your `GOPATH` workspace, or
+project's Go module dependencies.
+
+	go get github.com/ryanrishi/glinet-client-go
+
+To update the SDK use `go get -u` to retrieve the latest version of the SDK.
+
+	go get -u github.com/glinet-client-go
+
 
 ## Run examples
 Most examples require authentication. Set `GLINET_USERNAME` and `GLINET_PASSWORD` environment variables.
