@@ -3,6 +3,7 @@ package glinet
 import (
 	"bytes"
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"net/url"
@@ -125,6 +126,10 @@ func (c *Client) call(buf []byte, result interface{}) error {
 
 	err = json2.DecodeClientResponse(res.Body, result)
 	if err != nil {
+		if errors.Is(err, json2.ErrNullResult) {
+			return nil
+		}
+
 		return err
 	}
 
