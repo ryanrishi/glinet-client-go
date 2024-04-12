@@ -58,9 +58,9 @@ type GetSystemTimezoneConfigResponse struct {
 }
 
 type SetSystemTimezoneConfigRequest struct {
-	Zonename  string `json:"zonename"`
-	Localtime int    `json:"localtime,omitempty"`
-	Timezone  string `json:"timezone"`
+	Zonename  string `json:"zonename,omitempty"`
+	Localtime int64  `json:"localtime,omitempty"`
+	Timezone  string `json:"timezone,omitempty"`
 }
 
 func (s *SystemService) GetStatus() (*GetSystemStatusResponse, error) {
