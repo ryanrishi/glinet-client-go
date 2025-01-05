@@ -1,6 +1,6 @@
 module github.com/ryanrishi/glinet-client-go
 
-go 1.17
+go 1.21
 
 require (
 	github.com/GehirnInc/crypt v0.0.0-20200316065508-bb7000b8a962
