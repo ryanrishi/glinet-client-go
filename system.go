@@ -57,10 +57,16 @@ type GetSystemTimezoneConfigResponse struct {
 	Timezone            string `json:"timezone"`
 }
 
+type SetSystemTimezoneRequest struct {
+	Zonename  string `json:"zonename"`
+	Timezone  string `json:"timezone"`
+	Localtime int64  `json:"localtime"`
+}
+
 func (s *SystemService) GetStatus() (*GetSystemStatusResponse, error) {
 	var res GetSystemStatusResponse
 
-	err := s.client.CallWithStringSlice("call", []string{s.client.Sid, "system", "get_status"}, &res)
+	err := s.client.CallWithStringSlice("call", []string{s.client.GetSid(), "system", "get_status"}, &res)
 	if err != nil {
 		return nil, err
 	}
@@ -71,10 +77,33 @@ func (s *SystemService) GetStatus() (*GetSystemStatusResponse, error) {
 func (s *SystemService) GetTimezoneConfig() (*GetSystemTimezoneConfigResponse, error) {
 	var res GetSystemTimezoneConfigResponse
 
-	err := s.client.CallWithStringSlice("call", []string{s.client.Sid, "system", "get_timezone_config"}, &res)
+	err := s.client.CallWithStringSlice("call", []string{s.client.GetSid(), "system", "get_timezone_config"}, &res)
 	if err != nil {
 		return nil, err
 	}
 
 	return &res, nil
+}
+
+// SetTimezoneConfig updates the system timezone configuration
+func (s *SystemService) SetTimezoneConfig(config *SetSystemTimezoneRequest) error {
+	// Construct the parameters slice for the API call
+	params := []interface{}{
+		s.client.GetSid(),
+		"system",
+		"set_timezone_config",
+		map[string]interface{}{
+			"zonename":  config.Zonename,
+			"timezone":  config.Timezone,
+			"localtime": config.Localtime,
+		},
+	}
+
+	var response interface{}
+	err := s.client.CallWithInterfaceSlice("call", params, &response)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
