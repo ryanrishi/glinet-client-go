@@ -17,11 +17,18 @@ const (
 	defaultUserAgent = "glinet-client-go" + "/" + Version
 )
 
+type ClientInterface interface {
+	GetSid() string
+	CallWithStringSlice(method string, params []string, result interface{}) error
+	CallWithInterface(method string, params, result interface{}) error
+	CallWithInterfaceSlice(method string, params []interface{}, result interface{}) error
+}
+
 type Client struct {
 	BaseURL   *url.URL
 	UserAgent string
 	common    service // Reuse a single struct instead of allocating one for each service on the heap.
-	Sid       string
+	sid       string
 
 	// services
 	AdGuard *AdGuardService
@@ -30,7 +37,7 @@ type Client struct {
 }
 
 type service struct {
-	client  *Client
+	client  ClientInterface
 	context context.Context
 }
 
@@ -63,7 +70,7 @@ func NewClientWithHost(host string, username string, password []byte) *Client {
 		log.Fatal("Error logging in: ", err)
 	}
 
-	c.Sid = login.Sid
+	c.sid = login.Sid
 
 	return c
 }
@@ -81,6 +88,10 @@ func NewClientUnauthenticated() *Client {
 	c.System = (*SystemService)(&c.common)
 
 	return c
+}
+
+func (c *Client) GetSid() string {
+	return c.sid
 }
 
 func (c *Client) CallWithStringSlice(method string, params []string, result interface{}) error {

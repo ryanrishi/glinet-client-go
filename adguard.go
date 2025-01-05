@@ -13,7 +13,7 @@ type SetAdGuardConfigRequest struct {
 func (s *AdGuardService) GetAdGuardConfig() (*GetAdGuardConfigResponse, error) {
 	var res GetAdGuardConfigResponse
 
-	err := s.client.CallWithStringSlice("call", []string{s.client.Sid, "adguardhome", "get_config"}, &res)
+	err := s.client.CallWithStringSlice("call", []string{s.client.GetSid(), "adguardhome", "get_config"}, &res)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +27,7 @@ func (s *AdGuardService) SetAdGuardConfig(Enabled bool) error {
 	}
 
 	var params = make([]interface{}, 4)
-	params[0] = s.client.Sid
+	params[0] = s.client.GetSid()
 	params[1] = "adguardhome"
 	params[2] = "set_config"
 	params[3] = &req
