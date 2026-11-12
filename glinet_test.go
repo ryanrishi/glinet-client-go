@@ -235,8 +235,8 @@ func TestSystemTimezoneConfig(t *testing.T) {
 	ctx := context.Background()
 
 	err := c.System.SetTimezoneConfig(ctx, &glinet.SetSystemTimezoneRequest{
-		Zonename:  "America/New York",
-		Timezone:  "EST5EDT,M3.2.0,M11.1.0",
+		Zonename:  "Europe/Berlin",
+		Timezone:  "CET-1CEST,M3.5.0,M10.5.0/3",
 		Localtime: 1700000100,
 	})
 	if err != nil {
@@ -244,7 +244,7 @@ func TestSystemTimezoneConfig(t *testing.T) {
 	}
 
 	state := srv.System.TimezoneConfig()
-	if state.Zonename != "America/New York" || state.Timezone != "EST5EDT,M3.2.0,M11.1.0" || state.Localtime != 1700000100 {
+	if state.Zonename != "Europe/Berlin" || state.Timezone != "CET-1CEST,M3.5.0,M10.5.0/3" || state.Localtime != 1700000100 {
 		t.Errorf("server state = %+v", state)
 	}
 
@@ -253,11 +253,11 @@ func TestSystemTimezoneConfig(t *testing.T) {
 		t.Fatalf("GetTimezoneConfig: %v", err)
 	}
 	want := glinet.GetSystemTimezoneConfigResponse{
-		Zonename:            "America/New York",
+		Zonename:            "Europe/Berlin",
 		TZOffset:            state.TZOffset,
 		AutoTimezoneEnabled: true,
 		Localtime:           1700000100,
-		Timezone:            "EST5EDT,M3.2.0,M11.1.0",
+		Timezone:            "CET-1CEST,M3.5.0,M10.5.0/3",
 	}
 	if *res != want {
 		t.Errorf("GetTimezoneConfig = %+v, want %+v", *res, want)
