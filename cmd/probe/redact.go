@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
@@ -11,12 +10,12 @@ import (
 )
 
 var (
-	sensitiveKey = regexp.MustCompile(`^(key|key\d+|.*_key\d*|.*password.*|passwd|.*psk.*|.*private.*|.*preshared.*|.*token.*|.*secret.*|sid|sn|sn_bak|.*serial.*|device_?id|.*ddns.*|askpass|ta)$`)
+	sensitiveKey = regexp.MustCompile(`^(key|key\d+|.*_key\d*|.*password.*|passwd|.*psk.*|.*private.*|.*preshared.*|.*token.*|.*secret.*|sid|sn|sn_bak|.*serial.*|device_?id|.*ddns.*|askpass|ta|pin|pin_?code|.*_pin)$`)
 	publicKey    = regexp.MustCompile(`public_?key$`)
 	hostKey      = regexp.MustCompile(`^(end_?point|domain)$`)
 	hostnameKey  = regexp.MustCompile(`^(hostname|alias)$`)
 	macPattern   = regexp.MustCompile(`\b[0-9A-Fa-f]{2}([:-])[0-9A-Fa-f]{2}(?:[:-][0-9A-Fa-f]{2}){4}\b`)
-	ipv4Pattern  = regexp.MustCompile(`(^|[^0-9.])((?:\d{1,3}\.){3}\d{1,3})($|[^0-9.])`)
+	ipv4Pattern  = regexp.MustCompile(`(?:\d{1,3}\.){3}\d{1,3}`)
 	ipv6Pattern  = regexp.MustCompile(`[0-9A-Fa-f]{0,4}(?::[0-9A-Fa-f]{0,4}){2,7}`)
 	publicDNS    = map[string]bool{
 		"1.1.1.1": true, "1.0.0.1": true, "8.8.8.8": true, "8.8.4.4": true,
@@ -169,23 +168,60 @@ func (r *redactor) redactString(s string) string {
 	if strings.Contains(s, "PRIVATE KEY") {
 		return "redacted-private-key-pem"
 	}
-	for _, real := range sortedKeys(r.secrets) {
-		s = strings.ReplaceAll(s, real, r.secrets[real])
-	}
+	s = r.replaceSecrets(s)
 	s = macPattern.ReplaceAllStringFunc(s, r.fakeMAC)
-	s = ipv4Pattern.ReplaceAllStringFunc(s, func(m string) string {
-		sub := ipv4Pattern.FindStringSubmatch(m)
-		return sub[1] + r.fakeIPv4(sub[2]) + sub[3]
-	})
+	s = r.redactIPv4(s)
 	s = ipv6Pattern.ReplaceAllStringFunc(s, r.fakeIPv6)
 	return s
 }
 
-func (r *redactor) redactText(b []byte) []byte {
-	for _, real := range sortedKeys(r.secrets) {
-		b = bytes.ReplaceAll(b, []byte(real), []byte(r.secrets[real]))
+func (r *redactor) redactIPv4(s string) string {
+	var b strings.Builder
+	last := 0
+	for _, loc := range ipv4Pattern.FindAllStringIndex(s, -1) {
+		start, end := loc[0], loc[1]
+		if (start > 0 && isIPv4Char(s[start-1])) || (end < len(s) && isIPv4Char(s[end])) {
+			continue
+		}
+		b.WriteString(s[last:start])
+		b.WriteString(r.fakeIPv4(s[start:end]))
+		last = end
 	}
-	return b
+	b.WriteString(s[last:])
+	return b.String()
+}
+
+func isIPv4Char(c byte) bool {
+	return c == '.' || (c >= '0' && c <= '9')
+}
+
+// scrub replaces each known secret inside the string values and the keys of v.
+func (r *redactor) scrub(v any) any {
+	switch t := v.(type) {
+	case map[string]any:
+		out := make(map[string]any, len(t))
+		for k, val := range t {
+			out[r.replaceSecrets(k)] = r.scrub(val)
+		}
+		return out
+	case []any:
+		out := make([]any, len(t))
+		for i, val := range t {
+			out[i] = r.scrub(val)
+		}
+		return out
+	case string:
+		return r.replaceSecrets(t)
+	default:
+		return v
+	}
+}
+
+func (r *redactor) replaceSecrets(s string) string {
+	for _, real := range sortedKeys(r.secrets) {
+		s = strings.ReplaceAll(s, real, r.secrets[real])
+	}
+	return s
 }
 
 func (r *redactor) mapped(real, label string, fake func(n int) string) string {

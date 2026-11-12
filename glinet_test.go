@@ -166,6 +166,21 @@ func TestSessionRenewal(t *testing.T) {
 	}
 }
 
+func TestSessionRenewalAfterCallerClearsPassword(t *testing.T) {
+	srv := glinettest.NewServer(t)
+	password := []byte(srv.Password)
+	c, err := glinet.NewClientWithHost(srv.URL, srv.Username, password)
+	if err != nil {
+		t.Fatalf("NewClientWithHost: %v", err)
+	}
+	clear(password)
+	srv.ExpireSessions()
+
+	if _, err := c.System.GetTimezoneConfig(context.Background()); err != nil {
+		t.Fatalf("GetTimezoneConfig: %v", err)
+	}
+}
+
 func TestSessionRenewalOnlyOnce(t *testing.T) {
 	c, srv, rec := newRecordedClient(t)
 	srv.Handle("system", "get_timezone_config", func(json.RawMessage) (any, error) {

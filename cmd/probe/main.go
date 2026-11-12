@@ -112,15 +112,15 @@ func main() {
 	for _, o := range p.out {
 		resp := o.fixture.Response
 		if o.raw != nil {
-			resp = mustJSON(r.redact(o.raw))
+			resp = mustJSON(r.scrub(r.redact(o.raw)))
 		}
 		f := fixture{Request: o.fixture.Request, Response: resp}
-		f.Request.Params = r.redact(roundTrip(f.Request.Params))
+		f.Request.Params = r.scrub(r.redact(roundTrip(f.Request.Params)))
 		data, err := json.MarshalIndent(f, "", "  ")
 		if err != nil {
 			log.Fatal(err)
 		}
-		if err := os.WriteFile(filepath.Join(dir, o.name+".json"), r.redactText(append(data, '\n')), 0o644); err != nil {
+		if err := os.WriteFile(filepath.Join(dir, o.name+".json"), append(data, '\n'), 0o644); err != nil {
 			log.Fatal(err)
 		}
 	}

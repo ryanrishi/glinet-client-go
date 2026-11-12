@@ -52,7 +52,7 @@ func NewClientWithHost(host string, username string, password []byte) (*Client, 
 	}
 
 	c.username = username
-	c.password = password
+	c.password = bytes.Clone(password)
 
 	if err := c.login(context.Background(), ""); err != nil {
 		return nil, err
