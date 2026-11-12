@@ -1,5 +1,7 @@
 package glinet
 
+import "context"
+
 type SystemService service
 
 type GetSystemStatusResponse struct {
@@ -38,7 +40,7 @@ type GetSystemStatusResponse struct {
 		MemoryFree      int       `json:"memory_free"`
 		Ipv6Enabled     bool      `json:"ipv6_enabled"`
 		MemoryBuffCache int       `json:"memory_buff_cache"`
-		Uptime          int       `json:"uptime"`
+		Uptime          float64   `json:"uptime"`
 		LoadAverage     []float64 `json:"load_average"`
 		CPU             struct {
 			Temperature int `json:"temperature"`
@@ -63,47 +65,24 @@ type SetSystemTimezoneRequest struct {
 	Localtime int64  `json:"localtime"`
 }
 
-func (s *SystemService) GetStatus() (*GetSystemStatusResponse, error) {
+func (s *SystemService) GetStatus(ctx context.Context) (*GetSystemStatusResponse, error) {
 	var res GetSystemStatusResponse
-
-	err := s.client.CallWithStringSlice("call", []string{s.client.GetSid(), "system", "get_status"}, &res)
-	if err != nil {
+	if err := s.client.Call(ctx, "system", "get_status", nil, &res); err != nil {
 		return nil, err
 	}
 
 	return &res, nil
 }
 
-func (s *SystemService) GetTimezoneConfig() (*GetSystemTimezoneConfigResponse, error) {
+func (s *SystemService) GetTimezoneConfig(ctx context.Context) (*GetSystemTimezoneConfigResponse, error) {
 	var res GetSystemTimezoneConfigResponse
-
-	err := s.client.CallWithStringSlice("call", []string{s.client.GetSid(), "system", "get_timezone_config"}, &res)
-	if err != nil {
+	if err := s.client.Call(ctx, "system", "get_timezone_config", nil, &res); err != nil {
 		return nil, err
 	}
 
 	return &res, nil
 }
 
-// SetTimezoneConfig updates the system timezone configuration
-func (s *SystemService) SetTimezoneConfig(config *SetSystemTimezoneRequest) error {
-	// Construct the parameters slice for the API call
-	params := []interface{}{
-		s.client.GetSid(),
-		"system",
-		"set_timezone_config",
-		map[string]interface{}{
-			"zonename":  config.Zonename,
-			"timezone":  config.Timezone,
-			"localtime": config.Localtime,
-		},
-	}
-
-	var response interface{}
-	err := s.client.CallWithInterfaceSlice("call", params, &response)
-	if err != nil {
-		return err
-	}
-
-	return nil
+func (s *SystemService) SetTimezoneConfig(ctx context.Context, config *SetSystemTimezoneRequest) error {
+	return s.client.Call(ctx, "system", "set_timezone_config", config, nil)
 }

@@ -1,44 +1,28 @@
 package glinet
 
+import "context"
+
 type AdGuardService service
 
 type GetAdGuardConfigResponse struct {
-	Enabled bool `json:"enabled"`
+	Enabled    bool `json:"enabled"`
+	DNSEnabled bool `json:"dns_enabled"`
 }
 
 type SetAdGuardConfigRequest struct {
-	Enabled bool `json:"enabled"`
+	Enabled    bool `json:"enabled"`
+	DNSEnabled bool `json:"dns_enabled"`
 }
 
-func (s *AdGuardService) GetAdGuardConfig() (*GetAdGuardConfigResponse, error) {
+func (s *AdGuardService) GetAdGuardConfig(ctx context.Context) (*GetAdGuardConfigResponse, error) {
 	var res GetAdGuardConfigResponse
-
-	err := s.client.CallWithStringSlice("call", []string{s.client.GetSid(), "adguardhome", "get_config"}, &res)
-	if err != nil {
+	if err := s.client.Call(ctx, "adguardhome", "get_config", nil, &res); err != nil {
 		return nil, err
 	}
 
 	return &res, nil
 }
 
-func (s *AdGuardService) SetAdGuardConfig(Enabled bool) error {
-	var req = SetAdGuardConfigRequest{
-		Enabled,
-	}
-
-	var params = make([]interface{}, 4)
-	params[0] = s.client.GetSid()
-	params[1] = "adguardhome"
-	params[2] = "set_config"
-	params[3] = &req
-
-	// don't care about response; it's `[]` if successful
-	var res []byte
-
-	err := s.client.CallWithInterfaceSlice("call", params, &res)
-	if err != nil {
-		return err
-	}
-
-	return nil
+func (s *AdGuardService) SetAdGuardConfig(ctx context.Context, config *SetAdGuardConfigRequest) error {
+	return s.client.Call(ctx, "adguardhome", "set_config", config, nil)
 }
