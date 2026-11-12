@@ -1,0 +1,31 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "get_zone_list",
+      {}
+    ],
+    "id": 40
+  },
+  "response": {
+    "id": 40,
+    "jsonrpc": "2.0",
+    "result": {
+      "externals": [
+        "lan",
+        "wan",
+        "guest",
+        "wgclient"
+      ],
+      "internals": [
+        "lan",
+        "wan",
+        "guest",
+        "wgclient"
+      ]
+    }
+  }
+}

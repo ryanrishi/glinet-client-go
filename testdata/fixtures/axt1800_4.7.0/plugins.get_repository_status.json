@@ -1,0 +1,27 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "plugins",
+      "get_repository_status",
+      {}
+    ],
+    "id": 105
+  },
+  "response": {
+    "id": 105,
+    "jsonrpc": "2.0",
+    "result": {
+      "count_all": 492,
+      "count_installed": 492,
+      "count_not_installed": 0,
+      "count_reserve": 0,
+      "count_updatable": 0,
+      "status": 0,
+      "time_current": 1794517492,
+      "time_last_update": 0
+    }
+  }
+}

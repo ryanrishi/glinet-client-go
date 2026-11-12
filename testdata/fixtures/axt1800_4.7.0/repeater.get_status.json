@@ -1,0 +1,71 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "repeater",
+      "get_status",
+      {}
+    ],
+    "id": 115
+  },
+  "response": {
+    "id": 115,
+    "jsonrpc": "2.0",
+    "result": {
+      "band": "5g",
+      "bare_mode": false,
+      "bssid": "02:00:00:00:00:36",
+      "channel": 48,
+      "config": {
+        "auto_portal": false,
+        "disguise": false,
+        "key": "redacted-key-1",
+        "macaddr": {
+          "mode": "default"
+        },
+        "manual": false,
+        "protocol": "dhcp",
+        "remember": true,
+        "ssid": "ssid-4"
+      },
+      "connected": "37m,44s",
+      "device": "radio0",
+      "dfs": false,
+      "fail_type": "",
+      "htmode": "HT40",
+      "ipv4": {
+        "dns": [
+          "192.168.4.253"
+        ],
+        "gateway": "192.168.0.1",
+        "ip": "192.168.0.210/24"
+      },
+      "macaddr": "02:00:00:00:00:38",
+      "network": "wwan",
+      "portal": false,
+      "running": true,
+      "signal": -57,
+      "ssid": "ssid-4",
+      "state": 2,
+      "state_s": "connected",
+      "wpa_status": {
+        "address": "02:00:00:00:00:38",
+        "bssid": "02:00:00:00:00:36",
+        "freq": "5240",
+        "group_cipher": "CCMP",
+        "id": "0",
+        "ieee80211ac": "1",
+        "ip_address": "192.168.0.210",
+        "key_mgmt": "WPA2-PSK",
+        "mode": "station",
+        "pairwise_cipher": "CCMP",
+        "ssid": "ssid-4",
+        "uuid": "19e91740-71b8-573b-a9b8-108643f50236",
+        "wifi_generation": "5",
+        "wpa_state": "COMPLETED"
+      }
+    }
+  }
+}

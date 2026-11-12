@@ -1,0 +1,20 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "get_rule_list",
+      {}
+    ],
+    "id": 37
+  },
+  "response": {
+    "id": 37,
+    "jsonrpc": "2.0",
+    "result": {
+      "res": []
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "switch-button",
+      "get_funcs",
+      {}
+    ],
+    "id": 126
+  },
+  "response": {
+    "id": 126,
+    "jsonrpc": "2.0",
+    "result": {
+      "funcs": [
+        "adguardhome",
+        "openvpn",
+        "tor",
+        "wireguard"
+      ]
+    }
+  }
+}

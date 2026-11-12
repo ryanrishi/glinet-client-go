@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "wg-server",
+      "get_route_list",
+      {}
+    ],
+    "id": 160
+  },
+  "response": {
+    "id": 160,
+    "jsonrpc": "2.0",
+    "result": {
+      "ipv4_route_rules": [],
+      "ipv6_route_rules": []
+    }
+  }
+}

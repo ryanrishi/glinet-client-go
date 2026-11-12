@@ -1,0 +1,27 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "local-access",
+      "get_config",
+      {}
+    ],
+    "id": 51
+  },
+  "response": {
+    "id": 51,
+    "jsonrpc": "2.0",
+    "result": {
+      "http_port": 80,
+      "https_port": 443,
+      "luci_http_port": 8080,
+      "luci_https_port": 8443,
+      "luci_redirect_https": false,
+      "redirect_https": false,
+      "session_timeout": 300,
+      "ssh_port": 22
+    }
+  }
+}

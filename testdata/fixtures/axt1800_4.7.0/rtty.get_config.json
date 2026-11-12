@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "rtty",
+      "get_config",
+      {}
+    ],
+    "id": 122
+  },
+  "response": {
+    "id": 122,
+    "jsonrpc": "2.0",
+    "result": {
+      "ssh_enabled": false,
+      "web_enabled": false
+    }
+  }
+}

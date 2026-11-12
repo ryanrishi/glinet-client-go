@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "network",
+      "routes",
+      {}
+    ],
+    "id": 79
+  },
+  "response": {
+    "error": {
+      "code": -32601,
+      "message": "Method not found"
+    },
+    "id": 79,
+    "jsonrpc": "2.0"
+  }
+}

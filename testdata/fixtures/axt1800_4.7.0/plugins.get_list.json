@@ -1,0 +1,22 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "plugins",
+      "get_list",
+      {
+        "status": 1
+      }
+    ],
+    "id": 107
+  },
+  "response": {
+    "id": 107,
+    "jsonrpc": "2.0",
+    "result": {
+      "packages": []
+    }
+  }
+}

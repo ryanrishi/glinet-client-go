@@ -1,0 +1,29 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "system",
+      "disk_info",
+      {}
+    ],
+    "id": 5
+  },
+  "response": {
+    "id": 5,
+    "jsonrpc": "2.0",
+    "result": {
+      "root": {
+        "free": 38596608,
+        "total": 42745856,
+        "used": 1929216
+      },
+      "tmp": {
+        "free": 210915328,
+        "total": 212115456,
+        "used": 1200128
+      }
+    }
+  }
+}

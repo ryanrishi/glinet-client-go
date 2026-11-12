@@ -1,0 +1,20 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "modem",
+      "get_cell_tower",
+      {}
+    ],
+    "id": 68
+  },
+  "response": {
+    "id": 68,
+    "jsonrpc": "2.0",
+    "result": {
+      "slot": []
+    }
+  }
+}

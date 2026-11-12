@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "reboot",
+      "get_config",
+      {}
+    ],
+    "id": 113
+  },
+  "response": {
+    "error": {
+      "code": -32601,
+      "message": "Method not found"
+    },
+    "id": 113,
+    "jsonrpc": "2.0"
+  }
+}

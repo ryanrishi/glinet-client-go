@@ -1,0 +1,39 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "wg-client",
+      "get_config_list",
+      {
+        "group_id": 9859
+      }
+    ],
+    "id": 154
+  },
+  "response": {
+    "id": 154,
+    "jsonrpc": "2.0",
+    "result": {
+      "auth_type": 1,
+      "peers": [
+        {
+          "address_v4": "10.13.13.4/32",
+          "address_v6": "",
+          "allowed_ips": "0.0.0.0/0",
+          "dns": "10.13.13.1",
+          "end_point": "host-2.example.com:51820",
+          "listen_port": 14237,
+          "name": "app_custom_Centennial",
+          "peer_id": 8913,
+          "persistent_keepalive": 25,
+          "preshared_key": "",
+          "presharedkey_enable": false,
+          "private_key": "redacted-private_key-1",
+          "public_key": "OLouhYx5LuTMaTOeVimXAeq4suUXK1qTFNn7WXpjXdE="
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "logread",
+      "get_config",
+      {}
+    ],
+    "id": 55
+  },
+  "response": {
+    "error": {
+      "code": -32601,
+      "message": "Method not found"
+    },
+    "id": 55,
+    "jsonrpc": "2.0"
+  }
+}

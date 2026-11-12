@@ -1,0 +1,88 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "kmwan",
+      "get_config",
+      {}
+    ],
+    "id": 45
+  },
+  "response": {
+    "id": 45,
+    "jsonrpc": "2.0",
+    "result": {
+      "interfaces": [
+        {
+          "enable_check": true,
+          "enable_ssl": false,
+          "interface": "wan",
+          "metric": 10,
+          "track_ipv4": [
+            "1.1.1.1",
+            "8.8.8.8",
+            "208.67.222.222",
+            "208.67.220.220"
+          ],
+          "track_ipv6": [
+            "2001:4860:4860::8844",
+            "2001:4860:4860::8888",
+            "2001:db8::1",
+            "2001:db8::2"
+          ],
+          "track_method": 0,
+          "track_mode": 1,
+          "track_proto": 0,
+          "weight": 1
+        },
+        {
+          "enable_check": true,
+          "enable_ssl": false,
+          "interface": "wwan",
+          "metric": 20,
+          "track_ipv4": [
+            "1.1.1.1",
+            "8.8.8.8",
+            "208.67.222.222",
+            "208.67.220.220"
+          ],
+          "track_ipv6": [
+            "2001:4860:4860::8844",
+            "2001:4860:4860::8888",
+            "2001:db8::1",
+            "2001:db8::2"
+          ],
+          "track_method": 0,
+          "track_mode": 1,
+          "track_proto": 0,
+          "weight": 1
+        },
+        {
+          "enable_check": true,
+          "enable_ssl": false,
+          "interface": "tethering",
+          "metric": 30,
+          "track_ipv4": [
+            "1.1.1.1",
+            "8.8.8.8",
+            "208.67.222.222",
+            "208.67.220.220"
+          ],
+          "track_ipv6": [
+            "2001:4860:4860::8844",
+            "2001:4860:4860::8888",
+            "2001:db8::1",
+            "2001:db8::2"
+          ],
+          "track_method": 0,
+          "track_mode": 1,
+          "track_proto": 0,
+          "weight": 1
+        }
+      ],
+      "mode": 0
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "tailscale",
+      "get_status",
+      {}
+    ],
+    "id": 128
+  },
+  "response": {
+    "id": 128,
+    "jsonrpc": "2.0",
+    "result": {
+      "dns": [
+        "192.168.4.253"
+      ]
+    }
+  }
+}

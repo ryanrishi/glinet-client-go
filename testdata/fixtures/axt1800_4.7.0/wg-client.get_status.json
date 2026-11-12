@@ -1,0 +1,30 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "wg-client",
+      "get_status",
+      {}
+    ],
+    "id": 151
+  },
+  "response": {
+    "id": 151,
+    "jsonrpc": "2.0",
+    "result": {
+      "domain": "host-1.example.com",
+      "group_id": 2082,
+      "ipv4": "192.168.5.4/32",
+      "log": "",
+      "name": "NYC",
+      "peer_id": 2004,
+      "port": 51820,
+      "proxy": true,
+      "rx_bytes": 178955524,
+      "status": 1,
+      "tx_bytes": 10203432
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "vpn-policy",
+      "get_vlan_policy",
+      {}
+    ],
+    "id": 150
+  },
+  "response": {
+    "id": 150,
+    "jsonrpc": "2.0",
+    "result": {
+      "vlans": [
+        {
+          "id": 1,
+          "vpn": 1
+        },
+        {
+          "id": 2,
+          "vpn": 1
+        }
+      ]
+    }
+  }
+}

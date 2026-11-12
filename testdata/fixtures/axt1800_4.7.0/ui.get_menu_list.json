@@ -1,0 +1,523 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "ui",
+      "get_menu_list",
+      {}
+    ],
+    "id": 139
+  },
+  "response": {
+    "id": 139,
+    "jsonrpc": "2.0",
+    "result": {
+      "menus": [
+        {
+          "disables": [
+            "portal"
+          ],
+          "index": 80,
+          "lang_hide": [
+            "zh-cn"
+          ],
+          "level": 2,
+          "parent": "applications",
+          "parent_icon": "application",
+          "parent_index": 50,
+          "show_mode": [
+            "router"
+          ],
+          "title": "AdGuard Home",
+          "view": "adguardhome"
+        },
+        {
+          "index": 90,
+          "level": 2,
+          "parent": "system",
+          "parent_icon": "setting",
+          "parent_index": 70,
+          "view": "advanced"
+        },
+        {
+          "country": {
+            "codes": [
+              "cn"
+            ],
+            "exclude": true
+          },
+          "index": 20,
+          "level": 2,
+          "parent": "cloud",
+          "parent_icon": "cloud-services",
+          "parent_index": 39,
+          "parent_title": {
+            "translate": "cloud.service_label"
+          },
+          "show_mode": [
+            "router"
+          ],
+          "title": {
+            "translate": "menu_sdwan"
+          },
+          "view": "astrowarp"
+        },
+        {
+          "disables": [
+            "sdwan"
+          ],
+          "index": 50,
+          "level": 2,
+          "parent": "network",
+          "parent_icon": "network",
+          "parent_index": 60,
+          "view": "bridge"
+        },
+        {
+          "disables": [
+            "portal",
+            "sdwan"
+          ],
+          "index": 60,
+          "lang_hide": [
+            "zh-cn"
+          ],
+          "level": 2,
+          "parent": "system",
+          "parent_icon": "setting",
+          "parent_index": 70,
+          "show_mode": [
+            "router"
+          ],
+          "view": "btnsettings"
+        },
+        {
+          "icon": "clients",
+          "index": 30,
+          "level": 1,
+          "show_mode": [
+            "router",
+            "wds",
+            "relay",
+            "mesh",
+            "ap"
+          ],
+          "view": "clients"
+        },
+        {
+          "index": 10,
+          "level": 2,
+          "parent": "cloud",
+          "parent_icon": "cloud-services",
+          "parent_index": 39,
+          "parent_title": {
+            "translate": "cloud.service_label"
+          },
+          "title": {
+            "2b": "Cloud",
+            "2c": "GoodCloud"
+          },
+          "view": "cloud"
+        },
+        {
+          "disables": [
+            "portal"
+          ],
+          "index": 40,
+          "level": 2,
+          "parent": "network",
+          "parent_icon": "network",
+          "parent_index": 60,
+          "show_mode": [
+            "router"
+          ],
+          "title": "DNS",
+          "view": "dnsview"
+        },
+        {
+          "index": 20,
+          "lang_hide": [
+            "zh-cn"
+          ],
+          "level": 2,
+          "parent": "applications",
+          "parent_icon": "application",
+          "parent_index": 50,
+          "show_mode": [
+            "router",
+            "wds",
+            "relay",
+            "mesh",
+            "ap"
+          ],
+          "view": "dynamicdns"
+        },
+        {
+          "index": 90,
+          "level": 2,
+          "parent": "network",
+          "parent_icon": "network",
+          "parent_index": 60,
+          "show_mode": [
+            "router"
+          ],
+          "view": "edgerouter"
+        },
+        {
+          "index": 10,
+          "level": 2,
+          "parent": "network",
+          "parent_icon": "network",
+          "parent_index": 60,
+          "show_mode": [
+            "router"
+          ],
+          "title": {
+            "translate": "firewall.port_forwards"
+          },
+          "view": "firewallview"
+        },
+        {
+          "index": 20.1,
+          "level": 2,
+          "parent": "network",
+          "parent_icon": "network",
+          "parent_index": 60,
+          "show_mode": [
+            "router"
+          ],
+          "view": "guestip"
+        },
+        {
+          "index": 91,
+          "level": 2,
+          "parent": "network",
+          "parent_icon": "network",
+          "parent_index": 60,
+          "show_mode": [
+            "router"
+          ],
+          "title": "IGMP Snooping",
+          "view": "igmp"
+        },
+        {
+          "icon": "internet",
+          "index": 10,
+          "level": 1,
+          "view": "internet"
+        },
+        {
+          "index": 60,
+          "level": 2,
+          "parent": "network",
+          "parent_icon": "network",
+          "parent_index": 60,
+          "show_mode": [
+            "router"
+          ],
+          "tite": "IPv6",
+          "view": "ipv6"
+        },
+        {
+          "index": 20,
+          "level": 2,
+          "parent": "network",
+          "parent_icon": "network",
+          "parent_index": 60,
+          "show_mode": [
+            "router"
+          ],
+          "view": "lanip"
+        },
+        {
+          "index": 70,
+          "level": 2,
+          "parent": "system",
+          "parent_icon": "setting",
+          "parent_index": 70,
+          "view": "logview"
+        },
+        {
+          "index": 11,
+          "level": 2,
+          "parent": "network",
+          "parent_icon": "network",
+          "parent_index": 60,
+          "show_mode": [
+            "router"
+          ],
+          "view": "multiwan"
+        },
+        {
+          "index": 40,
+          "level": 2,
+          "parent": "applications",
+          "parent_icon": "application",
+          "parent_index": 50,
+          "show_mode": [
+            "router",
+            "wds",
+            "relay",
+            "mesh",
+            "ap"
+          ],
+          "view": "nasview"
+        },
+        {
+          "index": 102,
+          "level": 2,
+          "parent": "network",
+          "parent_icon": "network",
+          "parent_index": 60,
+          "show_mode": [
+            "router"
+          ],
+          "view": "netadvanced"
+        },
+        {
+          "index": 101,
+          "level": 2,
+          "parent": "network",
+          "parent_icon": "network",
+          "parent_index": 60,
+          "show_mode": [
+            "router"
+          ],
+          "view": "netnat"
+        },
+        {
+          "index": 41,
+          "level": 2,
+          "parent": "network",
+          "parent_icon": "network",
+          "parent_index": 60,
+          "show_mode": [
+            "router"
+          ],
+          "view": "netport"
+        },
+        {
+          "index": 10,
+          "level": 2,
+          "parent": "system",
+          "parent_icon": "setting",
+          "parent_index": 70,
+          "view": "overview"
+        },
+        {
+          "disables": [
+            "portal",
+            "sdwan"
+          ],
+          "index": 20,
+          "lang_hide": [
+            "zh-cn"
+          ],
+          "level": 2,
+          "parent": "vpn",
+          "parent_icon": "vpn",
+          "parent_index": 40,
+          "show_mode": [
+            "router"
+          ],
+          "view": "ovpnclient"
+        },
+        {
+          "index": 30,
+          "lang_hide": [
+            "zh-cn"
+          ],
+          "level": 2,
+          "parent": "vpn",
+          "parent_icon": "vpn",
+          "parent_index": 40,
+          "show_mode": [
+            "router"
+          ],
+          "view": "ovpnserver"
+        },
+        {
+          "disables": [
+            "portal"
+          ],
+          "index": 100,
+          "level": 2,
+          "parent": "applications",
+          "parent_icon": "application",
+          "parent_index": 50,
+          "show_mode": [
+            "router"
+          ],
+          "view": "parentalcontrol"
+        },
+        {
+          "index": 10,
+          "level": 2,
+          "parent": "applications",
+          "parent_icon": "application",
+          "parent_index": 50,
+          "view": "plugins"
+        },
+        {
+          "index": 80,
+          "level": 2,
+          "parent": "system",
+          "parent_icon": "setting",
+          "parent_index": 70,
+          "view": "reset"
+        },
+        {
+          "index": 71,
+          "level": 2,
+          "parent": "system",
+          "parent_icon": "setting",
+          "parent_index": 70,
+          "view": "security"
+        },
+        {
+          "level": 0,
+          "view": "sms"
+        },
+        {
+          "disables": [
+            "portal",
+            "sdwan"
+          ],
+          "index": 102,
+          "level": 2,
+          "parent": "applications",
+          "parent_icon": "application",
+          "parent_index": 50,
+          "show_mode": [
+            "router"
+          ],
+          "title": "Tailscale",
+          "view": "tailscaleview"
+        },
+        {
+          "index": 30,
+          "level": 2,
+          "parent": "system",
+          "parent_icon": "setting",
+          "parent_index": 70,
+          "view": "timedtask"
+        },
+        {
+          "index": 50,
+          "level": 2,
+          "parent": "system",
+          "parent_icon": "setting",
+          "parent_index": 70,
+          "view": "timezone"
+        },
+        {
+          "disables": [
+            "portal",
+            "sdwan"
+          ],
+          "index": 60,
+          "lang_hide": [
+            "zh-cn"
+          ],
+          "level": 2,
+          "parent": "vpn",
+          "parent_icon": "vpn",
+          "parent_index": 40,
+          "show_mode": [
+            "router"
+          ],
+          "title": "Tor",
+          "view": "torview"
+        },
+        {
+          "index": 20,
+          "level": 2,
+          "parent": "system",
+          "parent_icon": "setting",
+          "parent_index": 70,
+          "view": "upgrade"
+        },
+        {
+          "index": 10,
+          "lang_hide": [
+            "zh-cn"
+          ],
+          "level": 2,
+          "parent": "vpn",
+          "parent_icon": "vpn",
+          "parent_index": 40,
+          "show_mode": [
+            "router"
+          ],
+          "view": "vpndashboard"
+        },
+        {
+          "disables": [
+            "portal",
+            "sdwan"
+          ],
+          "index": 40,
+          "lang_hide": [
+            "zh-cn"
+          ],
+          "level": 2,
+          "parent": "vpn",
+          "parent_icon": "vpn",
+          "parent_index": 40,
+          "show_mode": [
+            "router"
+          ],
+          "view": "wgclient"
+        },
+        {
+          "index": 50,
+          "lang_hide": [
+            "zh-cn"
+          ],
+          "level": 2,
+          "parent": "vpn",
+          "parent_icon": "vpn",
+          "parent_index": 40,
+          "show_mode": [
+            "router"
+          ],
+          "view": "wgserver"
+        },
+        {
+          "global_sockets": [
+            "repeater.status"
+          ],
+          "icon": "wireless",
+          "index": 20,
+          "level": 1,
+          "show_mode": [
+            "router",
+            "wds",
+            "relay",
+            "mesh",
+            "ap"
+          ],
+          "view": "wireless"
+        },
+        {
+          "disables": [
+            "portal",
+            "sdwan"
+          ],
+          "index": 101,
+          "level": 2,
+          "parent": "applications",
+          "parent_icon": "application",
+          "parent_index": 50,
+          "show_mode": [
+            "router"
+          ],
+          "title": "ZeroTier",
+          "view": "zerotierview"
+        }
+      ]
+    }
+  }
+}

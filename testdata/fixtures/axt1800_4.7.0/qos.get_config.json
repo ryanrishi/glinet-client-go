@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "qos",
+      "get_config",
+      {}
+    ],
+    "id": 109
+  },
+  "response": {
+    "id": 109,
+    "jsonrpc": "2.0",
+    "result": {
+      "enable": false,
+      "mode": "0"
+    }
+  }
+}

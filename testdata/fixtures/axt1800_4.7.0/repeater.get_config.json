@@ -1,0 +1,22 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "repeater",
+      "get_config",
+      {}
+    ],
+    "id": 114
+  },
+  "response": {
+    "id": 114,
+    "jsonrpc": "2.0",
+    "result": {
+      "auto": true,
+      "dfs_support": true,
+      "macaddr": "02:00:00:00:00:38"
+    }
+  }
+}

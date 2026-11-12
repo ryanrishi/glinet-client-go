@@ -1,0 +1,31 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "plugins",
+      "get_config",
+      {}
+    ],
+    "id": 106
+  },
+  "response": {
+    "id": 106,
+    "jsonrpc": "2.0",
+    "result": {
+      "source": [
+        {
+          "name": "glinet_core",
+          "system": true,
+          "url": "https://fw.gl-inet.com/releases/v23.05-SNAPSHOT/kmod-5.4.164/aarch64_cortex-a53_neon-vfpv4/ipq60xx"
+        },
+        {
+          "name": "opnwrt_packages",
+          "system": true,
+          "url": "https://fw.gl-inet.com/releases/v23.05-SNAPSHOT/packages-5.0/aarch64_cortex-a53_neon-vfpv4/packages"
+        }
+      ]
+    }
+  }
+}

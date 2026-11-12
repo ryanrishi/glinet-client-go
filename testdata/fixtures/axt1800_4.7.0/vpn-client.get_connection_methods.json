@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "vpn-client",
+      "get_connection_methods",
+      {}
+    ],
+    "id": 145
+  },
+  "response": {
+    "error": {
+      "code": -32601,
+      "message": "Method not found"
+    },
+    "id": 145,
+    "jsonrpc": "2.0"
+  }
+}

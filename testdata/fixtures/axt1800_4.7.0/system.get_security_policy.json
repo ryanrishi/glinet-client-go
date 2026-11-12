@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "system",
+      "get_security_policy",
+      {}
+    ],
+    "id": 9
+  },
+  "response": {
+    "id": 9,
+    "jsonrpc": "2.0",
+    "result": {
+      "redirect_https": 0,
+      "security_rule": 1
+    }
+  }
+}

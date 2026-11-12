@@ -1,0 +1,18 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "modem",
+      "get_sim_info",
+      {}
+    ],
+    "id": 63
+  },
+  "response": {
+    "id": 63,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

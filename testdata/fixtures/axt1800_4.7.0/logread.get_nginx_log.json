@@ -1,0 +1,22 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "logread",
+      "get_nginx_log",
+      {
+        "type": "error"
+      }
+    ],
+    "id": 56
+  },
+  "response": {
+    "id": 56,
+    "jsonrpc": "2.0",
+    "result": {
+      "log": ""
+    }
+  }
+}

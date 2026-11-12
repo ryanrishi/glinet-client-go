@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "ddns",
+      "get_config",
+      {}
+    ],
+    "id": 26
+  },
+  "response": {
+    "id": 26,
+    "jsonrpc": "2.0",
+    "result": {
+      "device_id": "redacted-ddns-1",
+      "enable_ddns": false
+    }
+  }
+}

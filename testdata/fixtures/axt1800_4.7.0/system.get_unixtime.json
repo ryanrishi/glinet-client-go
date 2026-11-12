@@ -1,0 +1,20 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "system",
+      "get_unixtime",
+      {}
+    ],
+    "id": 7
+  },
+  "response": {
+    "id": 7,
+    "jsonrpc": "2.0",
+    "result": {
+      "time": 1794517485
+    }
+  }
+}

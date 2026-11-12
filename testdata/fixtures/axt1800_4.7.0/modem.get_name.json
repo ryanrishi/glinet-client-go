@@ -1,0 +1,18 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "modem",
+      "get_name",
+      {}
+    ],
+    "id": 66
+  },
+  "response": {
+    "id": 66,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

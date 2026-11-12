@@ -1,0 +1,45 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "ovpn-client",
+      "get_group_list",
+      {}
+    ],
+    "id": 94
+  },
+  "response": {
+    "id": 94,
+    "jsonrpc": "2.0",
+    "result": {
+      "groups": [
+        {
+          "askpass": "",
+          "askpass_exist": false,
+          "auth_type": 1,
+          "client_count": 0,
+          "group_id": 9016,
+          "group_name": "NordVPN",
+          "group_type": 1,
+          "password": "",
+          "procedure": 1,
+          "username": ""
+        },
+        {
+          "askpass": "",
+          "askpass_exist": false,
+          "auth_type": 1,
+          "client_count": 0,
+          "group_id": 91983,
+          "group_name": "FromApp",
+          "group_type": 3,
+          "password": "",
+          "procedure": 0,
+          "username": ""
+        }
+      ]
+    }
+  }
+}

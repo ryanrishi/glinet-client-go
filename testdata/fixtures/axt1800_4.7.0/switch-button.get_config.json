@@ -1,0 +1,20 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "switch-button",
+      "get_config",
+      {}
+    ],
+    "id": 127
+  },
+  "response": {
+    "id": 127,
+    "jsonrpc": "2.0",
+    "result": {
+      "func": "wireguard"
+    }
+  }
+}

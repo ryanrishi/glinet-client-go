@@ -1,0 +1,20 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "modem",
+      "get_sms_list",
+      {}
+    ],
+    "id": 62
+  },
+  "response": {
+    "id": 62,
+    "jsonrpc": "2.0",
+    "result": {
+      "list": []
+    }
+  }
+}

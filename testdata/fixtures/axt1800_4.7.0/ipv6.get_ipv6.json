@@ -1,0 +1,22 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "ipv6",
+      "get_ipv6",
+      {}
+    ],
+    "id": 44
+  },
+  "response": {
+    "id": 44,
+    "jsonrpc": "2.0",
+    "result": {
+      "enable": false,
+      "lan_dns_mode": true,
+      "lan_mode": "nat6"
+    }
+  }
+}

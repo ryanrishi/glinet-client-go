@@ -1,0 +1,19 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "challenge",
+    "params": {
+      "username": "root"
+    },
+    "id": 1
+  },
+  "response": {
+    "id": 1,
+    "jsonrpc": "2.0",
+    "result": {
+      "alg": 1,
+      "nonce": "\u003cnonce\u003e",
+      "salt": "\u003csalt\u003e"
+    }
+  }
+}

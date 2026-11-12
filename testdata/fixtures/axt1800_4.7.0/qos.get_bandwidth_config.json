@@ -1,0 +1,20 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "qos",
+      "get_bandwidth_config",
+      {}
+    ],
+    "id": 112
+  },
+  "response": {
+    "id": 112,
+    "jsonrpc": "2.0",
+    "result": {
+      "band_cfg": []
+    }
+  }
+}

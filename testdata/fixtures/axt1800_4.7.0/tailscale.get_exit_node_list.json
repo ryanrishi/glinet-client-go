@@ -1,0 +1,18 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "tailscale",
+      "get_exit_node_list",
+      {}
+    ],
+    "id": 130
+  },
+  "response": {
+    "id": 130,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

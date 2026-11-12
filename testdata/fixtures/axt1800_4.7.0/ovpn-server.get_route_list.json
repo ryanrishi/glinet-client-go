@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "ovpn-server",
+      "get_route_list",
+      {}
+    ],
+    "id": 100
+  },
+  "response": {
+    "id": 100,
+    "jsonrpc": "2.0",
+    "result": {
+      "ipv4_route_rules": [],
+      "ipv6_route_rules": []
+    }
+  }
+}

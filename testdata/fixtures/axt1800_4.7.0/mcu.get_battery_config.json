@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "mcu",
+      "get_battery_config",
+      {}
+    ],
+    "id": 58
+  },
+  "response": {
+    "error": {
+      "code": -32601,
+      "message": "Method not found"
+    },
+    "id": 58,
+    "jsonrpc": "2.0"
+  }
+}

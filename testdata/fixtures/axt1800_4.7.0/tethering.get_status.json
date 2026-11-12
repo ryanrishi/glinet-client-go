@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "tethering",
+      "get_status",
+      {}
+    ],
+    "id": 131
+  },
+  "response": {
+    "id": 131,
+    "jsonrpc": "2.0",
+    "result": {
+      "devices": [],
+      "status": 2
+    }
+  }
+}

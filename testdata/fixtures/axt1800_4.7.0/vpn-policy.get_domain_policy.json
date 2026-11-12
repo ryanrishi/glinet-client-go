@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "vpn-policy",
+      "get_domain_policy",
+      {}
+    ],
+    "id": 148
+  },
+  "response": {
+    "id": 148,
+    "jsonrpc": "2.0",
+    "result": {
+      "default_policy": 1,
+      "manual": true
+    }
+  }
+}

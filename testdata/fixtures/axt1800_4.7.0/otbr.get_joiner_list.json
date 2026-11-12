@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "otbr",
+      "get_joiner_list",
+      {}
+    ],
+    "id": 87
+  },
+  "response": {
+    "error": {
+      "code": -32601,
+      "message": "Method not found"
+    },
+    "id": 87,
+    "jsonrpc": "2.0"
+  }
+}

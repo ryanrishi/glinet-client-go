@@ -1,0 +1,24 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "wg-client",
+      "get_route_list",
+      {
+        "group_id": 9859,
+        "peer_id": 8913
+      }
+    ],
+    "id": 155
+  },
+  "response": {
+    "id": 155,
+    "jsonrpc": "2.0",
+    "result": {
+      "ipv4_route_rules": [],
+      "ipv6_route_rules": []
+    }
+  }
+}

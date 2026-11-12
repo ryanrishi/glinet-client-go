@@ -1,0 +1,337 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "cloud",
+      "get_batch_config",
+      {}
+    ],
+    "id": 23
+  },
+  "response": {
+    "id": 23,
+    "jsonrpc": "2.0",
+    "result": {
+      "firewall": {
+        "dmz": {
+          "enabled": false
+        },
+        "port_forwards": [],
+        "rules": []
+      },
+      "network": {
+        "guest": {
+          "dhcp_limit": "150",
+          "dhcp_start": "100",
+          "ipaddr": "192.168.9.1",
+          "netmask": "255.255.255.0"
+        },
+        "lan": {
+          "dhcp_limit": "150",
+          "dhcp_start": "100",
+          "ipaddr": "192.168.8.1",
+          "netmask": "255.255.255.0"
+        },
+        "wan": {
+          "dns": [],
+          "dns6": [],
+          "proto": "dhcp"
+        }
+      },
+      "system": {
+        "hostname": "hostname-1",
+        "language": "en",
+        "local_domain": "console.gl-inet.com",
+        "timezone": "EST5EDT,M3.2.0,M11.1.0",
+        "upgrade_url": "https://fw.gl-inet.com/firmware/axt1800/release",
+        "zonename": "America/New York"
+      },
+      "wifi": [
+        {
+          "band": "5G",
+          "channel": 48,
+          "channels": [
+            {
+              "channel": 36,
+              "dfs": false,
+              "psc": false
+            },
+            {
+              "channel": 40,
+              "dfs": false,
+              "psc": false
+            },
+            {
+              "channel": 44,
+              "dfs": false,
+              "psc": false
+            },
+            {
+              "channel": 48,
+              "dfs": false,
+              "psc": false
+            },
+            {
+              "channel": 52,
+              "dfs": true,
+              "psc": false
+            },
+            {
+              "channel": 56,
+              "dfs": true,
+              "psc": false
+            },
+            {
+              "channel": 60,
+              "dfs": true,
+              "psc": false
+            },
+            {
+              "channel": 64,
+              "dfs": true,
+              "psc": false
+            },
+            {
+              "channel": 100,
+              "dfs": true,
+              "psc": false
+            },
+            {
+              "channel": 104,
+              "dfs": true,
+              "psc": false
+            },
+            {
+              "channel": 108,
+              "dfs": true,
+              "psc": false
+            },
+            {
+              "channel": 112,
+              "dfs": true,
+              "psc": false
+            },
+            {
+              "channel": 116,
+              "dfs": true,
+              "psc": false
+            },
+            {
+              "channel": 120,
+              "dfs": true,
+              "psc": false
+            },
+            {
+              "channel": 124,
+              "dfs": true,
+              "psc": false
+            },
+            {
+              "channel": 128,
+              "dfs": true,
+              "psc": false
+            },
+            {
+              "channel": 132,
+              "dfs": true,
+              "psc": false
+            },
+            {
+              "channel": 136,
+              "dfs": true,
+              "psc": false
+            },
+            {
+              "channel": 140,
+              "dfs": true,
+              "psc": false
+            },
+            {
+              "channel": 144,
+              "dfs": true,
+              "psc": false
+            },
+            {
+              "channel": 149,
+              "dfs": false,
+              "psc": false
+            },
+            {
+              "channel": 153,
+              "dfs": false,
+              "psc": false
+            },
+            {
+              "channel": 157,
+              "dfs": false,
+              "psc": false
+            },
+            {
+              "channel": 161,
+              "dfs": false,
+              "psc": false
+            },
+            {
+              "channel": 165,
+              "dfs": false,
+              "psc": false
+            }
+          ],
+          "device": "radio0",
+          "encryptions": [
+            "none",
+            "psk2",
+            "psk-mixed",
+            "sae",
+            "sae-mixed"
+          ],
+          "htmode": "40",
+          "htmodes": {
+            "11a/n/ac": 80,
+            "11a/n/ac/ax": 80,
+            "11ac/ax": 80,
+            "11n/ac/ax": 80,
+            "auto": false
+          },
+          "hwmode": "11a/n/ac/ax",
+          "hwmodes": [
+            "11ac/ax",
+            "11n/ac/ax",
+            "11a/n/ac/ax",
+            "11a/n/ac"
+          ],
+          "ifaces": [
+            {
+              "enabled": true,
+              "encryption": "psk2",
+              "guest": false,
+              "hidden": false,
+              "key": "redacted-passwd-1",
+              "name": "default_radio0",
+              "ssid": "ssid-1"
+            },
+            {
+              "enabled": false,
+              "encryption": "psk2",
+              "guest": true,
+              "hidden": false,
+              "key": "redacted-passwd-2",
+              "name": "guest5g",
+              "ssid": "ssid-2"
+            }
+          ],
+          "random_bssid": true,
+          "txpower": "Medium"
+        },
+        {
+          "band": "2G",
+          "channel": 6,
+          "channels": [
+            {
+              "channel": 1,
+              "dfs": false,
+              "psc": false
+            },
+            {
+              "channel": 2,
+              "dfs": false,
+              "psc": false
+            },
+            {
+              "channel": 3,
+              "dfs": false,
+              "psc": false
+            },
+            {
+              "channel": 4,
+              "dfs": false,
+              "psc": false
+            },
+            {
+              "channel": 5,
+              "dfs": false,
+              "psc": false
+            },
+            {
+              "channel": 6,
+              "dfs": false,
+              "psc": false
+            },
+            {
+              "channel": 7,
+              "dfs": false,
+              "psc": false
+            },
+            {
+              "channel": 8,
+              "dfs": false,
+              "psc": false
+            },
+            {
+              "channel": 9,
+              "dfs": false,
+              "psc": false
+            },
+            {
+              "channel": 10,
+              "dfs": false,
+              "psc": false
+            },
+            {
+              "channel": 11,
+              "dfs": false,
+              "psc": false
+            }
+          ],
+          "device": "radio1",
+          "encryptions": [
+            "none",
+            "psk2",
+            "psk-mixed",
+            "sae",
+            "sae-mixed"
+          ],
+          "htmode": "auto",
+          "htmodes": {
+            "11b/g/n": 40,
+            "11b/g/n/ax": 40,
+            "11g/n/ax": 40,
+            "11n/ax": 40,
+            "auto": true
+          },
+          "hwmode": "11g/n/ax",
+          "hwmodes": [
+            "11n/ax",
+            "11g/n/ax",
+            "11b/g/n/ax",
+            "11b/g/n"
+          ],
+          "ifaces": [
+            {
+              "enabled": false,
+              "encryption": "psk2",
+              "guest": false,
+              "hidden": false,
+              "key": "redacted-passwd-2",
+              "name": "default_radio1",
+              "ssid": "ssid-1"
+            },
+            {
+              "enabled": false,
+              "encryption": "psk2",
+              "guest": true,
+              "hidden": false,
+              "key": "redacted-passwd-2",
+              "name": "guest2g",
+              "ssid": "ssid-3"
+            }
+          ],
+          "random_bssid": true,
+          "txpower": "Max"
+        }
+      ]
+    }
+  }
+}
