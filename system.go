@@ -56,13 +56,15 @@ type GetSystemTimezoneConfigResponse struct {
 	TZOffset            string `json:"tzoffset"`
 	AutoTimezoneEnabled bool   `json:"autotimezone_enabled"`
 	Localtime           int    `json:"localtime"`
+	Timestamp           int    `json:"timestamp"`
 	Timezone            string `json:"timezone"`
 }
 
 type SetSystemTimezoneRequest struct {
-	Zonename  string `json:"zonename"`
-	Timezone  string `json:"timezone"`
-	Localtime int64  `json:"localtime"`
+	Zonename string `json:"zonename"`
+	Timezone string `json:"timezone"`
+	// Localtime is a UTC Unix time. The router sets its clock to it. Nil leaves the clock as it is.
+	Localtime *int64 `json:"localtime,omitempty"`
 }
 
 func (s *SystemService) GetStatus(ctx context.Context) (*GetSystemStatusResponse, error) {
