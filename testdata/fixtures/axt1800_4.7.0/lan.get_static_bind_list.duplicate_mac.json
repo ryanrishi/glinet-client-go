@@ -1,0 +1,26 @@
+{
+  "request": {
+    "id": 1009,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "lan",
+      "get_static_bind_list",
+      {}
+    ]
+  },
+  "response": {
+    "id": 1009,
+    "jsonrpc": "2.0",
+    "result": {
+      "static_bind_list": [
+        {
+          "mac": "02:00:00:aa:bb:01",
+          "name": "test-lease-3",
+          "ip": "192.168.8.52"
+        }
+      ]
+    }
+  }
+}

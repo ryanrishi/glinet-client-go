@@ -1,0 +1,20 @@
+{
+  "request": {
+    "id": 1028,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "lan",
+      "get_static_bind_list",
+      {}
+    ]
+  },
+  "response": {
+    "id": 1028,
+    "jsonrpc": "2.0",
+    "result": {
+      "static_bind_list": []
+    }
+  }
+}

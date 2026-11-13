@@ -2,8 +2,10 @@ package glinet
 
 import "context"
 
+// SystemService calls the system module.
 type SystemService service
 
+// GetSystemStatusResponse is the result of system get_status.
 type GetSystemStatusResponse struct {
 	Network []struct {
 		Online    bool   `json:"online"`
@@ -21,19 +23,19 @@ type GetSystemStatusResponse struct {
 	} `json:"wifi"`
 	Service []struct {
 		Status  int    `json:"status"`
-		PeerId  int    `json:"peer_id,omitempty"`
+		PeerID  int    `json:"peer_id,omitempty"`
 		Name    string `json:"name"`
-		GroupId int    `json:"group_id,omitempty"`
+		GroupID int    `json:"group_id,omitempty"`
 	} `json:"service"`
 	Client []struct {
 		CableTotal    int `json:"cable_total"`
 		WirelessTotal int `json:"wireless_total"`
 	} `json:"client"`
 	System struct {
-		LanIp           string    `json:"lan_ip"`
+		LanIP           string    `json:"lan_ip"`
 		DDNSEnabled     bool      `json:"ddns_enabled"`
 		TZOffset        string    `json:"tzoffset"`
-		GuestIp         string    `json:"guest_ip"`
+		GuestIP         string    `json:"guest_ip"`
 		FlashApp        int       `json:"flash_app"`
 		FlashTotal      int       `json:"flash_total"`
 		MemoryTotal     int       `json:"memory_total"`
@@ -51,20 +53,25 @@ type GetSystemStatusResponse struct {
 	} `json:"system"`
 }
 
+// GetSystemTimezoneConfigResponse is the result of system get_timezone_config.
 type GetSystemTimezoneConfigResponse struct {
 	Zonename            string `json:"zonename"`
 	TZOffset            string `json:"tzoffset"`
 	AutoTimezoneEnabled bool   `json:"autotimezone_enabled"`
 	Localtime           int    `json:"localtime"`
+	Timestamp           int    `json:"timestamp"`
 	Timezone            string `json:"timezone"`
 }
 
+// SetSystemTimezoneRequest is the params of system set_timezone_config.
 type SetSystemTimezoneRequest struct {
-	Zonename  string `json:"zonename"`
-	Timezone  string `json:"timezone"`
-	Localtime int64  `json:"localtime"`
+	Zonename string `json:"zonename"`
+	Timezone string `json:"timezone"`
+	// Localtime is a UTC Unix time. The router sets its clock to it. Nil leaves the clock as it is.
+	Localtime *int64 `json:"localtime,omitempty"`
 }
 
+// GetStatus returns the router status.
 func (s *SystemService) GetStatus(ctx context.Context) (*GetSystemStatusResponse, error) {
 	var res GetSystemStatusResponse
 	if err := s.client.Call(ctx, "system", "get_status", nil, &res); err != nil {
@@ -74,6 +81,7 @@ func (s *SystemService) GetStatus(ctx context.Context) (*GetSystemStatusResponse
 	return &res, nil
 }
 
+// GetTimezoneConfig returns the time zone configuration.
 func (s *SystemService) GetTimezoneConfig(ctx context.Context) (*GetSystemTimezoneConfigResponse, error) {
 	var res GetSystemTimezoneConfigResponse
 	if err := s.client.Call(ctx, "system", "get_timezone_config", nil, &res); err != nil {
@@ -83,6 +91,7 @@ func (s *SystemService) GetTimezoneConfig(ctx context.Context) (*GetSystemTimezo
 	return &res, nil
 }
 
+// SetTimezoneConfig sets the time zone configuration.
 func (s *SystemService) SetTimezoneConfig(ctx context.Context, config *SetSystemTimezoneRequest) error {
 	return s.client.Call(ctx, "system", "set_timezone_config", config, nil)
 }

@@ -240,7 +240,7 @@ func TestSystemGetStatus(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetStatus: %v", err)
 	}
-	if res.System.LanIp != "192.168.8.1" || res.System.Uptime != 1234.56 || len(res.Wifi) != 2 {
+	if res.System.LanIP != "192.168.8.1" || res.System.Uptime != 1234.56 || len(res.Wifi) != 2 {
 		t.Errorf("unexpected status %+v", res)
 	}
 }
@@ -248,19 +248,19 @@ func TestSystemGetStatus(t *testing.T) {
 func TestSystemTimezoneConfig(t *testing.T) {
 	c, srv := newClient(t)
 	ctx := context.Background()
+	initial := srv.System.TimezoneConfig()
 
 	err := c.System.SetTimezoneConfig(ctx, &glinet.SetSystemTimezoneRequest{
-		Zonename:  "Europe/Berlin",
-		Timezone:  "CET-1CEST,M3.5.0,M10.5.0/3",
-		Localtime: 1700000100,
+		Zonename: "Europe/Berlin",
+		Timezone: "CET-1CEST,M3.5.0,M10.5.0/3",
 	})
 	if err != nil {
 		t.Fatalf("SetTimezoneConfig: %v", err)
 	}
 
 	state := srv.System.TimezoneConfig()
-	if state.Zonename != "Europe/Berlin" || state.Timezone != "CET-1CEST,M3.5.0,M10.5.0/3" || state.Localtime != 1700000100 {
-		t.Errorf("server state = %+v", state)
+	if state.Zonename != "Europe/Berlin" || state.Timezone != "CET-1CEST,M3.5.0,M10.5.0/3" || state.Timestamp != initial.Timestamp {
+		t.Errorf("server state = %+v, want new zone and timestamp %d", state, initial.Timestamp)
 	}
 
 	res, err := c.System.GetTimezoneConfig(ctx)
@@ -271,11 +271,45 @@ func TestSystemTimezoneConfig(t *testing.T) {
 		Zonename:            "Europe/Berlin",
 		TZOffset:            state.TZOffset,
 		AutoTimezoneEnabled: true,
-		Localtime:           1700000100,
+		Localtime:           int(initial.Localtime),
+		Timestamp:           int(initial.Timestamp),
 		Timezone:            "CET-1CEST,M3.5.0,M10.5.0/3",
 	}
 	if *res != want {
 		t.Errorf("GetTimezoneConfig = %+v, want %+v", *res, want)
+	}
+}
+
+func TestSystemTimezoneConfigLocaltime(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+
+	localtime := int64(1700000100)
+	err := c.System.SetTimezoneConfig(ctx, &glinet.SetSystemTimezoneRequest{
+		Zonename:  "UTC",
+		Timezone:  "UTC0",
+		Localtime: &localtime,
+	})
+	if err != nil {
+		t.Fatalf("SetTimezoneConfig: %v", err)
+	}
+
+	if got := srv.System.TimezoneConfig().Timestamp; got != localtime {
+		t.Errorf("server timestamp = %d, want %d", got, localtime)
+	}
+}
+
+func TestSystemTimezoneConfigIgnoresAutoTimezone(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+
+	params := map[string]any{"zonename": "UTC", "timezone": "UTC0", "autotimezone_enabled": false}
+	if err := c.Call(ctx, "system", "set_timezone_config", params, nil); err != nil {
+		t.Fatalf("set_timezone_config: %v", err)
+	}
+
+	if !srv.System.TimezoneConfig().AutoTimezoneEnabled {
+		t.Error("autotimezone_enabled changed, want it unchanged")
 	}
 }
 

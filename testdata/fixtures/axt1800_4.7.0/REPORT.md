@@ -15,6 +15,7 @@ All errors are a JSON-RPC `error` object. No response had `err_code` inside `res
 
 - Unknown method: `{"error":{"code":-32601,"message":"Method not found"}}` (37 calls).
 - Invalid or expired sid: `{"error":{"code":-32000,"message":"Access denied"}}`. See `invalid_sid.system.get_info.json`.
+- Invalid input to a write method: `{"error":{"code":-32602,"message":"Invalid params","err":"invalid mac"}}`. The `err` field has the detail. See `lan.*_static_bind.invalid_*.json`.
 
 ## VPN modules
 
@@ -30,7 +31,7 @@ The 4.9.0-only methods also return -32601 on 4.7.0: `system.get_network_status`,
 
 ## Differences from the 2023 reference
 
-Many lists were empty on this router, so their item fields could not be compared: `firewall.get_port_forward_list.res`, `firewall.get_rule_list.res`, `firewall.get_wan_access.whitelist`, `lan.get_static_bind_list.static_bind_list`, `wg-server.get_peer_list.peers`, `wg-server.get_route_list.*_route_rules`, `wg-server.get_status.peers`. DMZ is disabled, so `firewall.get_dmz` has only `enabled` (no `dest_ip`). Later phases must get fixtures with data for these (or use the reference shapes and mark them as not verified).
+Many lists were empty on this router, so their item fields could not be compared: `firewall.get_port_forward_list.res`, `firewall.get_rule_list.res`, `firewall.get_wan_access.whitelist`, `wg-server.get_peer_list.peers`, `wg-server.get_route_list.*_route_rules`, `wg-server.get_status.peers`. DMZ is disabled, so `firewall.get_dmz` has only `enabled` (no `dest_ip`). Later phases must get fixtures with data for these (or use the reference shapes and mark them as not verified).
 
 The reference marks `err_code` / `err_msg` as output of many methods. No ok response had them.
 
@@ -43,7 +44,44 @@ The reference marks `err_code` / `err_msg` as output of many methods. No ok resp
 
 ### lan
 - `get_config_list`: shape is `interfaces[]` with `interface`, `ip`, `gateway`, `netmask`, `start`, `end`, `enable`, `dns`, `leasetime`, `lpr`, `ap_isolate`; `transfer_enable` only on `guest`. This agrees with the intent of the reference, but the reference writes some of these paths wrong (`interface.enable`, top-level `ap_isolate`). `enable`, `ap_isolate`, `transfer_enable` are numbers (0/1), not bool. `leasetime` is a string (`"12h"`).
-- `get_static_bind_list`: empty list; item fields not verified.
+- `get_static_bind_list`: `{"static_bind_list":[{"mac":"02:00:00:aa:bb:01","ip":"192.168.8.50","name":"test-lease"}]}`. All fields are strings. A binding without a name has no `name` key.
+
+### lan static bind (write test, 2026-11-13)
+
+Verified on the router with invented MACs `02:00:00:aa:bb:0x` and IPs outside the DHCP range (`192.168.8.100`-`249`). The list was empty before and after the test. The fixtures `lan.*static_bind*.json` are one sequence; sorted by request `id`, they replay the state changes in order (`glinettest/lan_test.go` does this).
+
+| Call | Params | Result |
+|---|---|---|
+| `add_static_bind` | `{mac, ip, name?}` | `[]` |
+| `set_static_bind` | `{mac, ip, name?}` | `[]` |
+| `remove_static_bind` | `{mode: 0, mac}` | `[]` |
+
+Behavior:
+- The router identifies a binding by its exact MAC string. `02:00:00:AA:BB:01` and `02:00:00:aa:bb:01` can both exist, and `set` and `remove` with one letter case do not change the other. Exception: the two bindings showed the same `name` after a write to one of them (not in the fixtures; not emulated by `glinettest`). The router uses lower case in `clients.get_list`.
+- `add` with an existing MAC replaces that binding. It is not an error.
+- `add`, and `set` for a known MAC, remove each other binding with the same IP. The written binding goes to the end of the list.
+- `set` without `name` removes the name. `name: ""` is an error on `add` and `set`.
+- `set` and `remove` with an unknown MAC return `[]` and change nothing.
+- An IP outside the LAN subnet (`10.0.0.5`) and the router IP (`192.168.8.1`) are accepted.
+- Names with spaces, `_`, `.`, non-ASCII letters, and 70 characters are accepted.
+
+Errors (all code `-32602`, message `Invalid params`):
+
+| `err` | Cause |
+|---|---|
+| `invalid mac` | MAC with 5 groups, `-` or `.` separators, a non-hex digit, missing `mac`. Also on `set` and `remove`. |
+| `invalid ip` | `192.168.8.256`, `192.168.8`, `not-an-ip`, `""`, missing `ip`. Also on `set`. |
+| `invalid name` | `name: ""` on `add` and `set`. |
+| `invalid mode` | `remove_static_bind` without `mode`. |
+
+Differences from the 2023 reference:
+- `set_static_bind`: `name` is optional, and no `name` removes the name. The reference lists `name` for `set` without marking it optional.
+- The reference does not say that `add` replaces a binding with the same MAC or IP, or that `set` and `remove` with an unknown MAC are not errors.
+- The error detail is in `error.err`, not in `err_code` / `err_msg`.
+
+Not verified: `remove_static_bind` mode 1 (remove all; not called), other `mode` values, IPv6 addresses, `set` with an unknown MAC and an IP that another binding has, the list position after `add` with an existing MAC, and which check comes first when more than one field is invalid.
+
+The Ethernet link of the test Mac (`en8`) lost its IPv4 address two times for about 25 s during the test sessions. One time this happened before any write of that run. One add and remove with a ping log for 240 s did not cause it. The cause is not known.
 - `get_wan_info` (not in reference): ok.
 
 ### firewall

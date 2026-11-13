@@ -1,0 +1,21 @@
+{
+  "request": {
+    "id": 1022,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "lan",
+      "remove_static_bind",
+      {
+        "mac": "02:00:00:aa:bb:09",
+        "mode": 0
+      }
+    ]
+  },
+  "response": {
+    "id": 1022,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

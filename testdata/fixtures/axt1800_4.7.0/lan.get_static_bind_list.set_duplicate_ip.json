@@ -1,0 +1,31 @@
+{
+  "request": {
+    "id": 1016,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "lan",
+      "get_static_bind_list",
+      {}
+    ]
+  },
+  "response": {
+    "id": 1016,
+    "jsonrpc": "2.0",
+    "result": {
+      "static_bind_list": [
+        {
+          "mac": "02:00:00:aa:bb:04",
+          "name": "test-lease-dup-ip",
+          "ip": "192.168.8.52"
+        },
+        {
+          "mac": "02:00:00:aa:bb:02",
+          "name": "test-lease-4",
+          "ip": "10.0.0.5"
+        }
+      ]
+    }
+  }
+}

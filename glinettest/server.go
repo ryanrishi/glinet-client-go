@@ -24,15 +24,21 @@ import (
 const NonceTTL = 1000 * time.Millisecond
 
 // Error is a JSON-RPC error object. A Method returns it to send that error to the client.
+// Err is the detail that some router methods add, for example "invalid mac".
 type Error struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
+	Err     string `json:"err,omitempty"`
 }
 
 func (e *Error) Error() string {
+	if e.Err != "" {
+		return fmt.Sprintf("rpc error %d: %s: %s", e.Code, e.Message, e.Err)
+	}
 	return fmt.Sprintf("rpc error %d: %s", e.Code, e.Message)
 }
 
+// Errors that the router returns.
 var (
 	ErrAccessDenied   = &Error{Code: -32000, Message: "Access denied"}
 	ErrMethodNotFound = &Error{Code: -32601, Message: "Method not found"}
@@ -43,6 +49,7 @@ var (
 // A returned *Error goes to the client as is. Other errors become -32603.
 type Method func(params json.RawMessage) (any, error)
 
+// Server is a fake router. It serves the JSON-RPC API at URL.
 type Server struct {
 	URL      string
 	Username string
@@ -50,6 +57,7 @@ type Server struct {
 
 	System      *System
 	AdGuardHome *AdGuardHome
+	LAN         *LAN
 
 	srv *httptest.Server
 
@@ -80,6 +88,8 @@ func NewServer(t testing.TB) *Server {
 	s.System.register(s)
 	s.AdGuardHome = newAdGuardHome()
 	s.AdGuardHome.register(s)
+	s.LAN = newLAN()
+	s.LAN.register(s)
 
 	s.srv = httptest.NewServer(http.HandlerFunc(s.serveHTTP))
 	s.URL = s.srv.URL

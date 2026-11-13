@@ -1,0 +1,24 @@
+{
+  "request": {
+    "id": 1023,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "lan",
+      "remove_static_bind",
+      {
+        "mac": "02:00:00:aa:bb:02"
+      }
+    ]
+  },
+  "response": {
+    "id": 1023,
+    "jsonrpc": "2.0",
+    "error": {
+      "message": "Invalid params",
+      "err": "invalid mode",
+      "code": -32602
+    }
+  }
+}

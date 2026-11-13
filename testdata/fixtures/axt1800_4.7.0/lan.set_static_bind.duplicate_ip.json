@@ -1,0 +1,22 @@
+{
+  "request": {
+    "id": 1015,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "lan",
+      "set_static_bind",
+      {
+        "ip": "10.0.0.5",
+        "mac": "02:00:00:aa:bb:02",
+        "name": "test-lease-4"
+      }
+    ]
+  },
+  "response": {
+    "id": 1015,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

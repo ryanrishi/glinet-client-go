@@ -5,6 +5,7 @@ import (
 	"sync"
 )
 
+// TimezoneConfig is the time zone configuration of the system module.
 type TimezoneConfig struct {
 	Zonename            string `json:"zonename"`
 	Timezone            string `json:"timezone"`
@@ -14,7 +15,8 @@ type TimezoneConfig struct {
 	Timestamp           int64  `json:"timestamp"`
 }
 
-// System serves the system module.
+// System serves the system module. Timestamp is the router clock: set_timezone_config sets it
+// from localtime and ignores autotimezone_enabled, like the router.
 type System struct {
 	mu       sync.Mutex
 	timezone TimezoneConfig
@@ -70,12 +72,14 @@ func newSystem() *System {
 	}
 }
 
+// TimezoneConfig returns the time zone configuration.
 func (m *System) TimezoneConfig() TimezoneConfig {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return m.timezone
 }
 
+// SetTimezoneConfig sets the time zone configuration.
 func (m *System) SetTimezoneConfig(c TimezoneConfig) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -94,10 +98,9 @@ func (m *System) register(s *Server) {
 
 func (m *System) setTimezoneConfig(params json.RawMessage) (any, error) {
 	var p struct {
-		Zonename            *string `json:"zonename"`
-		Timezone            *string `json:"timezone"`
-		Localtime           *int64  `json:"localtime"`
-		AutoTimezoneEnabled *bool   `json:"autotimezone_enabled"`
+		Zonename  *string `json:"zonename"`
+		Timezone  *string `json:"timezone"`
+		Localtime *int64  `json:"localtime"`
 	}
 	if err := json.Unmarshal(params, &p); err != nil {
 		return nil, ErrInvalidParams
@@ -112,11 +115,8 @@ func (m *System) setTimezoneConfig(params json.RawMessage) (any, error) {
 		m.timezone.Timezone = *p.Timezone
 	}
 	if p.Localtime != nil {
-		m.timezone.Localtime = *p.Localtime
-	}
-	if p.AutoTimezoneEnabled != nil {
-		m.timezone.AutoTimezoneEnabled = *p.AutoTimezoneEnabled
+		m.timezone.Timestamp = *p.Localtime
 	}
 
-	return struct{}{}, nil
+	return json.RawMessage(`[]`), nil
 }
