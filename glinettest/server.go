@@ -38,6 +38,7 @@ func (e *Error) Error() string {
 	return fmt.Sprintf("rpc error %d: %s", e.Code, e.Message)
 }
 
+// Errors that the router returns.
 var (
 	ErrAccessDenied   = &Error{Code: -32000, Message: "Access denied"}
 	ErrMethodNotFound = &Error{Code: -32601, Message: "Method not found"}
@@ -48,6 +49,7 @@ var (
 // A returned *Error goes to the client as is. Other errors become -32603.
 type Method func(params json.RawMessage) (any, error)
 
+// Server is a fake router. It serves the JSON-RPC API at URL.
 type Server struct {
 	URL      string
 	Username string

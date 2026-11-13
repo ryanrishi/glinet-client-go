@@ -2,6 +2,7 @@ package glinet
 
 import "fmt"
 
+// JSON-RPC error codes that the router returns.
 const (
 	CodeAccessDenied   = -32000
 	CodeMethodNotFound = -32601

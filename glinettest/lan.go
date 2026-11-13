@@ -31,12 +31,14 @@ func newLAN() *LAN {
 	return &LAN{binds: []StaticBind{}}
 }
 
+// StaticBinds returns a copy of the bindings.
 func (m *LAN) StaticBinds() []StaticBind {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return slices.Clone(m.binds)
 }
 
+// SetStaticBinds replaces the bindings.
 func (m *LAN) SetStaticBinds(binds []StaticBind) {
 	m.mu.Lock()
 	defer m.mu.Unlock()

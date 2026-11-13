@@ -11,12 +11,14 @@ import (
 
 const algMD5Crypt = 1
 
+// DigestService calls the challenge and login methods.
 type DigestService service
 
 type challengeRequest struct {
 	Username string `json:"username"`
 }
 
+// ChallengeResponse is the result of challenge.
 type ChallengeResponse struct {
 	Salt       string `json:"salt"`
 	Algorithm  int    `json:"alg"`
@@ -29,11 +31,13 @@ type loginRequest struct {
 	Hash     string `json:"hash"`
 }
 
+// LoginResponse is the result of login. Sid is the session ID.
 type LoginResponse struct {
 	Username string `json:"username"`
 	Sid      string `json:"sid"`
 }
 
+// Challenge returns the salt, algorithm and nonce for a login of username.
 func (s *DigestService) Challenge(ctx context.Context, username string) (*ChallengeResponse, error) {
 	var res ChallengeResponse
 	if err := s.client.rpc(ctx, "challenge", challengeRequest{Username: username}, &res); err != nil {

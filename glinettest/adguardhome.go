@@ -5,6 +5,7 @@ import (
 	"sync"
 )
 
+// AdGuardHomeConfig is the configuration of the adguardhome module.
 type AdGuardHomeConfig struct {
 	Enabled    bool `json:"enabled"`
 	DNSEnabled bool `json:"dns_enabled"`
@@ -20,12 +21,14 @@ func newAdGuardHome() *AdGuardHome {
 	return &AdGuardHome{config: AdGuardHomeConfig{Enabled: false, DNSEnabled: true}}
 }
 
+// Config returns the configuration.
 func (m *AdGuardHome) Config() AdGuardHomeConfig {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return m.config
 }
 
+// SetConfig sets the configuration.
 func (m *AdGuardHome) SetConfig(c AdGuardHomeConfig) {
 	m.mu.Lock()
 	defer m.mu.Unlock()

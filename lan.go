@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// LANService calls the lan module.
 type LANService service
 
 // StaticBind is a DHCP static IP binding. The router identifies a binding by its exact MAC
@@ -15,6 +16,7 @@ type StaticBind struct {
 	Name string `json:"name,omitempty"`
 }
 
+// ListStaticBinds returns the DHCP static IP bindings.
 func (s *LANService) ListStaticBinds(ctx context.Context) ([]StaticBind, error) {
 	var res struct {
 		StaticBindList []StaticBind `json:"static_bind_list"`

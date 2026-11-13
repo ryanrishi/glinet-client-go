@@ -13,12 +13,14 @@ import (
 	"sync/atomic"
 )
 
+// Version is the version of this client. It is in the default User-Agent.
 const (
 	Version          = "v0.2.0"
-	defaultBaseUrl   = "http://192.168.8.1"
+	defaultBaseURL   = "http://192.168.8.1"
 	defaultUserAgent = "glinet-client-go" + "/" + Version
 )
 
+// Client calls the JSON-RPC API of a GL.iNet router.
 type Client struct {
 	BaseURL   *url.URL
 	UserAgent string
@@ -42,10 +44,12 @@ type service struct {
 	client *Client
 }
 
+// NewClient returns a client for the default host and logs in.
 func NewClient(username string, password []byte) (*Client, error) {
-	return NewClientWithHost(defaultBaseUrl, username, password)
+	return NewClientWithHost(defaultBaseURL, username, password)
 }
 
+// NewClientWithHost returns a client for host and logs in.
 func NewClientWithHost(host string, username string, password []byte) (*Client, error) {
 	c, err := newClient(host)
 	if err != nil {
@@ -65,7 +69,7 @@ func NewClientWithHost(host string, username string, password []byte) (*Client, 
 // NewClientUnauthenticated returns a client for the default host that has no session.
 // Only the Digest service is usable without a session.
 func NewClientUnauthenticated() *Client {
-	c, _ := newClient(defaultBaseUrl)
+	c, _ := newClient(defaultBaseURL)
 	return c
 }
 
@@ -74,12 +78,12 @@ func newClient(host string) (*Client, error) {
 		host = "http://" + host
 	}
 
-	baseUrl, err := url.Parse(strings.TrimRight(host, "/") + "/rpc")
+	baseURL, err := url.Parse(strings.TrimRight(host, "/") + "/rpc")
 	if err != nil {
 		return nil, fmt.Errorf("glinet: parse host %q: %w", host, err)
 	}
 
-	c := &Client{BaseURL: baseUrl, UserAgent: defaultUserAgent}
+	c := &Client{BaseURL: baseURL, UserAgent: defaultUserAgent}
 	c.common.client = c
 
 	c.AdGuard = (*AdGuardService)(&c.common)
@@ -90,6 +94,7 @@ func newClient(host string) (*Client, error) {
 	return c, nil
 }
 
+// GetSid returns the current session ID.
 func (c *Client) GetSid() string {
 	c.mu.Lock()
 	defer c.mu.Unlock()

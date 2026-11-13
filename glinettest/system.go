@@ -5,6 +5,7 @@ import (
 	"sync"
 )
 
+// TimezoneConfig is the time zone configuration of the system module.
 type TimezoneConfig struct {
 	Zonename            string `json:"zonename"`
 	Timezone            string `json:"timezone"`
@@ -71,12 +72,14 @@ func newSystem() *System {
 	}
 }
 
+// TimezoneConfig returns the time zone configuration.
 func (m *System) TimezoneConfig() TimezoneConfig {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return m.timezone
 }
 
+// SetTimezoneConfig sets the time zone configuration.
 func (m *System) SetTimezoneConfig(c TimezoneConfig) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
