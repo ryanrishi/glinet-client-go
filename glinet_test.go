@@ -240,7 +240,7 @@ func TestSystemGetStatus(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetStatus: %v", err)
 	}
-	if res.System.LanIp != "192.168.8.1" || res.System.Uptime != 1234.56 || len(res.Wifi) != 2 {
+	if res.System.LanIP != "192.168.8.1" || res.System.Uptime != 1234.56 || len(res.Wifi) != 2 {
 		t.Errorf("unexpected status %+v", res)
 	}
 }

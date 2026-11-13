@@ -23,19 +23,19 @@ type GetSystemStatusResponse struct {
 	} `json:"wifi"`
 	Service []struct {
 		Status  int    `json:"status"`
-		PeerId  int    `json:"peer_id,omitempty"`
+		PeerID  int    `json:"peer_id,omitempty"`
 		Name    string `json:"name"`
-		GroupId int    `json:"group_id,omitempty"`
+		GroupID int    `json:"group_id,omitempty"`
 	} `json:"service"`
 	Client []struct {
 		CableTotal    int `json:"cable_total"`
 		WirelessTotal int `json:"wireless_total"`
 	} `json:"client"`
 	System struct {
-		LanIp           string    `json:"lan_ip"`
+		LanIP           string    `json:"lan_ip"`
 		DDNSEnabled     bool      `json:"ddns_enabled"`
 		TZOffset        string    `json:"tzoffset"`
-		GuestIp         string    `json:"guest_ip"`
+		GuestIP         string    `json:"guest_ip"`
 		FlashApp        int       `json:"flash_app"`
 		FlashTotal      int       `json:"flash_total"`
 		MemoryTotal     int       `json:"memory_total"`
