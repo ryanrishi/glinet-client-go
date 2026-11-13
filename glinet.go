@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	Version          = "v0.1.0"
+	Version          = "v0.2.0"
 	defaultBaseUrl   = "http://192.168.8.1"
 	defaultUserAgent = "glinet-client-go" + "/" + Version
 )
