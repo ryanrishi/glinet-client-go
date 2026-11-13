@@ -87,3 +87,7 @@ $ echo -n "root:$hash:$nonce" | md5sum | tee>login_hash
 $ curl -XPOST http://192.168.8.1/rpc -d '{"jsonrpc": "2.0", "id": 1, "method": "login", "params": {"username": "root", "hash": "$login_hash"}}' | jq '.result'
 { "sid": ... }
 ```
+
+## Releasing
+To release, change the `Version` constant in `glinet.go` and merge the change into `main`.
+The `Release` workflow creates the tag and the GitHub release for a version that has no tag.
