@@ -1,0 +1,25 @@
+{
+  "request": {
+    "id": 1024,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "lan",
+      "remove_static_bind",
+      {
+        "mac": "bad",
+        "mode": 0
+      }
+    ]
+  },
+  "response": {
+    "id": 1024,
+    "jsonrpc": "2.0",
+    "error": {
+      "message": "Invalid params",
+      "err": "invalid mac",
+      "code": -32602
+    }
+  }
+}

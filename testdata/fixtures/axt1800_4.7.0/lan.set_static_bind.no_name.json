@@ -1,0 +1,21 @@
+{
+  "request": {
+    "id": 1006,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "lan",
+      "set_static_bind",
+      {
+        "ip": "192.168.8.51",
+        "mac": "02:00:00:aa:bb:01"
+      }
+    ]
+  },
+  "response": {
+    "id": 1006,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

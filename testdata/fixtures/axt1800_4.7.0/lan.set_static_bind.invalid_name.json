@@ -1,0 +1,26 @@
+{
+  "request": {
+    "id": 1021,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "lan",
+      "set_static_bind",
+      {
+        "ip": "10.0.0.5",
+        "mac": "02:00:00:aa:bb:02",
+        "name": ""
+      }
+    ]
+  },
+  "response": {
+    "id": 1021,
+    "jsonrpc": "2.0",
+    "error": {
+      "message": "Invalid params",
+      "err": "invalid name",
+      "code": -32602
+    }
+  }
+}
