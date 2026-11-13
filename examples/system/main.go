@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"log"
 	"os"
@@ -10,8 +11,12 @@ import (
 )
 
 func main() {
-	client := glinet.NewClient(os.Getenv("GLINET_USERNAME"), []byte(os.Getenv("GLINET_PASSWORD")))
-	res, err := client.System.GetStatus()
+	client, err := glinet.NewClient(os.Getenv("GLINET_USERNAME"), []byte(os.Getenv("GLINET_PASSWORD")))
+	if err != nil {
+		log.Fatal("Error creating client: ", err)
+	}
+
+	res, err := client.System.GetStatus(context.Background())
 	if err != nil {
 		log.Fatal("Error calling system get_status: ", err)
 	}

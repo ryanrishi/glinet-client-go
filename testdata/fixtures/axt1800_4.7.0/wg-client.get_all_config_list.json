@@ -1,0 +1,136 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "wg-client",
+      "get_all_config_list",
+      {}
+    ],
+    "id": 153
+  },
+  "response": {
+    "id": 153,
+    "jsonrpc": "2.0",
+    "result": {
+      "config_list": [
+        {
+          "auth_type": 1,
+          "group_id": 7573,
+          "group_name": "AzireVPN",
+          "password": "",
+          "peers": [],
+          "username": ""
+        },
+        {
+          "auth_type": 2,
+          "group_id": 6892,
+          "group_name": "Mullvad",
+          "peers": [],
+          "username": ""
+        },
+        {
+          "auth_type": 1,
+          "group_id": 9859,
+          "group_name": "FromApp",
+          "password": "",
+          "peers": [
+            {
+              "address_v4": "10.13.13.4/32",
+              "allowed_ips": "0.0.0.0/0",
+              "dns": "10.13.13.1",
+              "end_point": "host-2.example.com:51820",
+              "listen_port": 14237,
+              "mtu": 0,
+              "name": "app_custom_Centennial",
+              "peer_id": 8913,
+              "persistent_keepalive": 25,
+              "presharedkey_enable": false,
+              "private_key": "redacted-private_key-1",
+              "public_key": "OLouhYx5LuTMaTOeVimXAeq4suUXK1qTFNn7WXpjXdE="
+            }
+          ],
+          "username": ""
+        },
+        {
+          "auth_type": 0,
+          "group_id": 2082,
+          "group_name": "NYC",
+          "peers": [
+            {
+              "address_v4": "10.13.13.3/32",
+              "allowed_ips": "0.0.0.0/0, ::/0",
+              "dns": "10.13.13.1",
+              "end_point": "host-1.example.com:51820",
+              "ipv6_enable": false,
+              "listen_port": 51820,
+              "mtu": 1420,
+              "name": "NYC Peer 2",
+              "peer_id": 3578,
+              "persistent_keepalive": 25,
+              "preshared_key": "redacted-preshared_key-1",
+              "presharedkey_enable": true,
+              "private_key": "redacted-private_key-2",
+              "public_key": "l+W/SVVK3VSx56nQn7bS597+TBVAiayuNoosC6hdrl8="
+            },
+            {
+              "address_v4": "192.168.5.4/32",
+              "allowed_ips": "192.168.5.1/32, 192.168.5.4/32, 192.168.0.0/24, 192.168.2.0/24, 0.0.0.0/0",
+              "dns": "192.168.5.1",
+              "end_point": "host-1.example.com:51820",
+              "ipv6_enable": false,
+              "listen_port": 0,
+              "mtu": 1420,
+              "name": "NYC",
+              "peer_id": 2004,
+              "persistent_keepalive": 25,
+              "presharedkey_enable": false,
+              "private_key": "redacted-private_key-3",
+              "public_key": "f8X+2t+NpQ8+JVkI8Wgl1ornOgsVLmJJaXt7JbpldEM="
+            }
+          ]
+        },
+        {
+          "auth_type": 1,
+          "group_id": 4199,
+          "group_name": "PIA",
+          "password": "",
+          "peers": [],
+          "username": ""
+        },
+        {
+          "auth_type": 1,
+          "group_id": 7166,
+          "group_name": "Surfshark",
+          "password": "",
+          "peers": [],
+          "username": ""
+        },
+        {
+          "auth_type": 2,
+          "group_id": 132,
+          "group_name": "NordVPN",
+          "peers": [],
+          "username": ""
+        },
+        {
+          "auth_type": 1,
+          "group_id": 9451,
+          "group_name": "Hideme",
+          "password": "",
+          "peers": [],
+          "username": ""
+        },
+        {
+          "auth_type": 1,
+          "group_id": 2418,
+          "group_name": "IPVanish",
+          "password": "",
+          "peers": [],
+          "username": ""
+        }
+      ]
+    }
+  }
+}

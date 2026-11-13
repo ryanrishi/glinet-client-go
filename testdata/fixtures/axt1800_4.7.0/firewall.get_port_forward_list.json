@@ -1,0 +1,20 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "get_port_forward_list",
+      {}
+    ],
+    "id": 38
+  },
+  "response": {
+    "id": 38,
+    "jsonrpc": "2.0",
+    "result": {
+      "res": []
+    }
+  }
+}

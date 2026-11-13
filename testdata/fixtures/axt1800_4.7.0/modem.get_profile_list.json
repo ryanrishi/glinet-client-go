@@ -1,0 +1,94 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "modem",
+      "get_profile_list",
+      {}
+    ],
+    "id": 64
+  },
+  "response": {
+    "id": 64,
+    "jsonrpc": "2.0",
+    "result": {
+      "profiles": [
+        {
+          "apn": "VSBLINTERNET",
+          "apn_use": 3,
+          "auth": "",
+          "band_enable": false,
+          "description": "VISIBLE",
+          "device": "/dev/cdc-wdm0",
+          "dial_number": "",
+          "id": "visible",
+          "mtu": "",
+          "password": "",
+          "pin_code": "",
+          "protocol": "qcm",
+          "roaming": true,
+          "service": "",
+          "username": ""
+        },
+        {
+          "apn": "VZWINTERNET",
+          "apn_use": 3,
+          "auth": "",
+          "band_enable": false,
+          "description": "VERIZON",
+          "device": "/dev/cdc-wdm0",
+          "dial_number": "",
+          "id": "verizon",
+          "mtu": "",
+          "password": "",
+          "pin_code": "",
+          "protocol": "qcm",
+          "roaming": true,
+          "service": "",
+          "username": ""
+        },
+        {
+          "apn": "net",
+          "apn_use": 5,
+          "auth": "",
+          "band_enable": false,
+          "description": "ORANGE",
+          "device": "/dev/cdc-wdm0",
+          "dial_number": "",
+          "id": "orange",
+          "mtu": "",
+          "password": "",
+          "pin_code": "",
+          "protocol": "qcm",
+          "roaming": true,
+          "service": "",
+          "username": ""
+        },
+        {
+          "apn": "telstra.wap",
+          "apn_use": 1,
+          "apns": [
+            "",
+            "ims",
+            "sos"
+          ],
+          "auth": "",
+          "band_enable": false,
+          "description": "TELSTRA",
+          "device": "/dev/cdc-wdm0",
+          "dial_number": "",
+          "id": "telstra",
+          "mtu": "",
+          "password": "",
+          "pin_code": "",
+          "protocol": "qcm",
+          "roaming": true,
+          "service": "",
+          "username": ""
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "ovpn-client",
+      "get_status",
+      {}
+    ],
+    "id": 93
+  },
+  "response": {
+    "id": 93,
+    "jsonrpc": "2.0",
+    "result": {
+      "client_id": 0,
+      "domain": "",
+      "group_id": 0,
+      "ipv4": "",
+      "ipv6": "",
+      "log": "",
+      "mode": "",
+      "name": "",
+      "port": 0,
+      "rx_bytes": 0,
+      "status": 0,
+      "tx_bytes": 0
+    }
+  }
+}

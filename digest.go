@@ -1,11 +1,15 @@
 package glinet
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+
 	"github.com/GehirnInc/crypt/md5_crypt"
 )
+
+const algMD5Crypt = 1
 
 type DigestService service
 
@@ -13,10 +17,11 @@ type challengeRequest struct {
 	Username string `json:"username"`
 }
 
-type challengeResponse struct {
-	Salt      string `json:"salt"`
-	Algorithm int    `json:"alg"`
-	Nonce     string `json:"nonce"`
+type ChallengeResponse struct {
+	Salt       string `json:"salt"`
+	Algorithm  int    `json:"alg"`
+	Nonce      string `json:"nonce"`
+	HashMethod string `json:"hash_method,omitempty"`
 }
 
 type loginRequest struct {
@@ -24,46 +29,41 @@ type loginRequest struct {
 	Hash     string `json:"hash"`
 }
 
-type loginResponse struct {
+type LoginResponse struct {
 	Username string `json:"username"`
 	Sid      string `json:"sid"`
 }
 
-func (s *DigestService) Challenge(username string) (*challengeResponse, error) {
-	requestBody := challengeRequest{Username: username}
-	var responseBody challengeResponse
-	err := s.client.CallWithInterface("challenge", &requestBody, &responseBody)
-
-	if err != nil {
+func (s *DigestService) Challenge(ctx context.Context, username string) (*ChallengeResponse, error) {
+	var res ChallengeResponse
+	if err := s.client.rpc(ctx, "challenge", challengeRequest{Username: username}, &res); err != nil {
 		return nil, err
 	}
 
-	return &responseBody, nil
+	return &res, nil
 }
 
-func (s *DigestService) Login(username string, password []byte) (*loginResponse, error) {
-	challenge, err := s.Challenge(username)
+// Login gets a challenge and logs in with its nonce. The router accepts the nonce for 1000 ms.
+func (s *DigestService) Login(ctx context.Context, username string, password []byte) (*LoginResponse, error) {
+	challenge, err := s.Challenge(ctx, username)
 	if err != nil {
 		return nil, err
 	}
 
-	md5PasswordHash, err := md5_crypt.New().Generate(password, []byte(fmt.Sprintf("$1$%s", challenge.Salt)))
+	if challenge.Algorithm != algMD5Crypt || challenge.HashMethod != "" {
+		return nil, fmt.Errorf("glinet: unsupported login algorithm (alg %d, hash_method %q): only alg %d (MD5-crypt) is supported",
+			challenge.Algorithm, challenge.HashMethod, algMD5Crypt)
+	}
+
+	passwordHash, err := md5_crypt.New().Generate(password, []byte("$1$"+challenge.Salt))
 	if err != nil {
 		return nil, err
 	}
 
-	// call challenge again because it sometimes times out
-	challenge, err = s.Challenge(username)
-	if err != nil {
-		return nil, err
-	}
+	loginHash := md5.Sum([]byte(username + ":" + passwordHash + ":" + challenge.Nonce))
 
-	loginHash := md5.Sum([]byte(fmt.Sprintf("%s:%s:%s", username, md5PasswordHash, challenge.Nonce)))
-	digest := make([]byte, hex.EncodedLen(len(loginHash)))
-	hex.Encode(digest, loginHash[:])
-	request := loginRequest{Username: username, Hash: string(digest)}
-	var res loginResponse
-	err = s.client.CallWithInterface("login", &request, &res)
+	var res LoginResponse
+	err = s.client.rpc(ctx, "login", loginRequest{Username: username, Hash: hex.EncodeToString(loginHash[:])}, &res)
 	if err != nil {
 		return nil, err
 	}

@@ -1,0 +1,26 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "timer",
+      "get_reboot",
+      {}
+    ],
+    "id": 133
+  },
+  "response": {
+    "id": 133,
+    "jsonrpc": "2.0",
+    "result": {
+      "enable": false,
+      "hour": "03",
+      "min": "00",
+      "week": [
+        1,
+        4
+      ]
+    }
+  }
+}

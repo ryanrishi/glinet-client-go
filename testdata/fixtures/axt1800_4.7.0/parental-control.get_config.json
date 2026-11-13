@@ -1,0 +1,42 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "parental-control",
+      "get_config",
+      {}
+    ],
+    "id": 103
+  },
+  "response": {
+    "id": 103,
+    "jsonrpc": "2.0",
+    "result": {
+      "auto_update": false,
+      "drop_anonymous": false,
+      "enable": false,
+      "enable_app": false,
+      "groups": [],
+      "rules": [
+        {
+          "color": " #e982a5",
+          "id": "drop",
+          "manual": true,
+          "name": "drop_all",
+          "preset": true,
+          "url_success": "0"
+        },
+        {
+          "color": "#4bd9cc",
+          "id": "accept",
+          "manual": true,
+          "name": "accept_all",
+          "preset": true,
+          "url_success": "0"
+        }
+      ]
+    }
+  }
+}

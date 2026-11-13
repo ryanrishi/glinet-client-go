@@ -1,0 +1,23 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "vpn-policy",
+      "get_global_policy",
+      {}
+    ],
+    "id": 147
+  },
+  "response": {
+    "id": 147,
+    "jsonrpc": "2.0",
+    "result": {
+      "kill_switch": 0,
+      "service_policy": 0,
+      "vpn_server_policy": 1,
+      "wan_access": 0
+    }
+  }
+}

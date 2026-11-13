@@ -1,0 +1,32 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "sms-forward",
+      "get_config",
+      {}
+    ],
+    "id": 125
+  },
+  "response": {
+    "id": 125,
+    "jsonrpc": "2.0",
+    "result": {
+      "email": {
+        "account": "",
+        "emails": [],
+        "enable": false,
+        "encryption": 1,
+        "password": "",
+        "smtp": "",
+        "subject": ""
+      },
+      "phone": {
+        "enable": false,
+        "phone_numbers": []
+      }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "vpn-policy",
+      "get_proxy_mode",
+      {}
+    ],
+    "id": 146
+  },
+  "response": {
+    "id": 146,
+    "jsonrpc": "2.0",
+    "result": {
+      "mode": 0
+    }
+  }
+}

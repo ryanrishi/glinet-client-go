@@ -1,0 +1,20 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "acl",
+      "get_group_list",
+      {}
+    ],
+    "id": 13
+  },
+  "response": {
+    "id": 13,
+    "jsonrpc": "2.0",
+    "result": {
+      "groups": []
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "tor",
+      "get_config",
+      {}
+    ],
+    "id": 136
+  },
+  "response": {
+    "id": 136,
+    "jsonrpc": "2.0",
+    "result": {
+      "countries": [],
+      "enable": false,
+      "manual": false
+    }
+  }
+}

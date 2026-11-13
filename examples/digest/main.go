@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -10,7 +11,7 @@ import (
 
 func main() {
 	c := glinet.NewClientUnauthenticated()
-	challenge, err := c.Digest.Challenge("root")
+	challenge, err := c.Digest.Challenge(context.Background(), "root")
 	if err != nil {
 		fmt.Println(err)
 		return

@@ -1,0 +1,25 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "cable",
+      "get_status",
+      {}
+    ],
+    "id": 18
+  },
+  "response": {
+    "id": 18,
+    "jsonrpc": "2.0",
+    "result": {
+      "mode": 0,
+      "secondwan": {
+        "err_code": -4,
+        "err_msg": "Unsupported features!"
+      },
+      "status": 3
+    }
+  }
+}

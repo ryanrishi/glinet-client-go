@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "mcu",
+      "get_oled_config",
+      {}
+    ],
+    "id": 59
+  },
+  "response": {
+    "error": {
+      "code": -32601,
+      "message": "Method not found"
+    },
+    "id": 59,
+    "jsonrpc": "2.0"
+  }
+}

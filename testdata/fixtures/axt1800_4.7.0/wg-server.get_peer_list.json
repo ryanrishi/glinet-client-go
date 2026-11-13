@@ -1,0 +1,20 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "wg-server",
+      "get_peer_list",
+      {}
+    ],
+    "id": 157
+  },
+  "response": {
+    "id": 157,
+    "jsonrpc": "2.0",
+    "result": {
+      "peers": []
+    }
+  }
+}

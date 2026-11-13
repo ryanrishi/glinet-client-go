@@ -1,0 +1,20 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "edgerouter",
+      "get_status",
+      {}
+    ],
+    "id": 33
+  },
+  "response": {
+    "id": 33,
+    "jsonrpc": "2.0",
+    "result": {
+      "detected": 3
+    }
+  }
+}

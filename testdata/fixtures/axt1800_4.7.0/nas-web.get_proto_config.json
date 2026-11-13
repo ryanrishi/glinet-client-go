@@ -1,0 +1,18 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "nas-web",
+      "get_proto_config",
+      {}
+    ],
+    "id": 71
+  },
+  "response": {
+    "id": 71,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

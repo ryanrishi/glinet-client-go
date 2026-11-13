@@ -1,0 +1,106 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "wg-client",
+      "get_group_list",
+      {}
+    ],
+    "id": 152
+  },
+  "response": {
+    "id": 152,
+    "jsonrpc": "2.0",
+    "result": {
+      "groups": [
+        {
+          "auth_type": 1,
+          "group_id": 7573,
+          "group_name": "AzireVPN",
+          "group_type": 1,
+          "password": "",
+          "peer_count": 0,
+          "procedure": 0,
+          "username": ""
+        },
+        {
+          "auth_type": 2,
+          "group_id": 6892,
+          "group_name": "Mullvad",
+          "group_type": 1,
+          "peer_count": 0,
+          "procedure": 1,
+          "username": ""
+        },
+        {
+          "auth_type": 1,
+          "group_id": 9859,
+          "group_name": "FromApp",
+          "group_type": 3,
+          "password": "",
+          "peer_count": 1,
+          "procedure": 0,
+          "username": ""
+        },
+        {
+          "auth_type": 0,
+          "group_id": 2082,
+          "group_name": "NYC",
+          "group_type": 2,
+          "peer_count": 2
+        },
+        {
+          "auth_type": 1,
+          "group_id": 4199,
+          "group_name": "PIA",
+          "group_type": 1,
+          "password": "",
+          "peer_count": 0,
+          "procedure": 1,
+          "username": ""
+        },
+        {
+          "auth_type": 1,
+          "group_id": 7166,
+          "group_name": "Surfshark",
+          "group_type": 1,
+          "password": "",
+          "peer_count": 0,
+          "procedure": 1,
+          "username": ""
+        },
+        {
+          "auth_type": 2,
+          "group_id": 132,
+          "group_name": "NordVPN",
+          "group_type": 1,
+          "peer_count": 0,
+          "procedure": 1,
+          "username": ""
+        },
+        {
+          "auth_type": 1,
+          "group_id": 9451,
+          "group_name": "Hideme",
+          "group_type": 1,
+          "password": "",
+          "peer_count": 0,
+          "procedure": 0,
+          "username": ""
+        },
+        {
+          "auth_type": 1,
+          "group_id": 2418,
+          "group_name": "IPVanish",
+          "group_type": 1,
+          "password": "",
+          "peer_count": 0,
+          "procedure": 1,
+          "username": ""
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "system",
+      "get_info",
+      {}
+    ],
+    "id": 3
+  },
+  "response": {
+    "id": 3,
+    "jsonrpc": "2.0",
+    "result": {
+      "board_info": {
+        "architecture": "ARMv8 Processor rev 4",
+        "hostname": "hostname-1",
+        "kernel_version": "5.4.164",
+        "model": "GL Technologies, Inc. AXT1800",
+        "openwrt_version": "OpenWrt 23.05-SNAPSHOT r23485+111-e92cf0c46f"
+      },
+      "country_code": "US",
+      "cpu_num": 4,
+      "ddns": "redacted-ddns-1",
+      "device_type": 1,
+      "firmware_date": "2025-03-19 10:28:59",
+      "firmware_type": "release8",
+      "firmware_version": "4.7.0",
+      "hardware_feature": {
+        "bluetooth": false,
+        "build_in_modem": "",
+        "fan": true,
+        "gps": false,
+        "hwnat": true,
+        "lan": "eth1 eth2",
+        "mcu": false,
+        "microsd": "",
+        "modem_reset": 2,
+        "nand": false,
+        "noled": false,
+        "nowds": false,
+        "radio": "radio0 radio1",
+        "reset_button": "gpio-50",
+        "rs485": false,
+        "slot": "single",
+        "submodel": "",
+        "switch_button": "gpio9",
+        "usb": "1-1,2-1",
+        "usb3": "2-1",
+        "usb_reset": "usb_power,1",
+        "wan": "eth0"
+      },
+      "hardware_version": "",
+      "hidden_features": [],
+      "mac": "02:00:00:00:00:01",
+      "model": "axt1800",
+      "sn": "redacted-sn-1",
+      "sn_bak": "redacted-sn_bak-1",
+      "software_feature": {
+        "adguard": true,
+        "bark": false,
+        "cellular_upgrade": false,
+        "ids_ips": false,
+        "ipv6": true,
+        "ksmbd": false,
+        "mlo": false,
+        "nas": true,
+        "passthrough": false,
+        "repeater_eap": true,
+        "secondwan": false,
+        "sms_forward": true,
+        "tor": true,
+        "vpn": true
+      },
+      "vendor": "GL.iNet"
+    }
+  }
+}

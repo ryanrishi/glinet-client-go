@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "edgerouter",
+      "get_config",
+      {}
+    ],
+    "id": 32
+  },
+  "response": {
+    "id": 32,
+    "jsonrpc": "2.0",
+    "result": {
+      "enable": false,
+      "ignore": true
+    }
+  }
+}

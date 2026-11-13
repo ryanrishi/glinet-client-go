@@ -1,0 +1,36 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "kmwan",
+      "get_status",
+      {}
+    ],
+    "id": 46
+  },
+  "response": {
+    "id": 46,
+    "jsonrpc": "2.0",
+    "result": {
+      "interfaces": [
+        {
+          "interface": "wan",
+          "status_v4": 1,
+          "status_v6": 1
+        },
+        {
+          "interface": "wwan",
+          "status_v4": 0,
+          "status_v6": 1
+        },
+        {
+          "interface": "tethering",
+          "status_v4": 1,
+          "status_v6": 1
+        }
+      ]
+    }
+  }
+}

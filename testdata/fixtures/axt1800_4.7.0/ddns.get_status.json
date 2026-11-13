@@ -1,0 +1,36 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "ddns",
+      "get_status",
+      {}
+    ],
+    "id": 27
+  },
+  "response": {
+    "id": 27,
+    "jsonrpc": "2.0",
+    "result": {
+      "ips": [
+        {
+          "interface": "wan6",
+          "ip": []
+        },
+        {
+          "interface": "wwan",
+          "ip": [
+            "192.168.0.210"
+          ]
+        },
+        {
+          "interface": "wwan6",
+          "ip": []
+        }
+      ],
+      "status": 2
+    }
+  }
+}

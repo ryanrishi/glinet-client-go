@@ -1,0 +1,29 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "cloud",
+      "get_config",
+      {}
+    ],
+    "id": 22
+  },
+  "response": {
+    "id": 22,
+    "jsonrpc": "2.0",
+    "result": {
+      "aw_url": "https://my.astrowarp.net",
+      "cloud_enable": false,
+      "rtty_ssh": false,
+      "rtty_web": false,
+      "serverzones": [
+        "Europe",
+        "America",
+        "Asia Pacific"
+      ],
+      "token_invalid": false
+    }
+  }
+}

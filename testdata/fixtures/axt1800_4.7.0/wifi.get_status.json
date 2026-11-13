@@ -1,0 +1,30 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "wifi",
+      "get_status",
+      {}
+    ],
+    "id": 163
+  },
+  "response": {
+    "id": 163,
+    "jsonrpc": "2.0",
+    "result": {
+      "res": [
+        {
+          "channel": 48,
+          "name": "radio0",
+          "state": "ready"
+        },
+        {
+          "name": "radio1",
+          "state": "ready"
+        }
+      ]
+    }
+  }
+}

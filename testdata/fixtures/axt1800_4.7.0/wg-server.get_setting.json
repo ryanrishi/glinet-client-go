@@ -1,0 +1,22 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "wg-server",
+      "get_setting",
+      {}
+    ],
+    "id": 161
+  },
+  "response": {
+    "id": 161,
+    "jsonrpc": "2.0",
+    "result": {
+      "client_to_client": false,
+      "local_access": false,
+      "masq": true
+    }
+  }
+}

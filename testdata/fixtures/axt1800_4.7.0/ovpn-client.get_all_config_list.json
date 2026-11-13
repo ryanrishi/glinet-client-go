@@ -1,0 +1,20 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "ovpn-client",
+      "get_all_config_list",
+      {}
+    ],
+    "id": 95
+  },
+  "response": {
+    "id": 95,
+    "jsonrpc": "2.0",
+    "result": {
+      "config_list": []
+    }
+  }
+}

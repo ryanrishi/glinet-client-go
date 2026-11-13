@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "nas-web",
+      "get_disk_list",
+      {}
+    ],
+    "id": 73
+  },
+  "response": {
+    "id": 73,
+    "jsonrpc": "2.0",
+    "result": {
+      "disk": [],
+      "disk_number": 0
+    }
+  }
+}

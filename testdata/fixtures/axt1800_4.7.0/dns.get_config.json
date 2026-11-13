@@ -1,0 +1,31 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "dns",
+      "get_config",
+      {}
+    ],
+    "id": 30
+  },
+  "response": {
+    "id": 30,
+    "jsonrpc": "2.0",
+    "result": {
+      "controld_id": "",
+      "dot_provider": "0",
+      "force_dns": false,
+      "free_controld_id": "",
+      "mode": "auto",
+      "nextdns_id": "",
+      "override_vpn": true,
+      "rebind_protection": false,
+      "server": [
+        "wwan 192.168.4.253",
+        "wg 192.168.5.1"
+      ]
+    }
+  }
+}

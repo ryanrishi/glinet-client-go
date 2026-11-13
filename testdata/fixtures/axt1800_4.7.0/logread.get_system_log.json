@@ -1,0 +1,22 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "logread",
+      "get_system_log",
+      {
+        "lines": 20
+      }
+    ],
+    "id": 52
+  },
+  "response": {
+    "id": 52,
+    "jsonrpc": "2.0",
+    "result": {
+      "log": "Thu Nov 12 15:51:44 2026 user.notice firewall: Reloading firewall due to ifup of wgclient (wgclient)\nThu Nov 12 15:51:44 2026 user.notice root: modem_traffic : ntp success...\nThu Nov 12 15:51:45 2026 daemon.info dnsmasq[9855]: started, version 2.89 cache disabled\nThu Nov 12 15:51:45 2026 daemon.info dnsmasq[9855]: DNS service limited to local subnets\nThu Nov 12 15:51:45 2026 daemon.info dnsmasq[9855]: compile time options: IPv6 GNU-getopt no-RTC no-DBus UBus no-i18n no-IDN DHCP DHCPv6 no-Lua TFTP conntrack ipset nftset auth cryptohash DNSSEC no-ID loop-detect inotify dumpfile\nThu Nov 12 15:51:45 2026 daemon.info dnsmasq[9855]: UBus support enabled: connected to system bus\nThu Nov 12 15:51:45 2026 daemon.info dnsmasq-dhcp[9855]: DHCP, IP range 192.168.8.100 -- 192.168.8.249, lease time 12h\nThu Nov 12 15:51:45 2026 daemon.info dnsmasq[9855]: using nameserver 192.168.5.1#53\nThu Nov 12 15:51:45 2026 daemon.info dnsmasq[9855]: using only locally-known addresses for lan_chgd\nThu Nov 12 15:51:45 2026 daemon.info dnsmasq[9855]: read /etc/hosts - 12 names\nThu Nov 12 15:51:45 2026 daemon.info dnsmasq[9855]: read /tmp/hosts.vpn/lan_hosts - 2 names\nThu Nov 12 15:51:45 2026 daemon.info dnsmasq-dhcp[9855]: read /etc/ethers - 0 addresses\nThu Nov 12 15:51:54 2026 daemon.err usbmuxd[10072]: [15:51:54.634][3] usbmuxd v1.1.1 starting up\nThu Nov 12 15:51:54 2026 daemon.err usbmuxd[10072]: [15:51:54.634][3] Using libusb 1.0.26\nThu Nov 12 15:51:54 2026 daemon.err usbmuxd[10072]: [15:51:54.635][3] Initialization complete\nThu Nov 12 15:51:54 2026 daemon.err usbmuxd[10072]: [15:51:54.635][3] Enabled exit on SIGUSR1 if no devices are attached. Start a new instance with \"--exit\" to trigger.\nThu Nov 12 15:51:56 2026 daemon.err usbmuxd[10072]: [15:51:56.596][3] Caught signal 15, exiting\nThu Nov 12 15:51:56 2026 daemon.err usbmuxd[10072]: [15:51:56.596][3] usbmuxd shutting down\nThu Nov 12 15:51:56 2026 daemon.err usbmuxd[10072]: [15:51:56.696][3] Shutdown complete\nThu Nov 12 15:52:16 2026 daemon.info gl-repeater[2638]: (repeater.lua:1197) ntp been valid\n"
+    }
+  }
+}
