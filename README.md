@@ -4,7 +4,8 @@ glinet-client-go
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/ryanrishi/glinet-client-go)](https://github.com/ryanrishi/glinet-client-go/releases/latest)
 
 
-A Go client to access [GL.iNet](https://www.gl-inet.com/) routers. Based on [v4 firmware](https://dev.gl-inet.com/router-4.x-api/).
+A Go client to access [GL.iNet](https://www.gl-inet.com/) routers that run [v4 firmware](https://docs.gl-inet.com/router/en/4/).
+API reference: [archived copy of the GL.iNet 4.x API documentation](https://web.archive.org/web/20240121142533/https://dev.gl-inet.com/router-4.x-api/).
 
 
 ## Usage
