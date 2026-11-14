@@ -199,3 +199,20 @@ func (s *FirewallService) GetDMZ(ctx context.Context) (*DMZ, error) {
 func (s *FirewallService) SetDMZ(ctx context.Context, dmz DMZ) error {
 	return s.client.Call(ctx, "firewall", "set_dmz", dmz, nil)
 }
+
+// FirewallZones is the result of firewall get_zone_list: names of the zones of the firewall
+// configuration. On the test router both lists are "lan", "wan", "guest" and "wgclient".
+type FirewallZones struct {
+	Internals []string `json:"internals"`
+	Externals []string `json:"externals"`
+}
+
+// GetZones returns the firewall zones.
+func (s *FirewallService) GetZones(ctx context.Context) (*FirewallZones, error) {
+	var res FirewallZones
+	if err := s.client.Call(ctx, "firewall", "get_zone_list", nil, &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}

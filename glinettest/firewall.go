@@ -44,7 +44,7 @@ type DMZ struct {
 	DestIP  string `json:"dest_ip,omitempty"`
 }
 
-// Firewall serves the port forward, rule and DMZ methods of the firewall module. Like the router,
+// Firewall serves the port forward, rule, DMZ and zone methods of the firewall module. Like the router,
 // it does not check the values and accepts duplicates. It keeps the port forwards and rules in one
 // list of firewall sections and gives each one the ID of its position in that list, so the IDs
 // after a removed port forward or rule change. Like the router, the set and remove methods of
@@ -53,9 +53,13 @@ type DMZ struct {
 // The first set_dmz adds a DMZ section without an ID at the end of the list. Like the router,
 // add_port_forward moves it to the end again after it gives the ID of the new port forward,
 // so that ID is one more than the ID in the list when the DMZ section was before the new forward.
+//
+// The result of get_zone_list is that of the test router until a test sets it.
 type Firewall struct {
 	mu       sync.Mutex
 	sections []section
+
+	zones readResult
 }
 
 type section struct {
@@ -96,7 +100,19 @@ func sectionID(i int, suffix string) string {
 }
 
 func newFirewall() *Firewall {
-	return &Firewall{}
+	m := &Firewall{}
+	m.zones.set(json.RawMessage(firewallZones))
+	return m
+}
+
+// Zones returns the result of get_zone_list.
+func (m *Firewall) Zones() json.RawMessage {
+	return m.zones.get()
+}
+
+// SetZones sets the result of get_zone_list.
+func (m *Firewall) SetZones(result json.RawMessage) {
+	m.zones.set(result)
 }
 
 // PortForwards returns a copy of the port forwards.
@@ -207,6 +223,7 @@ func (m *Firewall) register(s *Server) {
 	s.Handle("firewall", "add_rule", m.add(ruleSuffix, ruleKeys))
 	s.Handle("firewall", "set_rule", m.set(ruleKeys))
 	s.Handle("firewall", "remove_rule", m.remove)
+	s.Handle("firewall", "get_zone_list", m.zones.handle)
 	s.Handle("firewall", "get_dmz", m.getDMZ)
 	s.Handle("firewall", "set_dmz", m.setDMZ)
 }

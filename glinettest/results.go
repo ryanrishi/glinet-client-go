@@ -347,4 +347,19 @@ const (
 			}
 		]
 	}`
+
+	firewallZones = `{
+		"externals": [
+			"lan",
+			"wan",
+			"guest",
+			"wgclient"
+		],
+		"internals": [
+			"lan",
+			"wan",
+			"guest",
+			"wgclient"
+		]
+	}`
 )
