@@ -410,23 +410,28 @@ Same list or two features: one list. `clients.block_client` writes the `black_ma
 
 Not verified: that the router really blocks a MAC (no real client was blocked), how long the firewall takes to apply a write, mode `white` and `white_mac`, what `set_single_mac` and `set_config` do with `mode: "white"` or no `mode` (never sent, because mode `white` cuts the access of all clients that are not in the list), the maximum list size (the web UI allows 1000).
 
-### ddns (2026-11-14, reads only)
+### ddns (write test, 2026-11-14)
 
-No write was sent: the only field of `set_config` is the enable flag, and enabling DDNS registers the router with an external service of GL.iNet. The config was `{"enable_ddns":false, "device_id":<redacted>}` before and after the work, and `system.get_status` had `ddns_enabled: false`.
+The owner of the router allowed DDNS to be enabled for a short time. DDNS was enabled for 27 s (14:37:50-14:38:17). No access over the WAN was enabled. The config was `{"enable_ddns":false, "device_id":<redacted>}` before and after the test. The fixtures `ddns.*.json` with request IDs 21000-21010 are one sequence (`glinettest/ddns_test.go` replays the config fixtures).
 
 | Call | Params | Result |
 |---|---|---|
 | `get_config` | none | `{"enable_ddns":bool, "device_id":string}` |
-| `get_status` | none | `{"ips":[{"interface":string, "ip":[string]}], "status":int}` (`status` 2 on the test router) |
+| `get_status` | none | `{"ddns"?:string, "ips":[{"interface":string, "ip":[string]}], "status":int}` |
+| `set_config` | `{enable_ddns}` | `[]`, or `{"err_code":-1,"err_msg":"missing parameters"}` |
 
 - `device_id` is the device ID for the GL.iNet DDNS name (the same value as `system.get_info.ddns`). It is a secret and is redacted in the fixtures.
+- `set_config {"enable_ddns":true}` and `{"enable_ddns":false}` each returned `[]` in about 30 ms. The next `get_config`, 15 ms later, had the new value, and `system.get_status.system.ddns_enabled` had it at once.
+- `set_config {}` (sent while DDNS was enabled) returned `{"err_code":-1,"err_msg":"missing parameters"}` and changed nothing.
+- `get_status` takes about 0.6 s. `status` was 2 before, during and after the test (meaning not known). About 5 s after the enable, the result had a new key `ddns`: an IPv4 address (a public one, redacted in the fixtures). It was gone 2 s after the disable.
+- While DDNS was enabled, these did not change: firewall rule list, port forward list, DMZ, zone list, WAN access (`get_wan_access`), DNS config, static binds, block list, hosts, LED, timers, AdGuard Home, time zone, the services in `system.get_status` and the WireGuard client (connected, same peer).
 
 From the UI code, not tested (`/views/gl-sdk4-ui-dynamicdns.common.js.gz`, read on 2026-11-14):
 - The view calls `ddns.get_config {}`, `ddns.get_status {}` (the "DDNS test"), `ddns.set_config` and `firewall.get_wan_access {}`.
 - The write is `ddns.set_config {"enable_ddns": bool}`, nothing else. The UI enables it only after the user accepts the terms. It reads `get_config` again 3 s after the write. A result with `err_msg` is shown as an error (`err_code` + `err_msg`).
 - The UI reads `ddns`, `ddnsv6`, `status` and `ips` from `get_status`. The access over the WAN (`enable_ssh_access`, `enable_http_access`, `enable_https_access` of the 2023 reference) is not in the DDNS write; the view shows `firewall.get_wan_access` (`enable_https`, `enable_ssh`) instead.
 
-Not verified: any `set_config` call, its result and errors, and what an enabled DDNS does.
+Not verified: non-boolean values of `enable_ddns`, `ddnsv6` in `get_status`, the meaning of `status`, that the DDNS name resolves (no DNS lookup was made), DDNS on a router with a public WAN address.
 
 ### tailscale (write test with Tailscale disabled, 2026-11-14)
 

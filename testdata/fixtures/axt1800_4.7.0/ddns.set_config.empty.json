@@ -1,0 +1,21 @@
+{
+  "request": {
+    "id": 21006,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "ddns",
+      "set_config",
+      {}
+    ]
+  },
+  "response": {
+    "id": 21006,
+    "jsonrpc": "2.0",
+    "result": {
+      "err_code": -1,
+      "err_msg": "missing parameters"
+    }
+  }
+}
