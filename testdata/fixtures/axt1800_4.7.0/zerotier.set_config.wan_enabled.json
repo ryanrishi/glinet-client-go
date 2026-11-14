@@ -1,0 +1,22 @@
+{
+  "request": {
+    "id": 20006,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "zerotier",
+      "set_config",
+      {
+        "enabled": false,
+        "lan_enabled": false,
+        "wan_enabled": true
+      }
+    ]
+  },
+  "response": {
+    "id": 20006,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

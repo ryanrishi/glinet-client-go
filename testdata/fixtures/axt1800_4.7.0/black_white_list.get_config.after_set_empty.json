@@ -1,0 +1,20 @@
+{
+  "request": {
+    "id": 16044,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "black_white_list",
+      "get_config",
+      {}
+    ]
+  },
+  "response": {
+    "id": 16044,
+    "jsonrpc": "2.0",
+    "result": {
+      "mode": "black"
+    }
+  }
+}

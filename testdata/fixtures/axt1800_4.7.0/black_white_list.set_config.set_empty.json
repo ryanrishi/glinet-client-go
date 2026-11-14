@@ -1,0 +1,21 @@
+{
+  "request": {
+    "id": 16043,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "black_white_list",
+      "set_config",
+      {
+        "mac": [],
+        "mode": "black"
+      }
+    ]
+  },
+  "response": {
+    "id": 16043,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

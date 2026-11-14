@@ -60,17 +60,21 @@ type Server struct {
 	Username string
 	Password string
 
-	System      *System
-	AdGuardHome *AdGuardHome
-	Cable       *Cable
-	Clients     *Clients
-	DNS         *DNS
-	Firewall    *Firewall
-	LAN         *LAN
-	LED         *LED
-	Network     *Network
-	Timer       *Timer
-	Wifi        *Wifi
+	System        *System
+	AccessControl *AccessControl
+	AdGuardHome   *AdGuardHome
+	Cable         *Cable
+	Clients       *Clients
+	DDNS          *DDNS
+	DNS           *DNS
+	Firewall      *Firewall
+	LAN           *LAN
+	LED           *LED
+	Network       *Network
+	Tailscale     *Tailscale
+	Timer         *Timer
+	Wifi          *Wifi
+	ZeroTier      *ZeroTier
 
 	srv *httptest.Server
 
@@ -99,12 +103,16 @@ func NewServer(t testing.TB) *Server {
 
 	s.System = newSystem()
 	s.System.register(s)
+	s.AccessControl = newAccessControl()
+	s.AccessControl.register(s)
 	s.AdGuardHome = newAdGuardHome()
 	s.AdGuardHome.register(s)
 	s.Cable = newCable()
 	s.Cable.register(s)
 	s.Clients = newClients()
 	s.Clients.register(s)
+	s.DDNS = newDDNS()
+	s.DDNS.register(s)
 	s.DNS = newDNS()
 	s.DNS.register(s)
 	s.Firewall = newFirewall()
@@ -115,10 +123,14 @@ func NewServer(t testing.TB) *Server {
 	s.LED.register(s)
 	s.Network = newNetwork()
 	s.Network.register(s)
+	s.Tailscale = newTailscale()
+	s.Tailscale.register(s)
 	s.Timer = newTimer()
 	s.Timer.register(s)
 	s.Wifi = newWifi()
 	s.Wifi.register(s)
+	s.ZeroTier = newZeroTier()
+	s.ZeroTier.register(s)
 
 	s.srv = httptest.NewServer(http.HandlerFunc(s.serveHTTP))
 	s.URL = s.srv.URL

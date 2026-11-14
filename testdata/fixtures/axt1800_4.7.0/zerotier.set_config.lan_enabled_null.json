@@ -1,0 +1,25 @@
+{
+  "request": {
+    "id": 20012,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "zerotier",
+      "set_config",
+      {
+        "enabled": false,
+        "lan_enabled": null,
+        "wan_enabled": false
+      }
+    ]
+  },
+  "response": {
+    "error": {
+      "code": -32602,
+      "message": "Invalid params"
+    },
+    "id": 20012,
+    "jsonrpc": "2.0"
+  }
+}

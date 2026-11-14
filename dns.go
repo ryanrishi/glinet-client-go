@@ -65,7 +65,8 @@ func (s *DNSService) GetHosts(ctx context.Context) (string, error) {
 // SetHosts replaces the hosts file with content. Keep the localhost lines of GetHosts in it.
 // The router does not check the lines and keeps content as it is, with comments, blank lines and
 // "\r\n", but adds "\n" when content does not end with one.
-// In the test, the DNS server of the router did not answer with a new name within 30 s.
+// The DNS server of the router does not use the new file at once: in the test, it did not answer
+// with a new name within 5 minutes.
 func (s *DNSService) SetHosts(ctx context.Context, content string) error {
 	params := struct {
 		Content string `json:"content"`

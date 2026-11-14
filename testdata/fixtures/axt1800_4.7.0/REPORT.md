@@ -302,7 +302,9 @@ Behavior:
 
 Differences from the 2023 reference: `set_host` returns `[]`, not `null`. The reference does not say that the content is not checked, that a newline is added, or that the DNS server is not reloaded.
 
-Not verified: whether a reboot or another write makes the DNS server use the new file; the maximum size.
+Timing test (2026-11-14, request IDs 17000-17004, fixtures `dns.*_host.timing_*.json`): one line `192.0.2.1 tf-test-host.invalid tf-test-host.lan` was added to the initial file. `dig @192.168.8.1` for `tf-test-host.invalid` and `tf-test-host.lan` (A record) was NXDOMAIN at each query, every 15 s from 0 s to 300 s after the write. So the router does not answer with a name from a new hosts file within 5 minutes, for a `.invalid` name and for a `.lan` name. No service was restarted and no DNS setting was changed. The exact initial string was written back and read back after the test.
+
+Not verified: whether a reboot, a restart of dnsmasq or another write makes the DNS server use the new file; the maximum size.
 
 What the web UI does when the user saves the hosts file (from the UI code, not tested). Source: `/views/gl-sdk4-ui-dnsview.common.js.gz` of the router web server (`/views/gl-sdk4-ui-dnsview.common.js` redirects with 302), 77187 bytes unpacked, read on 2026-11-14.
 - The API object of the DNS view has only these methods: `dns.get_info {}`, `dns.get_config {}`, `dns.set_config`, `dns.get_host {}` and `setDnsHost(t)`, which is `$rpcRequest("call", ["sid", "dns", "set_host", t], {errTips: {keep: true}})`.
@@ -372,6 +374,106 @@ Not verified: the error when another DNS feature is active (that needs a DNS mod
 ### clients
 - `get_list`: extra per client: `ipv6`, `last_rx`, `last_tx`, `last_update_rate`, `total_rx_init`, `total_tx_init`.
 - `get_status`: matches.
+
+### black_white_list block list (write test, 2026-11-14)
+
+Verified on the router in mode `black` only, with made-up MACs `02:00:00:00:00:a1` to `a9` (no real client). Mode `white` was never written. The config was `{"mode":"black"}` (empty list) before and after the test, and the mode stayed `black` after each write. The fixtures `black_white_list.*.json` with request IDs 16000-16060 are one sequence (`glinettest/accesscontrol_test.go` replays them; the `clients.block_client` calls 16045-16058 and their reads are not in the fixtures, see below).
+
+| Call | Params | Result |
+|---|---|---|
+| `get_config` | none | `{"mode":string, "black_mac":[string]}`; no `black_mac` when the list is empty |
+| `set_single_mac` | `{mode, operate, mac}` | `[]` |
+| `set_config` | `{mode, mac:[string]}` | `[]`, or `{"err_code":-1,"err_msg":"mac required"}` |
+
+Formats:
+- `black_mac` is the block list, an array of strings in the order of the writes. The web UI code also reads `white_mac` (the allow list); it was not seen, because mode `white` was not tested.
+- The router keeps each MAC as written, also its letter case (`"02:00:00:00:00:A2"` stays upper case).
+
+Behavior of `set_single_mac` (the web UI uses it for the block switch of one client, with `mode` = the current mode):
+- `operate: "add"` appends `mac`. A MAC that is in the list with the same letter case is not added again; the same MAC in the other letter case is added as a second entry.
+- `operate: "del"` removes `mac` only with the same letter case (`del 02:00:00:00:00:a2` did not remove `02:00:00:00:00:A2`). A MAC that is not in the list gives `[]` and no change.
+- `mac` is not checked: `"not-a-mac"` was added. A MAC with `-` separators (`"02-00-00-00-00-a3"`) was not added, and `[]` was returned.
+- No `mac`, an unknown `operate` (`"toggle"`) or no `operate` gives `[]` and no change. `mac: null` gives `-32602 Invalid params` (no `err`).
+- Each write returned in about 10-50 ms. The next read, 4 ms later, had the new list.
+
+Behavior of `set_config` (the web UI uses it for the access control dialog, with the MACs in upper case):
+- It replaces the whole list with `mac`, as written: duplicates (`[a4, a4, A4]`), `"not-a-mac"` and `-` separators were kept. `mac: []` empties the list (`get_config` then has no `black_mac`).
+- No `mac` or `mac` as a string gives the result `{"err_code":-1,"err_msg":"mac required"}` and no change. `mac: null` gives `-32602`.
+- Each write returned in about 10 ms. The next read had the new list.
+
+`clients.block_client {mac, block}` (not in the web UI; named in the 2023 reference and `gli4py`):
+- It exists on 4.7.0 and returns `[]` after about 850-890 ms, also for `"not-a-mac"` and without `block`.
+- It changes the same list (`black_mac`), in upper case (`a6` was stored as `"02:00:00:00:00:A6"`), but not reliably and not at once: in one test the MAC was in the list 6 ms after the call; in another, `block: true` for `a7` (two times) was not in the list after the call, but `"02:00:00:00:00:A7"` and `"NOT-A-MAC"` appeared some seconds later, after a `set_config` had emptied the list; in a third test, `block: true` for `a7` did not change the list within 15 s. `block: false` with either letter case did not remove `"02:00:00:00:00:A6"`. The list was emptied with `set_config` and then stayed empty for 2.5 minutes, also after `block: false` for each test MAC.
+- So the client does not use `clients.block_client`.
+
+Same list or two features: one list. `clients.block_client` writes the `black_mac` list of `black_white_list`, and the web UI shows a client as blocked when its MAC is in `black_mac` (compared without letter case) and does not read the `blocked` field of `clients.get_list`. Not verified: whether `clients.get_list[].blocked` is computed from `black_mac` (that needs the MAC of a real client in the list). The made-up MACs did not appear in `clients.get_list`, and the `blocked` flags of the real clients stayed `false`.
+
+Not verified: that the router really blocks a MAC (no real client was blocked), how long the firewall takes to apply a write, mode `white` and `white_mac`, what `set_single_mac` and `set_config` do with `mode: "white"` or no `mode` (never sent, because mode `white` cuts the access of all clients that are not in the list), the maximum list size (the web UI allows 1000).
+
+### ddns (2026-11-14, reads only)
+
+No write was sent: the only field of `set_config` is the enable flag, and enabling DDNS registers the router with an external service of GL.iNet. The config was `{"enable_ddns":false, "device_id":<redacted>}` before and after the work, and `system.get_status` had `ddns_enabled: false`.
+
+| Call | Params | Result |
+|---|---|---|
+| `get_config` | none | `{"enable_ddns":bool, "device_id":string}` |
+| `get_status` | none | `{"ips":[{"interface":string, "ip":[string]}], "status":int}` (`status` 2 on the test router) |
+
+- `device_id` is the device ID for the GL.iNet DDNS name (the same value as `system.get_info.ddns`). It is a secret and is redacted in the fixtures.
+
+From the UI code, not tested (`/views/gl-sdk4-ui-dynamicdns.common.js.gz`, read on 2026-11-14):
+- The view calls `ddns.get_config {}`, `ddns.get_status {}` (the "DDNS test"), `ddns.set_config` and `firewall.get_wan_access {}`.
+- The write is `ddns.set_config {"enable_ddns": bool}`, nothing else. The UI enables it only after the user accepts the terms. It reads `get_config` again 3 s after the write. A result with `err_msg` is shown as an error (`err_code` + `err_msg`).
+- The UI reads `ddns`, `ddnsv6`, `status` and `ips` from `get_status`. The access over the WAN (`enable_ssh_access`, `enable_http_access`, `enable_https_access` of the 2023 reference) is not in the DDNS write; the view shows `firewall.get_wan_access` (`enable_https`, `enable_ssh`) instead.
+
+Not verified: any `set_config` call, its result and errors, and what an enabled DDNS does.
+
+### tailscale (write test with Tailscale disabled, 2026-11-14)
+
+Verified on the router only with `enabled: false`; no write enabled Tailscale, and `get_auth_url`, `logout` and every login method were not called. The config was `{"enabled":false,"lan_enabled":false,"wan_enabled":false,"lan_ip":"192.168.8.0/24"}` before and after the test, and `system.get_status` had the `tailscale` service at status `0` after each test group. The fixtures `tailscale.*_config*.json` with request IDs 19000-19039 are one sequence (`glinettest/tailscale_test.go` replays them).
+
+| Call | Params | Result |
+|---|---|---|
+| `get_config` | none | `{"enabled":bool, "lan_enabled":bool, "wan_enabled":bool, "lan_ip":string, "exit_node_ip"?:string}` |
+| `set_config` | `{enabled, lan_enabled, wan_enabled, exit_node_ip?}` | `[]` |
+| `get_status` | none | `{"dns":[string]}` while disabled (took 2 s once) |
+| `get_exit_node_list` | none | `[]` while disabled |
+
+Behavior (all with `enabled: false`):
+- The router stores `lan_enabled`, `wan_enabled` and `exit_node_ip` also while Tailscale is disabled; the next read, 5 ms later, had them.
+- `enabled`, `lan_enabled` and `wan_enabled` are set to the sent values: a missing one is written as `false` (`{"enabled":false}` and `{}` set `lan_enabled` from `true` to `false`). `lan_enabled: 1` gave `true`. `lan_enabled: null` returned `-32602 Invalid params` (no `err`) and changed nothing.
+- `exit_node_ip` (`"100.64.0.1"`) was stored and is then in `get_config`. `exit_node_ip: ""` and a write without `exit_node_ip` remove it (the key is then not in `get_config`).
+- `lan_ip` is not changed by a write.
+- Each write returned in about 5-16 ms.
+
+From the UI code, not tested (`/views/gl-sdk4-ui-tailscaleview.common.js.gz`, read on 2026-11-14):
+- To disable, the UI sends only `{"enabled":false}`. To enable, it sends `{"enabled":true, "lan_enabled", "wan_enabled", "exit_node_ip":""}`. To set an exit node, it sends `{"enabled", "lan_enabled", "wan_enabled", "exit_node_ip"}`. It reads `get_config` again 5 s after a write.
+- When enabled, the UI reads `status` (1 login needed, 4 connecting; 3 is shown as running in the service list), `login_name`, `address_v4` and `dns` from `get_status`, and `exit_node_list` from `get_exit_node_list`. It calls `get_auth_url` (timeout 30 s, result `auth_url`, `err_code -1` = no URL) for the login, and `logout`.
+
+Not verified: any write with `enabled: true` (it starts Tailscale and contacts the Tailscale servers), the login, the status values when enabled, the exit node list items.
+
+### zerotier (write test with ZeroTier disabled, 2026-11-14)
+
+Verified on the router only with `enabled: false`; no write enabled ZeroTier and no network ID was written. The config was `{"enabled":false,"lan_enabled":false,"wan_enabled":false}` before and after the test, and `system.get_status` had the `zerotier` service at status `0` after each test group. The fixtures `zerotier.*_config*.json` with request IDs 20000-20017 are one sequence (`glinettest/zerotier_test.go` replays them).
+
+| Call | Params | Result |
+|---|---|---|
+| `get_config` | none | `{"enabled":bool, "lan_enabled":bool, "wan_enabled":bool}` (no `id` on the test router) |
+| `set_config` | `{enabled, id?, lan_enabled?, wan_enabled?}` | `[]` |
+| `get_status` | none | `[]` while disabled |
+
+Behavior (all with `enabled: false`):
+- A write that does not enable ZeroTier ignores `lan_enabled` and `wan_enabled`: `{"enabled":false,"lan_enabled":true,...}`, `{"enabled":false,...,"wan_enabled":true}`, `lan_enabled: 1`, `{"enabled":false}` and `{}` all left `{"enabled":false,"lan_enabled":false,"wan_enabled":false}`, also 15 s later. (This is unlike `tailscale`, which stores them.)
+- `lan_enabled: null` returned `-32602 Invalid params` (no `err`).
+- Each write returned in about 0.95-1 s (a write that fails with `-32602` in 4 ms).
+
+A write of a made-up network ID with `enabled: false` was planned, but the tool permission system of this session refused the call, so it was not sent.
+
+From the UI code, not tested (`/views/gl-sdk4-ui-zerotierview.common.js.gz`, read on 2026-11-14):
+- To disable, the UI sends only `{"enabled":false}`. To enable, it sends `{"enabled":true, "id", "lan_enabled", "wan_enabled"}`, with a timeout of 30 s, and reads `get_config` again 5 s after the write. The UI accepts `id` only as 16 hex digits.
+- The UI reads `id`, `enabled`, `lan_enabled` and `wan_enabled` from `get_config` (each may be missing), and `status` (0 connected, 1 connecting, 2 not authorized, 3 network not found), `zerotier_ip`, `lan_ip`, `wan_ip`, `wwan_ip` and `secondwan_ip` from `get_status`.
+
+Not verified: any write with `enabled: true` (it joins a ZeroTier network and contacts the ZeroTier servers), a write of `id`, the format of `id` in `get_config`, the status when enabled.
 
 ### wg-server
 - `get_status`: server fields are nested in `server{initialization,log,rx_bytes,status,tunnel_ip,tx_bytes}`. The reference has them at top level. `peers` is a top-level list (empty here).

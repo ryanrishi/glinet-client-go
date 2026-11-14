@@ -15,7 +15,7 @@ import (
 
 // Version is the version of this client. It is in the default User-Agent.
 const (
-	Version          = "v0.6.0"
+	Version          = "v0.7.0"
 	defaultBaseURL   = "http://192.168.8.1"
 	defaultUserAgent = "glinet-client-go" + "/" + Version
 )
@@ -34,18 +34,22 @@ type Client struct {
 	nextID atomic.Int64
 
 	// services
-	AdGuard  *AdGuardService
-	Cable    *CableService
-	Clients  *ClientsService
-	Digest   *DigestService
-	DNS      *DNSService
-	Firewall *FirewallService
-	LAN      *LANService
-	LED      *LEDService
-	Network  *NetworkService
-	System   *SystemService
-	Timer    *TimerService
-	Wifi     *WifiService
+	AccessControl *AccessControlService
+	AdGuard       *AdGuardService
+	Cable         *CableService
+	Clients       *ClientsService
+	DDNS          *DDNSService
+	Digest        *DigestService
+	DNS           *DNSService
+	Firewall      *FirewallService
+	LAN           *LANService
+	LED           *LEDService
+	Network       *NetworkService
+	System        *SystemService
+	Tailscale     *TailscaleService
+	Timer         *TimerService
+	Wifi          *WifiService
+	ZeroTier      *ZeroTierService
 }
 
 type service struct {
@@ -94,18 +98,22 @@ func newClient(host string) (*Client, error) {
 	c := &Client{BaseURL: baseURL, UserAgent: defaultUserAgent}
 	c.common.client = c
 
+	c.AccessControl = (*AccessControlService)(&c.common)
 	c.AdGuard = (*AdGuardService)(&c.common)
 	c.Cable = (*CableService)(&c.common)
 	c.Clients = (*ClientsService)(&c.common)
 	c.Digest = (*DigestService)(&c.common)
+	c.DDNS = (*DDNSService)(&c.common)
 	c.DNS = (*DNSService)(&c.common)
 	c.Firewall = (*FirewallService)(&c.common)
 	c.LAN = (*LANService)(&c.common)
 	c.LED = (*LEDService)(&c.common)
 	c.Network = (*NetworkService)(&c.common)
 	c.System = (*SystemService)(&c.common)
+	c.Tailscale = (*TailscaleService)(&c.common)
 	c.Timer = (*TimerService)(&c.common)
 	c.Wifi = (*WifiService)(&c.common)
+	c.ZeroTier = (*ZeroTierService)(&c.common)
 
 	return c, nil
 }

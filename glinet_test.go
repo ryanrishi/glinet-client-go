@@ -411,3 +411,30 @@ func TestCallResultError(t *testing.T) {
 		t.Errorf("error = %v, want *RPCError -1 parameter missing", err)
 	}
 }
+
+func TestSystemStatusDecodesLargeByteCounts(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+	const big = 8589934592
+	srv.System.SetStatus(json.RawMessage(`{"system": {"flash_app": 8589934592, "flash_total": 8589934592, "flash_free": 8589934592, "memory_total": 8589934592, "memory_free": 8589934592, "memory_buff_cache": 8589934592, "timestamp": 8589934592}}`))
+	srv.System.SetDiskInfo(json.RawMessage(`{"root": {"total": 8589934592, "used": 8589934592, "free": 8589934592}, "tmp": {"total": 8589934592, "used": 0, "free": 8589934592}}`))
+
+	status, err := c.System.GetStatus(ctx)
+	if err != nil {
+		t.Fatalf("GetStatus: %v", err)
+	}
+	s := status.System
+	for name, v := range map[string]int64{"flash_app": s.FlashApp, "flash_total": s.FlashTotal, "flash_free": s.FlashFree, "memory_total": s.MemoryTotal, "memory_free": s.MemoryFree, "memory_buff_cache": s.MemoryBuffCache, "timestamp": s.Timestamp} {
+		if v != big {
+			t.Errorf("%s = %d, want %d", name, v, int64(big))
+		}
+	}
+
+	disk, err := c.System.GetDiskInfo(ctx)
+	if err != nil {
+		t.Fatalf("GetDiskInfo: %v", err)
+	}
+	if disk.Root.Total != big || disk.Tmp.Free != big {
+		t.Errorf("GetDiskInfo = %+v, want %d bytes", *disk, int64(big))
+	}
+}

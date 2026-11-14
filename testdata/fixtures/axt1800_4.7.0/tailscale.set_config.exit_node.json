@@ -1,0 +1,23 @@
+{
+  "request": {
+    "id": 19024,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "tailscale",
+      "set_config",
+      {
+        "enabled": false,
+        "exit_node_ip": "100.64.0.1",
+        "lan_enabled": false,
+        "wan_enabled": false
+      }
+    ]
+  },
+  "response": {
+    "id": 19024,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "request": {
+    "id": 16037,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "black_white_list",
+      "set_config",
+      {
+        "mac": "02:00:00:00:00:a8",
+        "mode": "black"
+      }
+    ]
+  },
+  "response": {
+    "id": 16037,
+    "jsonrpc": "2.0",
+    "result": {
+      "err_code": -1,
+      "err_msg": "mac required"
+    }
+  }
+}
