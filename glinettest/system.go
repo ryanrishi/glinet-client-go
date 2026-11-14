@@ -17,54 +17,20 @@ type TimezoneConfig struct {
 	Timestamp           int64  `json:"timestamp"`
 }
 
-// System serves the system module. Timestamp is the router clock: set_timezone_config sets it
+// System serves the system module. The results of get_info, get_status and disk_info are those of
+// the test router until a test sets them. Timestamp is the router clock: set_timezone_config sets it
 // from localtime and ignores autotimezone_enabled, like the router. It also sets TZOffset to the
 // UTC offset of the POSIX TZ string timezone at that clock, with daylight saving time.
 // A timezone that is not a valid POSIX TZ string gives "+0000".
 type System struct {
 	mu       sync.Mutex
 	timezone TimezoneConfig
+
+	info, status, diskInfo readResult
 }
 
-const systemStatus = `{
-	"client": [{"cable_total": 1, "wireless_total": 2}],
-	"network": [
-		{"interface": "wan", "online": true, "up": true},
-		{"interface": "wwan", "online": false, "up": false}
-	],
-	"service": [
-		{"name": "wgclient", "status": 1, "group_id": 1001, "peer_id": 2001},
-		{"name": "adguard", "status": 0}
-	],
-	"system": {
-		"cpu": {"temperature": 45},
-		"ddns_enabled": false,
-		"flash_app": 1000000,
-		"flash_free": 30000000,
-		"flash_total": 134217728,
-		"guest_ip": "192.168.9.1",
-		"guest_netmask": "255.255.255.0",
-		"ipv6_enabled": false,
-		"lan_ip": "192.168.8.1",
-		"lan_netmask": "255.255.255.0",
-		"load_average": [0.1, 0.05, 0.01],
-		"memory_buff_cache": 100000000,
-		"memory_free": 200000000,
-		"memory_total": 400000000,
-		"mode": 0,
-		"netnat_enabled": true,
-		"timestamp": 1700000000,
-		"tzoffset": "+0000",
-		"uptime": 1234.56
-	},
-	"wifi": [
-		{"band": "5G", "channel": 36, "encryption": "psk2", "guest": false, "hidden": false, "mld": false, "name": "default_radio0", "passwd": "wifi-password", "ssid": "test-5g", "up": true},
-		{"band": "2G", "channel": 6, "encryption": "psk2", "guest": true, "hidden": false, "mld": false, "name": "guest2g", "passwd": "guest-password", "ssid": "test-guest", "up": false}
-	]
-}`
-
 func newSystem() *System {
-	return &System{
+	m := &System{
 		timezone: TimezoneConfig{
 			Zonename:            "UTC",
 			Timezone:            "UTC0",
@@ -74,6 +40,40 @@ func newSystem() *System {
 			Timestamp:           1700000000,
 		},
 	}
+	m.info.set(json.RawMessage(systemInfo))
+	m.status.set(json.RawMessage(systemStatus))
+	m.diskInfo.set(json.RawMessage(systemDiskInfo))
+	return m
+}
+
+// Info returns the result of get_info.
+func (m *System) Info() json.RawMessage {
+	return m.info.get()
+}
+
+// SetInfo sets the result of get_info.
+func (m *System) SetInfo(result json.RawMessage) {
+	m.info.set(result)
+}
+
+// Status returns the result of get_status.
+func (m *System) Status() json.RawMessage {
+	return m.status.get()
+}
+
+// SetStatus sets the result of get_status.
+func (m *System) SetStatus(result json.RawMessage) {
+	m.status.set(result)
+}
+
+// DiskInfo returns the result of disk_info.
+func (m *System) DiskInfo() json.RawMessage {
+	return m.diskInfo.get()
+}
+
+// SetDiskInfo sets the result of disk_info.
+func (m *System) SetDiskInfo(result json.RawMessage) {
+	m.diskInfo.set(result)
 }
 
 // TimezoneConfig returns the time zone configuration.
@@ -91,9 +91,9 @@ func (m *System) SetTimezoneConfig(c TimezoneConfig) {
 }
 
 func (m *System) register(s *Server) {
-	s.Handle("system", "get_status", func(json.RawMessage) (any, error) {
-		return json.RawMessage(systemStatus), nil
-	})
+	s.Handle("system", "get_info", m.info.handle)
+	s.Handle("system", "get_status", m.status.handle)
+	s.Handle("system", "disk_info", m.diskInfo.handle)
 	s.Handle("system", "get_timezone_config", func(json.RawMessage) (any, error) {
 		return m.TimezoneConfig(), nil
 	})

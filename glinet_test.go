@@ -269,15 +269,45 @@ func TestServerInternalServerError(t *testing.T) {
 	}
 }
 
-func TestSystemGetStatus(t *testing.T) {
-	c, _ := newClient(t)
+func TestSystemReadsDecodeRouterFixtures(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
 
-	res, err := c.System.GetStatus(context.Background())
+	info := fixtureResult(t, "system.get_info.json")
+	srv.System.SetInfo(info)
+	gotInfo, err := c.System.GetInfo(ctx)
+	if err != nil {
+		t.Fatalf("GetInfo: %v", err)
+	}
+	checkLossless(t, gotInfo, info)
+
+	status := fixtureResult(t, "system.get_status.json")
+	srv.System.SetStatus(status)
+	gotStatus, err := c.System.GetStatus(ctx)
 	if err != nil {
 		t.Fatalf("GetStatus: %v", err)
 	}
-	if res.System.LanIP != "192.168.8.1" || res.System.Uptime != 1234.56 || len(res.Wifi) != 2 {
-		t.Errorf("unexpected status %+v", res)
+	checkLossless(t, gotStatus, status)
+
+	disk := fixtureResult(t, "system.disk_info.json")
+	srv.System.SetDiskInfo(disk)
+	gotDisk, err := c.System.GetDiskInfo(ctx)
+	if err != nil {
+		t.Fatalf("GetDiskInfo: %v", err)
+	}
+	checkLossless(t, gotDisk, disk)
+}
+
+func TestSystemInfo(t *testing.T) {
+	c, srv := newClient(t)
+	srv.System.SetInfo(json.RawMessage(`{"model": "mt6000", "firmware_version": "4.8.1", "sn": "SN1", "hidden_features": ["x"]}`))
+
+	res, err := c.System.GetInfo(context.Background())
+	if err != nil {
+		t.Fatalf("GetInfo: %v", err)
+	}
+	if res.Model != "mt6000" || res.FirmwareVersion != "4.8.1" || res.SN != "SN1" || !slices.Equal(res.HiddenFeatures, []string{"x"}) {
+		t.Errorf("GetInfo = %+v", *res)
 	}
 }
 
