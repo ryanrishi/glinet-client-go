@@ -1,6 +1,7 @@
 glinet-client-go
 ===
 [![Tests](https://github.com/ryanrishi/glinet-client-go/actions/workflows/go.yml/badge.svg)](https://github.com/ryanrishi/glinet-client-go/actions/workflows/go.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/ryanrishi/glinet-client-go.svg)](https://pkg.go.dev/github.com/ryanrishi/glinet-client-go)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/ryanrishi/glinet-client-go)](https://github.com/ryanrishi/glinet-client-go/releases/latest)
 
 
