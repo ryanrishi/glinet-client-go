@@ -39,3 +39,30 @@ func (s *TimerService) GetLEDSchedule(ctx context.Context) (*LEDSchedule, error)
 func (s *TimerService) SetLEDSchedule(ctx context.Context, schedule LEDSchedule) error {
 	return s.client.Call(ctx, "timer", "set_led", schedule, nil)
 }
+
+// RebootSchedule reboots the router at Hour:Min on the days in Week.
+type RebootSchedule struct {
+	Enabled bool   `json:"enable"`
+	Hour    string `json:"hour,omitempty"`
+	Min     string `json:"min,omitempty"`
+	Week    []int  `json:"week,omitempty"`
+}
+
+// GetRebootSchedule returns the reboot schedule.
+func (s *TimerService) GetRebootSchedule(ctx context.Context) (*RebootSchedule, error) {
+	var res RebootSchedule
+	if err := s.client.Call(ctx, "timer", "get_reboot", nil, &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+// SetRebootSchedule sets the reboot schedule.
+//
+// When schedule.Enabled is false, the router only disables the schedule and keeps the other values.
+// A write with Enabled true was not tested on a router. The web UI sends Hour, Min and Week only
+// with Enabled true, as for the LED schedule.
+func (s *TimerService) SetRebootSchedule(ctx context.Context, schedule RebootSchedule) error {
+	return s.client.Call(ctx, "timer", "set_reboot", schedule, nil)
+}

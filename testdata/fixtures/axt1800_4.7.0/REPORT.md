@@ -263,6 +263,26 @@ Differences from the 2023 reference:
 
 Not verified: whether the LEDs turn off and on at the set times (enabled for less than 1 s); the day numbering of the router itself (only the web UI labels); times that are not two digits, which the web UI does not write.
 
+### timer reboot schedule (write test, 2026-11-14)
+
+Verified on the router only with `enable: false`, so that no reboot could be scheduled. The schedule was `{"enable":false,"hour":"03","min":"00","week":[1,4]}` before and after the test. The fixtures `timer.*_reboot*.json` with request IDs 12000-12010 are one sequence (`glinettest/timer_test.go` replays them).
+
+| Call | Params | Result |
+|---|---|---|
+| `get_reboot` | none | `{"enable":bool, "hour":string, "min":string, "week":[int]}` |
+| `set_reboot` | `{enable, hour?, min?, week?}` | `[]` |
+
+Formats: as in "timer LED schedule". `hour` and `min` are strings with two digits (`"03"`, `"00"`) in the router's local time. The web UI labels the days 0 Sunday to 6 Saturday, and sends `week` sorted.
+
+Behavior:
+- A write with `enable: false`, without `enable`, or `{}` sets `enable` to `false` and ignores `hour`, `min` and `week` (`{"enable":false,"hour":"05","min":"30","week":[2]}` changed nothing else).
+- `enable: null` and `week` as a string (`"1,2"`) return `-32602 Invalid params` (no `err`) and change nothing.
+- Each write returned in about 4 ms.
+
+Not verified (no write with `enable: true` was sent): the enabled write and its errors, how `hour`, `min` and `week` are stored, and the day numbering of the router. A write with `enable: true` can only set the values; after it the router keeps them, so a test of it cannot restore the initial values `03:00` on days `[1,4]` without a schedule that can run in less than 6 days. The web UI sends `{enable: true, hour, min, week}` and only `{enable: false}` to disable, as for the LED schedule, so the enabled write probably works like `timer.set_led` (all fields necessary, else `err_code -1`). `glinettest` emulates it like that.
+
+Differences from the 2023 reference: `hour`, `min` and `week` are not required (and are ignored) when `enable` is `false`. `set_reboot` returns `[]`, not `null`.
+
 ### dns
 - `get_config`: no `proto`. Extra: `controld_id`, `dot_provider` (string, `"0"`), `free_controld_id`, `override_vpn`. `server` items are strings like `"wwan 192.168.4.253"`.
 - `get_host`, `get_info`: match.

@@ -1,0 +1,24 @@
+{
+  "request": {
+    "id": 12009,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "timer",
+      "set_reboot",
+      {
+        "enable": false,
+        "week": "1,2"
+      }
+    ]
+  },
+  "response": {
+    "id": 12009,
+    "jsonrpc": "2.0",
+    "error": {
+      "message": "Invalid params",
+      "code": -32602
+    }
+  }
+}

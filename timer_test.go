@@ -52,3 +52,38 @@ func TestTimerLEDScheduleParameterMissing(t *testing.T) {
 		t.Errorf("server state = %+v, want %+v", got, initial)
 	}
 }
+
+func TestTimerRebootSchedule(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+
+	res, err := c.Timer.GetRebootSchedule(ctx)
+	if err != nil {
+		t.Fatalf("GetRebootSchedule: %v", err)
+	}
+	want := glinet.RebootSchedule{Hour: "03", Min: "00", Week: []int{1, 4}}
+	if !reflect.DeepEqual(*res, want) {
+		t.Errorf("GetRebootSchedule = %+v, want %+v", *res, want)
+	}
+
+	if err := c.Timer.SetRebootSchedule(ctx, glinet.RebootSchedule{Enabled: true, Hour: "04", Min: "30", Week: []int{0, 6}}); err != nil {
+		t.Fatalf("SetRebootSchedule: %v", err)
+	}
+	wantState := glinettest.RebootSchedule{Enabled: true, Hour: "04", Min: "30", Week: []int{0, 6}}
+	if got := srv.Timer.RebootSchedule(); !reflect.DeepEqual(got, wantState) {
+		t.Errorf("server state = %+v, want %+v", got, wantState)
+	}
+
+	if err := c.Timer.SetRebootSchedule(ctx, glinet.RebootSchedule{Enabled: false, Hour: "05"}); err != nil {
+		t.Fatalf("SetRebootSchedule disabled: %v", err)
+	}
+	wantState.Enabled = false
+	if got := srv.Timer.RebootSchedule(); !reflect.DeepEqual(got, wantState) {
+		t.Errorf("server state after disable = %+v, want %+v", got, wantState)
+	}
+
+	err = c.Timer.SetRebootSchedule(ctx, glinet.RebootSchedule{Enabled: true, Hour: "04", Min: "30"})
+	if code := rpcCode(t, err); code != -1 {
+		t.Errorf("code = %d, want -1", code)
+	}
+}
