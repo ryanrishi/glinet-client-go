@@ -38,6 +38,7 @@ type Client struct {
 	Digest   *DigestService
 	Firewall *FirewallService
 	LAN      *LANService
+	LED      *LEDService
 	System   *SystemService
 }
 
@@ -91,6 +92,7 @@ func newClient(host string) (*Client, error) {
 	c.Digest = (*DigestService)(&c.common)
 	c.Firewall = (*FirewallService)(&c.common)
 	c.LAN = (*LANService)(&c.common)
+	c.LED = (*LEDService)(&c.common)
 	c.System = (*SystemService)(&c.common)
 
 	return c, nil

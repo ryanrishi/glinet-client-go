@@ -64,6 +64,7 @@ type Server struct {
 	AdGuardHome *AdGuardHome
 	Firewall    *Firewall
 	LAN         *LAN
+	LED         *LED
 
 	srv *httptest.Server
 
@@ -98,6 +99,8 @@ func NewServer(t testing.TB) *Server {
 	s.Firewall.register(s)
 	s.LAN = newLAN()
 	s.LAN.register(s)
+	s.LED = newLED()
+	s.LED.register(s)
 
 	s.srv = httptest.NewServer(http.HandlerFunc(s.serveHTTP))
 	s.URL = s.srv.URL

@@ -1,0 +1,23 @@
+{
+  "request": {
+    "id": 10011,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "led",
+      "set_config",
+      {
+        "led_enable": null
+      }
+    ]
+  },
+  "response": {
+    "id": 10011,
+    "jsonrpc": "2.0",
+    "error": {
+      "message": "Invalid params",
+      "code": -32602
+    }
+  }
+}

@@ -32,7 +32,7 @@ if err != nil {
 tz, err := client.System.GetTimezoneConfig(ctx)
 ```
 
-The client has the services `AdGuard`, `Digest`, `Firewall`, `LAN` and `System`.
+The client has the services `AdGuard`, `Digest`, `Firewall`, `LAN`, `LED` and `System`.
 `NewClientUnauthenticated` returns a client that has no session. Only `Digest` works without a session.
 
 `Call` calls a module method that has no typed method yet. A nil `params` sends `{}`. A nil `result` discards the response.

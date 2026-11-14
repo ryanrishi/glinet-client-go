@@ -214,6 +214,26 @@ Differences from the 2023 reference:
 
 Not verified: `set_dmz` with `enabled: true` and no `dest_ip`, or with an invalid `dest_ip` (not sent, so that the DMZ could not take traffic for an unknown host); `priority` on write and what it does; whether `set_port_forward`, `remove_port_forward`, `set_rule` or `remove_rule` move the DMZ section (in the test the DMZ section was at the end at each of these calls); whether the firewall forwards traffic to the DMZ host (no traffic was sent).
 
+### led (write test, 2026-11-14)
+
+Verified on the router. `led_enable` was `true` before and after the test. The fixtures `led.*.json` with request IDs 10000-10106 are one sequence (`glinettest/led_test.go` replays them).
+
+| Call | Params | Result |
+|---|---|---|
+| `get_config` | none | `{"led_enable":bool}` |
+| `set_config` | `{led_enable}` | `[]` |
+
+Behavior:
+- `led_enable` is a JSON bool. The router reads the value as a flag: no `led_enable` (also `{}`) gives `false`; `false` gives `false`; each other value gives `true`, also `0`, `1`, `"true"` and `"false"`.
+- `led_enable: null` returns `-32602 Invalid params` with no `err` and changes nothing.
+- Other keys are ignored.
+- Each write returned in about 130-180 ms. The next read, 3 ms later, had the new value.
+- A write of the LED schedule (`timer.set_led`, also enabled) did not change `led_enable`.
+
+Differences from the 2023 reference: `set_config` returns `[]`, not `null`. The reference does not say that no `led_enable` disables the LEDs.
+
+Not verified: the physical LEDs (no one looked at the router).
+
 ### dns
 - `get_config`: no `proto`. Extra: `controld_id`, `dot_provider` (string, `"0"`), `free_controld_id`, `override_vpn`. `server` items are strings like `"wwan 192.168.4.253"`.
 - `get_host`, `get_info`: match.
