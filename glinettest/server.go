@@ -46,9 +46,9 @@ var (
 	ErrInvalidParams  = &Error{Code: -32602, Message: "Invalid params"}
 )
 
-// errInternalServerError makes the server answer with HTTP status 500 and no JSON-RPC response,
-// as the router does when a method fails.
-var errInternalServerError = errors.New("internal server error")
+// ErrInternalServerError makes the server answer with HTTP status 500 and no JSON-RPC response,
+// as the router does when some methods fail. A Method can return it.
+var ErrInternalServerError = errors.New("internal server error")
 
 // Method handles one module method. params is the fourth element of the call params.
 // A returned *Error goes to the client as is. Other errors become -32603.
@@ -113,6 +113,14 @@ func (s *Server) Handle(module, method string, m Method) {
 	s.methods[module+"."+method] = m
 }
 
+// Handler returns the method that serves module.method, or nil if there is none.
+// A test can call it from a method that it sets with Handle.
+func (s *Server) Handler(module, method string) Method {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.methods[module+"."+method]
+}
+
 // ExpireSessions makes all session IDs invalid. The next call with an old session ID gets -32000.
 func (s *Server) ExpireSessions() {
 	s.mu.Lock()
@@ -146,7 +154,7 @@ func (s *Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := s.dispatch(req)
-	if errors.Is(err, errInternalServerError) {
+	if errors.Is(err, ErrInternalServerError) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

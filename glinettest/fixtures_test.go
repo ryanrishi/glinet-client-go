@@ -70,7 +70,7 @@ func replayFixtures(t *testing.T, patterns ...string) {
 		result, err := s.dispatch(request{Method: f.Request.Method, Params: params})
 
 		if f.Response.HTTPStatus != 0 {
-			if f.Response.HTTPStatus != 500 || !errors.Is(err, errInternalServerError) {
+			if f.Response.HTTPStatus != 500 || !errors.Is(err, ErrInternalServerError) {
 				t.Errorf("%s: got result %v error %v, want HTTP status %d", f.name, result, err, f.Response.HTTPStatus)
 			}
 			continue

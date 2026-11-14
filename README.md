@@ -65,7 +65,10 @@ client, err := glinet.NewClientWithHost(srv.URL, srv.Username, []byte(srv.Passwo
 
 srv.ExpireSessions()                    // the next call gets -32000
 srv.Handle("system", "get_info", method) // add or replace a method
+srv.Handler("system", "get_info")        // the method that serves system.get_info now
 ```
+
+A method can return a `*glinettest.Error` to send a JSON-RPC error, or `glinettest.ErrInternalServerError` to send HTTP status 500.
 
 To run the read-only test against a real router, set `GLINET_USERNAME` and `GLINET_PASSWORD`, and `GLINET_HOST` if the router is not at `http://192.168.8.1` (in the environment or in `.env`) and run:
 
