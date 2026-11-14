@@ -407,4 +407,18 @@ const (
 			}
 		]
 	}`
+
+	wifiStatus = `{
+		"res": [
+			{
+				"channel": 48,
+				"name": "radio0",
+				"state": "ready"
+			},
+			{
+				"name": "radio1",
+				"state": "ready"
+			}
+		]
+	}`
 )

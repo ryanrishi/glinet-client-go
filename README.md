@@ -32,7 +32,7 @@ if err != nil {
 tz, err := client.System.GetTimezoneConfig(ctx)
 ```
 
-The client has the services `AdGuard`, `Digest`, `DNS`, `Firewall`, `LAN`, `LED`, `System` and `Timer`.
+The client has the services `AdGuard`, `Cable`, `Clients`, `Digest`, `DNS`, `Firewall`, `LAN`, `LED`, `Network`, `System`, `Timer` and `Wifi`.
 `NewClientUnauthenticated` returns a client that has no session. Only `Digest` works without a session.
 
 `Call` calls a module method that has no typed method yet. A nil `params` sends `{}`. A nil `result` discards the response.
@@ -66,7 +66,10 @@ client, err := glinet.NewClientWithHost(srv.URL, srv.Username, []byte(srv.Passwo
 srv.ExpireSessions()                    // the next call gets -32000
 srv.Handle("system", "get_info", method) // add or replace a method
 srv.Handler("system", "get_info")        // the method that serves system.get_info now
+srv.System.SetInfo(json.RawMessage(`{"model": "mt6000"}`)) // the result of a read-only method
 ```
+
+The results of the read-only methods are those of the test router (`testdata/fixtures/axt1800_4.7.0`; 3 of its clients for `clients.get_list`) until a test sets them.
 
 A method can return a `*glinettest.Error` to send a JSON-RPC error, or `glinettest.ErrInternalServerError` to send HTTP status 500.
 

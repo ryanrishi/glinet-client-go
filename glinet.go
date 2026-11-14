@@ -45,6 +45,7 @@ type Client struct {
 	Network  *NetworkService
 	System   *SystemService
 	Timer    *TimerService
+	Wifi     *WifiService
 }
 
 type service struct {
@@ -104,6 +105,7 @@ func newClient(host string) (*Client, error) {
 	c.Network = (*NetworkService)(&c.common)
 	c.System = (*SystemService)(&c.common)
 	c.Timer = (*TimerService)(&c.common)
+	c.Wifi = (*WifiService)(&c.common)
 
 	return c, nil
 }

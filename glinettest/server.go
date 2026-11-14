@@ -70,6 +70,7 @@ type Server struct {
 	LED         *LED
 	Network     *Network
 	Timer       *Timer
+	Wifi        *Wifi
 
 	srv *httptest.Server
 
@@ -116,6 +117,8 @@ func NewServer(t testing.TB) *Server {
 	s.Network.register(s)
 	s.Timer = newTimer()
 	s.Timer.register(s)
+	s.Wifi = newWifi()
+	s.Wifi.register(s)
 
 	s.srv = httptest.NewServer(http.HandlerFunc(s.serveHTTP))
 	s.URL = s.srv.URL
