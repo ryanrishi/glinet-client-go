@@ -1,0 +1,20 @@
+{
+  "request": {
+    "id": 13304,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "dns",
+      "set_host",
+      {
+        "content": "# comment\n192.0.2.1 tf-test.invalid # trailing\n\n\n\t192.0.2.2\ttf-test2.invalid  alias.invalid\n"
+      }
+    ]
+  },
+  "response": {
+    "id": 13304,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

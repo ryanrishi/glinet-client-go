@@ -1,0 +1,20 @@
+{
+  "request": {
+    "id": 13308,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "dns",
+      "set_host",
+      {
+        "content": "192.0.2.1 tf-test.invalid\r\n192.0.2.2 tf-test2.invalid\r\n"
+      }
+    ]
+  },
+  "response": {
+    "id": 13308,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

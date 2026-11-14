@@ -1,0 +1,23 @@
+{
+  "request": {
+    "id": 14310,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "dns",
+      "set_config",
+      {
+        "force_dns": false,
+        "rebind_protection": 0,
+        "override_vpn": true,
+        "mode": "auto"
+      }
+    ]
+  },
+  "response": {
+    "id": 14310,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

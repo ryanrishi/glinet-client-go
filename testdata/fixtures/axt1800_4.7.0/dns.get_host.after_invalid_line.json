@@ -1,0 +1,20 @@
+{
+  "request": {
+    "id": 13307,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "dns",
+      "get_host",
+      {}
+    ]
+  },
+  "response": {
+    "id": 13307,
+    "jsonrpc": "2.0",
+    "result": {
+      "content": "not-an-ip tf-test.invalid\nonlyonefield\n192.0.2.256 x.invalid\n"
+    }
+  }
+}

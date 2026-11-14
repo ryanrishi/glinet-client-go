@@ -1,0 +1,30 @@
+{
+  "request": {
+    "id": 11213,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "timer",
+      "set_led",
+      {
+        "enable": true,
+        "turnon_hour": "",
+        "turnon_min": "04",
+        "turnoff_hour": "18",
+        "turnoff_min": "04",
+        "week": [
+          1
+        ]
+      }
+    ]
+  },
+  "response": {
+    "id": 11213,
+    "jsonrpc": "2.0",
+    "result": {
+      "err_msg": "parameter missing",
+      "err_code": -1
+    }
+  }
+}

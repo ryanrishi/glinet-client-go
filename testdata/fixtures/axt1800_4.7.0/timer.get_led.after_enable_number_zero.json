@@ -1,0 +1,27 @@
+{
+  "request": {
+    "id": 11204,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "timer",
+      "get_led",
+      {}
+    ]
+  },
+  "response": {
+    "id": 11204,
+    "jsonrpc": "2.0",
+    "result": {
+      "turnon_hour": "05",
+      "turnoff_min": "05",
+      "turnon_min": "05",
+      "enable": true,
+      "week": [
+        3
+      ],
+      "turnoff_hour": "19"
+    }
+  }
+}

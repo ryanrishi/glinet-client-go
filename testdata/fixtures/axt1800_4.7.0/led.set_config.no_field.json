@@ -1,0 +1,18 @@
+{
+  "request": {
+    "id": 10003,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "led",
+      "set_config",
+      {}
+    ]
+  },
+  "response": {
+    "id": 10003,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

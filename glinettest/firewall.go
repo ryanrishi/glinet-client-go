@@ -348,7 +348,7 @@ func (m *Firewall) remove(params json.RawMessage) (any, error) {
 	defer m.mu.Unlock()
 	i := m.index(p.ID)
 	if i < 0 || m.sections[i].values["dest_port"] == nil {
-		return nil, errInternalServerError
+		return nil, ErrInternalServerError
 	}
 	m.sections = slices.Delete(m.sections, i, i+1)
 

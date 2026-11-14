@@ -32,7 +32,7 @@ if err != nil {
 tz, err := client.System.GetTimezoneConfig(ctx)
 ```
 
-The client has the services `AdGuard`, `Digest`, `Firewall`, `LAN` and `System`.
+The client has the services `AdGuard`, `Digest`, `DNS`, `Firewall`, `LAN`, `LED`, `System` and `Timer`.
 `NewClientUnauthenticated` returns a client that has no session. Only `Digest` works without a session.
 
 `Call` calls a module method that has no typed method yet. A nil `params` sends `{}`. A nil `result` discards the response.
@@ -47,7 +47,7 @@ var res struct {
 err := client.Call(ctx, "lan", "get_config_list", nil, &res)
 ```
 
-Router errors are `*glinet.RPCError`:
+Router errors are `*glinet.RPCError`. This includes a result with a non-zero `err_code`, which some write methods return:
 
 ```go
 var rpcErr *glinet.RPCError
@@ -65,7 +65,10 @@ client, err := glinet.NewClientWithHost(srv.URL, srv.Username, []byte(srv.Passwo
 
 srv.ExpireSessions()                    // the next call gets -32000
 srv.Handle("system", "get_info", method) // add or replace a method
+srv.Handler("system", "get_info")        // the method that serves system.get_info now
 ```
+
+A method can return a `*glinettest.Error` to send a JSON-RPC error, or `glinettest.ErrInternalServerError` to send HTTP status 500.
 
 To run the read-only test against a real router, set `GLINET_USERNAME` and `GLINET_PASSWORD`, and `GLINET_HOST` if the router is not at `http://192.168.8.1` (in the environment or in `.env`) and run:
 

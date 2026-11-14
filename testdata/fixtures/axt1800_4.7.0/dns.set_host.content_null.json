@@ -1,0 +1,23 @@
+{
+  "request": {
+    "id": 13318,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "dns",
+      "set_host",
+      {
+        "content": null
+      }
+    ]
+  },
+  "response": {
+    "id": 13318,
+    "jsonrpc": "2.0",
+    "error": {
+      "message": "Invalid params",
+      "code": -32602
+    }
+  }
+}

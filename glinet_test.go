@@ -233,6 +233,42 @@ func TestCallParams(t *testing.T) {
 	}
 }
 
+func TestServerHandlerWrapsMethod(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+
+	original := srv.Handler("system", "get_timezone_config")
+	calls := 0
+	srv.Handle("system", "get_timezone_config", func(params json.RawMessage) (any, error) {
+		calls++
+		return original(params)
+	})
+
+	res, err := c.System.GetTimezoneConfig(ctx)
+	if err != nil {
+		t.Fatalf("GetTimezoneConfig: %v", err)
+	}
+	if calls != 1 || res.Zonename != srv.System.TimezoneConfig().Zonename {
+		t.Errorf("calls = %d, result %+v, want 1 call and the original result", calls, *res)
+	}
+
+	if m := srv.Handler("system", "no_such_method"); m != nil {
+		t.Error("Handler of an unknown method is not nil")
+	}
+}
+
+func TestServerInternalServerError(t *testing.T) {
+	c, srv := newClient(t)
+	srv.Handle("test", "fail", func(json.RawMessage) (any, error) {
+		return nil, glinettest.ErrInternalServerError
+	})
+
+	err := c.Call(context.Background(), "test", "fail", nil, nil)
+	if err == nil || !strings.Contains(err.Error(), "500") {
+		t.Errorf("error = %v, want HTTP status 500", err)
+	}
+}
+
 func TestSystemGetStatus(t *testing.T) {
 	c, _ := newClient(t)
 
@@ -330,5 +366,18 @@ func TestAdGuardConfig(t *testing.T) {
 	}
 	if got := srv.AdGuardHome.Config(); !got.Enabled || got.DNSEnabled {
 		t.Errorf("server state = %+v, want enabled=true dns_enabled=false", got)
+	}
+}
+
+func TestCallResultError(t *testing.T) {
+	c, srv := newClient(t)
+	srv.Handle("test", "result_error", func(json.RawMessage) (any, error) {
+		return map[string]any{"err_code": -1, "err_msg": "parameter missing"}, nil
+	})
+
+	err := c.Call(context.Background(), "test", "result_error", nil, nil)
+	var rpcErr *glinet.RPCError
+	if !errors.As(err, &rpcErr) || rpcErr.Code != -1 || rpcErr.Message != "parameter missing" {
+		t.Errorf("error = %v, want *RPCError -1 parameter missing", err)
 	}
 }

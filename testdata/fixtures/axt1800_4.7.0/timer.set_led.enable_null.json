@@ -1,0 +1,30 @@
+{
+  "request": {
+    "id": 11207,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "timer",
+      "set_led",
+      {
+        "enable": null,
+        "turnon_hour": "04",
+        "turnon_min": "04",
+        "turnoff_hour": "18",
+        "turnoff_min": "04",
+        "week": [
+          4
+        ]
+      }
+    ]
+  },
+  "response": {
+    "id": 11207,
+    "jsonrpc": "2.0",
+    "error": {
+      "message": "Invalid params",
+      "code": -32602
+    }
+  }
+}

@@ -11,7 +11,8 @@ type AdGuardHomeConfig struct {
 	DNSEnabled bool `json:"dns_enabled"`
 }
 
-// AdGuardHome serves the adguardhome module.
+// AdGuardHome serves the adguardhome module. Like the router, set_config without enabled
+// disables AdGuard Home, and set_config without dns_enabled keeps dns_enabled.
 type AdGuardHome struct {
 	mu     sync.Mutex
 	config AdGuardHomeConfig
@@ -43,8 +44,11 @@ func (m *AdGuardHome) register(s *Server) {
 }
 
 func (m *AdGuardHome) setConfig(params json.RawMessage) (any, error) {
+	if _, err := objectParams(params); err != nil {
+		return nil, err
+	}
 	var p struct {
-		Enabled    *bool `json:"enabled"`
+		Enabled    bool  `json:"enabled"`
 		DNSEnabled *bool `json:"dns_enabled"`
 	}
 	if err := json.Unmarshal(params, &p); err != nil {
@@ -53,12 +57,10 @@ func (m *AdGuardHome) setConfig(params json.RawMessage) (any, error) {
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if p.Enabled != nil {
-		m.config.Enabled = *p.Enabled
-	}
+	m.config.Enabled = p.Enabled
 	if p.DNSEnabled != nil {
 		m.config.DNSEnabled = *p.DNSEnabled
 	}
 
-	return struct{}{}, nil
+	return writeResult, nil
 }

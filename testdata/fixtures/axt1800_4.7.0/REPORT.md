@@ -11,7 +11,7 @@
 
 ## Error format
 
-All errors are a JSON-RPC `error` object. No response had `err_code` inside `result`.
+All errors in the probe were a JSON-RPC `error` object. No probe response had `err_code` inside `result`. Some write methods return `{"err_code":...,"err_msg":...}` as the result (see "timer LED schedule").
 
 - Unknown method: `{"error":{"code":-32601,"message":"Method not found"}}` (37 calls).
 - Invalid or expired sid: `{"error":{"code":-32000,"message":"Access denied"}}`. See `invalid_sid.system.get_info.json`.
@@ -214,12 +214,150 @@ Differences from the 2023 reference:
 
 Not verified: `set_dmz` with `enabled: true` and no `dest_ip`, or with an invalid `dest_ip` (not sent, so that the DMZ could not take traffic for an unknown host); `priority` on write and what it does; whether `set_port_forward`, `remove_port_forward`, `set_rule` or `remove_rule` move the DMZ section (in the test the DMZ section was at the end at each of these calls); whether the firewall forwards traffic to the DMZ host (no traffic was sent).
 
+### led (write test, 2026-11-14)
+
+Verified on the router. `led_enable` was `true` before and after the test. The fixtures `led.*.json` with request IDs 10000-10106 are one sequence (`glinettest/led_test.go` replays them).
+
+| Call | Params | Result |
+|---|---|---|
+| `get_config` | none | `{"led_enable":bool}` |
+| `set_config` | `{led_enable}` | `[]` |
+
+Behavior:
+- `led_enable` is a JSON bool. The router reads the value as a flag: no `led_enable` (also `{}`) gives `false`; `false` gives `false`; each other value gives `true`, also `0`, `1`, `"true"` and `"false"`.
+- `led_enable: null` returns `-32602 Invalid params` with no `err` and changes nothing.
+- Other keys are ignored.
+- Each write returned in about 130-180 ms. The next read, 3 ms later, had the new value.
+- A write of the LED schedule (`timer.set_led`, also enabled) did not change `led_enable`.
+
+Differences from the 2023 reference: `set_config` returns `[]`, not `null`. The reference does not say that no `led_enable` disables the LEDs.
+
+Not verified: the physical LEDs (no one looked at the router).
+
+### timer LED schedule (write test, 2026-11-14)
+
+Verified on the router. The schedule was `{"enable":false,"turnon_hour":"07","turnon_min":"00","turnoff_hour":"22","turnoff_min":"00","week":[0,1,2,3,4,5,6]}` before and after the test. The fixtures `timer.*_led*.json` are one sequence (request IDs 11000-11219; `glinettest/timer_test.go` replays them). The fixtures named `*.disabled_*` are the writes with `enable: false`.
+
+| Call | Params | Result |
+|---|---|---|
+| `get_led` | none | `{"enable":bool, "turnon_hour":string, "turnon_min":string, "turnoff_hour":string, "turnoff_min":string, "week":[int]}` |
+| `set_led` | `{enable, turnon_hour, turnon_min, turnoff_hour, turnoff_min, week}` | `[]`, or `{"err_code":-1,"err_msg":"parameter missing"}` |
+
+Formats:
+- Times are strings: hour and minute, in the router's local time (the time zone of `system.get_timezone_config`). The router has `"07"`, `"00"` (two digits); the web UI splits `"HH:MM"` and writes the parts. The router does not change a written value: `9` (number) and `"9"` give `"9"`, `"0"` gives `"0"`.
+- `week` is an array of numbers. The web UI labels the days 0 Sunday, 1 Monday, ..., 6 Saturday. The router keeps the array as written: `[5,1,1]` stays `[5,1,1]`, and `[7]` stays `[7]`. Strings with numbers are written as numbers (`["1","2"]` gives `[1,2]`). An empty array gives `[0,1,2,3,4,5,6]`.
+
+Behavior:
+- `enable` is read as a flag: no `enable` and `false` are false; each other value is true, also `0` and `"false"`.
+- When the write does not enable the schedule, the router sets `enable` to `false` and ignores all other fields, also when they are valid (`{"enable":false,"turnon_hour":"08",...}` changed nothing else). The web UI also sends `week` in this case.
+- When the write enables the schedule, all five other fields are necessary. If one is missing, or a time is `""`, the result is `{"err_code":-1,"err_msg":"parameter missing"}` (a successful JSON-RPC response) and nothing changes. `{"enable":true}` alone also gives this error.
+- No value is checked: `"25"`, `"60"`, `"ab"`, `[7]`, and the same on and off time were accepted and stored.
+- `null` for any field returns `-32602 Invalid params` (no `err`) and changes nothing. `week` as a string (`"1,2"`) returns `-32602`, also when `enable` is `false`.
+- Each write returned in about 5-20 ms. The next read, 4 ms later, had the new values.
+- The schedule does not change `led.get_config`.
+
+Differences from the 2023 reference:
+- All fields are required only when `enable` is true. A write that disables the schedule keeps the times and days.
+- The "parameter missing" error is in the result, not a JSON-RPC error.
+- `set_led` returns `[]`, not `null`.
+
+Not verified: whether the LEDs turn off and on at the set times (enabled for less than 1 s); the day numbering of the router itself (only the web UI labels); times that are not two digits, which the web UI does not write.
+
+### timer reboot schedule (write test, 2026-11-14)
+
+Verified on the router only with `enable: false`, so that no reboot could be scheduled. The schedule was `{"enable":false,"hour":"03","min":"00","week":[1,4]}` before and after the test. The fixtures `timer.*_reboot*.json` with request IDs 12000-12010 are one sequence (`glinettest/timer_test.go` replays them).
+
+| Call | Params | Result |
+|---|---|---|
+| `get_reboot` | none | `{"enable":bool, "hour":string, "min":string, "week":[int]}` |
+| `set_reboot` | `{enable, hour?, min?, week?}` | `[]` |
+
+Formats: as in "timer LED schedule". `hour` and `min` are strings with two digits (`"03"`, `"00"`) in the router's local time. The web UI labels the days 0 Sunday to 6 Saturday, and sends `week` sorted.
+
+Behavior:
+- A write with `enable: false`, without `enable`, or `{}` sets `enable` to `false` and ignores `hour`, `min` and `week` (`{"enable":false,"hour":"05","min":"30","week":[2]}` changed nothing else).
+- `enable: null` and `week` as a string (`"1,2"`) return `-32602 Invalid params` (no `err`) and change nothing.
+- Each write returned in about 4 ms.
+
+Not verified (no write with `enable: true` was sent): the enabled write and its errors, how `hour`, `min` and `week` are stored, and the day numbering of the router. A write with `enable: true` can only set the values; after it the router keeps them, so a test of it cannot restore the initial values `03:00` on days `[1,4]` without a schedule that can run in less than 6 days. The web UI sends `{enable: true, hour, min, week}` and only `{enable: false}` to disable, as for the LED schedule, so the enabled write probably works like `timer.set_led` (all fields necessary, else `err_code -1`). `glinettest` emulates it like that.
+
+Differences from the 2023 reference: `hour`, `min` and `week` are not required (and are ignored) when `enable` is `false`. `set_reboot` returns `[]`, not `null`.
+
+### dns hosts file (write test, 2026-11-14)
+
+Verified on the router with names under `.invalid` and single-label names, and the IPs `192.0.2.1`, `192.0.2.2` and `192.168.8.250` (no known client). The hosts file was `"127.0.0.1 localhost\n\n::1     localhost ip6-localhost ip6-loopback\nff02::1 ip6-allnodes\nff02::2 ip6-allrouters\n"` before and after the test. The fixtures `dns.*_host*.json` with request IDs 13000-13405 are one sequence (`glinettest/dns_test.go` replays them).
+
+| Call | Params | Result |
+|---|---|---|
+| `get_host` | none | `{"content":string}` |
+| `set_host` | `{content}` | `[]` |
+
+Behavior:
+- `set_host` replaces the whole file with `content`. A write without the localhost lines removes them.
+- The router keeps the content byte for byte: comments (`# ...`, also after a name), blank lines, tabs, more than one space, `\r\n`, two trailing newlines, IPv6 lines. It adds `\n` when the content does not end with `\n`; `""` gives `"\n"`.
+- No line is checked: `not-an-ip name`, a line with one field and `192.0.2.256 name` were accepted. (The web UI checks that each non-empty line is an IP and at least one name, and does not allow comments.)
+- `{}` and `content` as a number return HTTP 500 (no JSON-RPC body) and change nothing. `content: null` returns `-32602 Invalid params` (no `err`).
+- Each write returned in about 7-25 ms. The next read, 3 ms later, had the new content.
+- The DNS server of the router (`dig @192.168.8.1`) did not answer with a new name: `tf-test.invalid`, `tftesthost`, `tftesthost.lan` (192.0.2.x) and `tftesthost2` (192.168.8.250) were NXDOMAIN for at least 30 s after the write, and also after a `dns.set_config` write. `ip6-allnodes` from the initial file was answered. So `set_host` does not reload the DNS server, and it is not known when the new names take effect (probably at the next start of dnsmasq).
+
+Differences from the 2023 reference: `set_host` returns `[]`, not `null`. The reference does not say that the content is not checked, that a newline is added, or that the DNS server is not reloaded.
+
+Not verified: whether a reboot or another write makes the DNS server use the new file; the maximum size.
+
+### dns config (write test, 2026-11-14)
+
+Verified on the router in mode `auto`, with a WireGuard client tunnel that supplies DNS (`wg 192.168.5.1` in `server`). The config was `{"mode":"auto","force_dns":false,"rebind_protection":false,"override_vpn":true,"dot_provider":"0","nextdns_id":"","controld_id":"","free_controld_id":"","server":["wwan 192.168.4.253","wg 192.168.5.1"]}` before and after the test, and `server` did not change during it. Only `rebind_protection` and `force_dns` were changed on purpose, one at a time. The fixtures `dns.*_config*.json` with request IDs 14000-14315 are one sequence (`glinettest/dns_test.go` replays them).
+
+| Call | Params | Result |
+|---|---|---|
+| `get_config` | none | `{"mode":string, "force_dns":bool, "rebind_protection":bool, "override_vpn":bool, "server":[string], "dot_provider":string, "nextdns_id":string, "controld_id":string, "free_controld_id":string}` |
+| `set_config` | `{mode?, force_dns, rebind_protection, override_vpn}` | `[]` |
+
+Formats:
+- In mode `auto`, `server` is the upstream DNS servers that the router learned, one string `"<interface> <ip>"` for each. It is runtime data.
+- `dot_provider` is a string (`"0"`). The web UI reads `"1"` as NextDNS and `"2"`/`"3"` as ControlD plans.
+
+Behavior:
+- `force_dns`, `rebind_protection` and `override_vpn` are read as flags: no value gives `false`, `false` gives `false`, each other value gives `true` (`rebind_protection: 0` gave `true`). The first test, `{"rebind_protection":true}` alone, also set `override_vpn` from `true` to `false`; it was restored 12 s later. `server` and the DNS answers did not change in that time.
+- No `mode` keeps the mode (`{"force_dns":false,"rebind_protection":false,"override_vpn":true}` kept `auto`). This is what the web UI sends when AdGuard Home is enabled; otherwise it sends `mode` too, and the fields of that mode (`server` for `manual` and `proxy`; `proto`, `dot_provider` and an ID for `secure`).
+- `null` for a field returns `-32602 Invalid params` (no `err`) and changes nothing.
+- Each write returned in about 0.6-1.1 s. The next read, 7 ms later, had the new values. DNS queries to the router (every 250 ms) were answered during each write; the WireGuard client stayed connected.
+- A `set_config` while AdGuard Home was enabled returned `[]` (no "DNS is occupied" error).
+
+Differences from the 2023 reference:
+- No `proto` in mode `auto`. Extra fields: `override_vpn`, `dot_provider`, `controld_id`, `free_controld_id`.
+- `mode` is optional. The booleans are not optional: a missing boolean is written as `false`.
+- `set_config` returns `[]`, not `null`.
+
+Not verified: modes other than `auto` (the active tunnel supplies DNS, so no mode change was tested); `server`, `proto`, `dot_provider` and the IDs on write; an invalid `mode`; the errors `-1` (DNS is occupied) and `-2`/`-3` of the reference and the web UI; a write of `override_vpn` on purpose and what it does with the tunnel DNS.
+
 ### dns
 - `get_config`: no `proto`. Extra: `controld_id`, `dot_provider` (string, `"0"`), `free_controld_id`, `override_vpn`. `server` items are strings like `"wwan 192.168.4.253"`.
 - `get_host`, `get_info`: match.
 
 ### adguardhome
 - `get_config`: extra `dns_enabled` (reference has it only as `set_config` input).
+
+### adguardhome (write test, 2026-11-14)
+
+Verified on the router. The config was `{"enabled":false,"dns_enabled":true}` before and after the test. AdGuard Home was enabled two times, for 13 s and 38 s. The fixtures `adguardhome.*.json` with request IDs 15000-15501 are one sequence (`glinettest/adguardhome_test.go` replays them).
+
+| Call | Params | Result |
+|---|---|---|
+| `get_config` | none | `{"enabled":bool, "dns_enabled":bool}` |
+| `set_config` | `{enabled, dns_enabled?}` | `[]` |
+
+Behavior:
+- No `enabled` disables AdGuard Home: `{"dns_enabled":true}` while it was enabled gave `enabled: false`.
+- No `dns_enabled` keeps `dns_enabled` (`{}` and `{"enabled":false}` kept `true`). `dns_enabled` can be changed while AdGuard Home is disabled. The web UI sends `{enabled: true, dns_enabled}` to enable and only `{enabled: false}` to disable.
+- `enabled: null` returns `-32602 Invalid params` (no `err`) and changes nothing. Other value types were not sent.
+- A write that enables AdGuard Home returned in about 270 ms, and `get_config` had the new values at once. The service started later: `system.get_status` showed `adguard` status `0` 1 s after the write and `1` 38 s after it. The DNS server of the router did not answer (`dig` timeout) from 1 s after `{"enabled":true,"dns_enabled":false}` until 3 s after the next disable (16 s); in the second test, after `{"enabled":true,"dns_enabled":true}`, one query 8 s after the write timed out and the others were answered. The web UI waits 6 s after it enables and 3 s after it disables.
+- A write that disables it returned in about 20-50 ms. DNS queries were answered after it.
+- No write returned an error. The "other DNS not turned off" error (`err_code 1` in the result, from the web UI and the reference) did not occur in DNS mode `auto`.
+
+Differences from the 2023 reference: `dns_enabled` is in the `get_config` result. `enabled` is not required (no value disables), `dns_enabled` is not required (no value keeps it). `set_config` returns `[]`, not `null`.
+
+Not verified: the error when another DNS feature is active (that needs a DNS mode change); whether AdGuard Home answers queries after it started (it was disabled after 38 s); what `dns_enabled: false` does while AdGuard Home runs.
 
 ### wifi
 - `get_config`: extra `res[].random_bssid`. `res[].channels` items are objects `{channel, dfs, psc}`. `res[].htmodes` is an object (mode → max bandwidth, plus `auto`), as the reference says.
