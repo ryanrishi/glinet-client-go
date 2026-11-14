@@ -35,6 +35,7 @@ type Client struct {
 
 	// services
 	AdGuard  *AdGuardService
+	Clients  *ClientsService
 	Digest   *DigestService
 	DNS      *DNSService
 	Firewall *FirewallService
@@ -91,6 +92,7 @@ func newClient(host string) (*Client, error) {
 	c.common.client = c
 
 	c.AdGuard = (*AdGuardService)(&c.common)
+	c.Clients = (*ClientsService)(&c.common)
 	c.Digest = (*DigestService)(&c.common)
 	c.DNS = (*DNSService)(&c.common)
 	c.Firewall = (*FirewallService)(&c.common)
