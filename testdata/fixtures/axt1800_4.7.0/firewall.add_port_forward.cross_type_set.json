@@ -1,0 +1,29 @@
+{
+  "request": {
+    "id": 3056,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "add_port_forward",
+      {
+        "name": "tf-test-pf-3",
+        "proto": "tcp",
+        "src": "wan",
+        "src_dport": "50021",
+        "dest": "lan",
+        "dest_ip": "192.168.8.250",
+        "dest_port": "50021",
+        "enabled": false
+      }
+    ]
+  },
+  "response": {
+    "id": 3056,
+    "jsonrpc": "2.0",
+    "result": {
+      "id": "cfg2d3837"
+    }
+  }
+}

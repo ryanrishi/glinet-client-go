@@ -1,0 +1,26 @@
+{
+  "request": {
+    "id": 3015,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "add_rule",
+      {
+        "name": "tf-test-4",
+        "src": "wan",
+        "dest_port": "50006",
+        "target": "DROP",
+        "enabled": false
+      }
+    ]
+  },
+  "response": {
+    "id": 3015,
+    "jsonrpc": "2.0",
+    "result": {
+      "id": "cfg2792bd"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "request": {
+    "id": 3057,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "set_rule",
+      {
+        "id": "cfg2d3837",
+        "name": "tf-test-pf-3b",
+        "enabled": false
+      }
+    ]
+  },
+  "response": {
+    "id": 3057,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "request": {
+    "id": 3042,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "remove_rule",
+      {}
+    ]
+  },
+  "response": {
+    "http_status": 500
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "request": {
+    "id": 3053,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "remove_rule",
+      {
+        "id": "cfg2d3837"
+      }
+    ]
+  },
+  "response": {
+    "id": 3053,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

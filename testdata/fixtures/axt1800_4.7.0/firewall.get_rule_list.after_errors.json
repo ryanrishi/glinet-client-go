@@ -1,0 +1,59 @@
+{
+  "request": {
+    "id": 3043,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "get_rule_list",
+      {}
+    ]
+  },
+  "response": {
+    "id": 3043,
+    "jsonrpc": "2.0",
+    "result": {
+      "res": [
+        {
+          "enabled": false,
+          "id": "cfg2392bd",
+          "dest_port": "50009",
+          "name": "tf-test-2c",
+          "target": "REJECT",
+          "dest": "lan",
+          "src": "wan"
+        },
+        {
+          "enabled": false,
+          "id": "cfg2492bd",
+          "dest_ip": "192.168.8.250",
+          "dest_port": "50004-50005",
+          "name": "tf-test-3",
+          "src": "wan",
+          "target": "REJECT",
+          "proto": "udp"
+        },
+        {
+          "id": "cfg2592bd",
+          "dest_port": "50006",
+          "name": "tf-test-4",
+          "target": "DROP",
+          "enabled": false,
+          "src": "wan"
+        },
+        {
+          "id": "cfg2692bd",
+          "dest_ip": "192.168.8.250",
+          "enabled": true,
+          "dest_port": "50007",
+          "name": "tf-test-5",
+          "target": "DROP",
+          "dest": "lan",
+          "proto": "tcp",
+          "src": "wan"
+        }
+      ]
+    }
+  }
+}

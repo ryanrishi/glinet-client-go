@@ -25,14 +25,23 @@ type fixture struct {
 	name string
 }
 
-// replayFixtures replays the fixtures of the real router that match pattern in the order of their
-// request IDs and compares each result, error and HTTP status 500 with the fake router.
-func replayFixtures(t *testing.T, pattern string) {
+// replayFixtures replays the fixtures of the real router that match one of patterns in the order
+// of their request IDs and compares each result, error and HTTP status 500 with the fake router.
+// The fixtures of one probe or write test session have request IDs in one block of 1000
+// (for example 3000-3999), and the router state between sessions is not in the fixtures,
+// so each block starts on a new fake router.
+func replayFixtures(t *testing.T, patterns ...string) {
 	t.Helper()
-	paths, err := filepath.Glob(filepath.Join("../testdata/fixtures/axt1800_4.7.0", pattern))
-	if err != nil || len(paths) == 0 {
-		t.Fatalf("no fixtures: %v", err)
+	var paths []string
+	for _, pattern := range patterns {
+		matches, err := filepath.Glob(filepath.Join("../testdata/fixtures/axt1800_4.7.0", pattern))
+		if err != nil || len(matches) == 0 {
+			t.Fatalf("no fixtures for %s: %v", pattern, err)
+		}
+		paths = append(paths, matches...)
 	}
+	slices.Sort(paths)
+	paths = slices.Compact(paths)
 
 	var fixtures []fixture
 	for _, p := range paths {
@@ -49,10 +58,14 @@ func replayFixtures(t *testing.T, pattern string) {
 	}
 	slices.SortFunc(fixtures, func(a, b fixture) int { return a.Request.ID - b.Request.ID })
 
-	s := NewServer(t)
-	s.sessions["sid"] = struct{}{}
-
+	var s *Server
+	block := -1
 	for _, f := range fixtures {
+		if f.Request.ID/1000 != block {
+			block = f.Request.ID / 1000
+			s = NewServer(t)
+			s.sessions["sid"] = struct{}{}
+		}
 		params := json.RawMessage(strings.Replace(string(f.Request.Params), `"\u003csid\u003e"`, `"sid"`, 1))
 		result, err := s.dispatch(request{Method: f.Request.Method, Params: params})
 
