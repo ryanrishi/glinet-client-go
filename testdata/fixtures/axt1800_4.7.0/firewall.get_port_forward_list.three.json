@@ -1,0 +1,54 @@
+{
+  "request": {
+    "id": 2005,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "get_port_forward_list",
+      {}
+    ]
+  },
+  "response": {
+    "id": 2005,
+    "jsonrpc": "2.0",
+    "result": {
+      "res": [
+        {
+          "enabled": true,
+          "src_dport": "50001",
+          "id": "cfg233837",
+          "dest_ip": "192.168.8.250",
+          "dest_port": "50001",
+          "name": "tf-test-1",
+          "src": "wan",
+          "dest": "lan",
+          "proto": "tcp"
+        },
+        {
+          "enabled": false,
+          "src_dport": "50002",
+          "id": "cfg243837",
+          "dest_ip": "192.168.8.250",
+          "dest_port": "50003",
+          "name": "tf-test-2",
+          "src": "wan",
+          "dest": "lan",
+          "proto": "udp"
+        },
+        {
+          "src_dport": "50004-50005",
+          "id": "cfg253837",
+          "dest_ip": "192.168.8.250",
+          "dest_port": "50004-50005",
+          "name": "tf-test-3",
+          "enabled": true,
+          "dest": "lan",
+          "src": "wan",
+          "proto": "tcp udp"
+        }
+      ]
+    }
+  }
+}

@@ -1,9 +1,6 @@
 package glinet
 
-import (
-	"context"
-	"strings"
-)
+import "context"
 
 // LANService calls the lan module.
 type LANService service
@@ -28,8 +25,8 @@ func (s *LANService) ListStaticBinds(ctx context.Context) ([]StaticBind, error) 
 	return res.StaticBindList, nil
 }
 
-// FindStaticBind returns the first binding whose MAC is equal to mac, ignoring letter case.
-// It returns nil and no error when there is no such binding.
+// FindStaticBind returns the binding whose MAC string is equal to mac, with the same letter case,
+// as the router compares MACs. It returns nil and no error when there is no such binding.
 func (s *LANService) FindStaticBind(ctx context.Context, mac string) (*StaticBind, error) {
 	binds, err := s.ListStaticBinds(ctx)
 	if err != nil {
@@ -37,7 +34,7 @@ func (s *LANService) FindStaticBind(ctx context.Context, mac string) (*StaticBin
 	}
 
 	for _, b := range binds {
-		if strings.EqualFold(b.MAC, mac) {
+		if b.MAC == mac {
 			return &b, nil
 		}
 	}

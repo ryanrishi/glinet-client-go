@@ -1,0 +1,29 @@
+{
+  "request": {
+    "id": 2014,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "add_port_forward",
+      {
+        "dest": "nope",
+        "dest_ip": "not-an-ip",
+        "dest_port": "70000",
+        "enabled": 0,
+        "name": "tf-test-bad",
+        "proto": "foo",
+        "src": "nope",
+        "src_dport": "abc"
+      }
+    ]
+  },
+  "response": {
+    "id": 2014,
+    "jsonrpc": "2.0",
+    "result": {
+      "id": "cfg283837"
+    }
+  }
+}

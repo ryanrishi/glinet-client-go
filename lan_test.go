@@ -132,7 +132,7 @@ func TestLANFindStaticBind(t *testing.T) {
 		{MAC: "02:00:00:AA:BB:02", IP: "192.168.8.51"},
 	})
 
-	got, err := c.LAN.FindStaticBind(ctx, "02:00:00:aa:bb:02")
+	got, err := c.LAN.FindStaticBind(ctx, "02:00:00:AA:BB:02")
 	if err != nil {
 		t.Fatalf("FindStaticBind: %v", err)
 	}
@@ -141,9 +141,11 @@ func TestLANFindStaticBind(t *testing.T) {
 		t.Errorf("FindStaticBind = %+v, want %+v", got, want)
 	}
 
-	got, err = c.LAN.FindStaticBind(ctx, "02:00:00:aa:bb:09")
-	if err != nil || got != nil {
-		t.Errorf("FindStaticBind unknown MAC = %+v, %v, want nil, nil", got, err)
+	for _, mac := range []string{"02:00:00:aa:bb:02", "02:00:00:AA:BB:01", "02:00:00:aa:bb:09"} {
+		got, err = c.LAN.FindStaticBind(ctx, mac)
+		if err != nil || got != nil {
+			t.Errorf("FindStaticBind(%q) = %+v, %v, want nil, nil", mac, got, err)
+		}
 	}
 }
 

@@ -1,0 +1,21 @@
+{
+  "request": {
+    "id": 2007,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "set_port_forward",
+      {
+        "enabled": false,
+        "id": "cfg243837"
+      }
+    ]
+  },
+  "response": {
+    "id": 2007,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}
