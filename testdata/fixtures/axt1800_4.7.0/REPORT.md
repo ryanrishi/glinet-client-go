@@ -283,6 +283,27 @@ Not verified (no write with `enable: true` was sent): the enabled write and its 
 
 Differences from the 2023 reference: `hour`, `min` and `week` are not required (and are ignored) when `enable` is `false`. `set_reboot` returns `[]`, not `null`.
 
+### dns hosts file (write test, 2026-11-14)
+
+Verified on the router with names under `.invalid` and single-label names, and the IPs `192.0.2.1`, `192.0.2.2` and `192.168.8.250` (no known client). The hosts file was `"127.0.0.1 localhost\n\n::1     localhost ip6-localhost ip6-loopback\nff02::1 ip6-allnodes\nff02::2 ip6-allrouters\n"` before and after the test. The fixtures `dns.*_host*.json` with request IDs 13000-13405 are one sequence (`glinettest/dns_test.go` replays them).
+
+| Call | Params | Result |
+|---|---|---|
+| `get_host` | none | `{"content":string}` |
+| `set_host` | `{content}` | `[]` |
+
+Behavior:
+- `set_host` replaces the whole file with `content`. A write without the localhost lines removes them.
+- The router keeps the content byte for byte: comments (`# ...`, also after a name), blank lines, tabs, more than one space, `\r\n`, two trailing newlines, IPv6 lines. It adds `\n` when the content does not end with `\n`; `""` gives `"\n"`.
+- No line is checked: `not-an-ip name`, a line with one field and `192.0.2.256 name` were accepted. (The web UI checks that each non-empty line is an IP and at least one name, and does not allow comments.)
+- `{}` and `content` as a number return HTTP 500 (no JSON-RPC body) and change nothing. `content: null` returns `-32602 Invalid params` (no `err`).
+- Each write returned in about 7-25 ms. The next read, 3 ms later, had the new content.
+- The DNS server of the router (`dig @192.168.8.1`) did not answer with a new name: `tf-test.invalid`, `tftesthost`, `tftesthost.lan` (192.0.2.x) and `tftesthost2` (192.168.8.250) were NXDOMAIN for at least 30 s after the write, and also after a `dns.set_config` write. `ip6-allnodes` from the initial file was answered. So `set_host` does not reload the DNS server, and it is not known when the new names take effect (probably at the next start of dnsmasq).
+
+Differences from the 2023 reference: `set_host` returns `[]`, not `null`. The reference does not say that the content is not checked, that a newline is added, or that the DNS server is not reloaded.
+
+Not verified: whether a reboot or another write makes the DNS server use the new file; the maximum size.
+
 ### dns
 - `get_config`: no `proto`. Extra: `controld_id`, `dot_provider` (string, `"0"`), `free_controld_id`, `override_vpn`. `server` items are strings like `"wwan 192.168.4.253"`.
 - `get_host`, `get_info`: match.

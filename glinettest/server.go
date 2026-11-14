@@ -62,6 +62,7 @@ type Server struct {
 
 	System      *System
 	AdGuardHome *AdGuardHome
+	DNS         *DNS
 	Firewall    *Firewall
 	LAN         *LAN
 	LED         *LED
@@ -96,6 +97,8 @@ func NewServer(t testing.TB) *Server {
 	s.System.register(s)
 	s.AdGuardHome = newAdGuardHome()
 	s.AdGuardHome.register(s)
+	s.DNS = newDNS()
+	s.DNS.register(s)
 	s.Firewall = newFirewall()
 	s.Firewall.register(s)
 	s.LAN = newLAN()

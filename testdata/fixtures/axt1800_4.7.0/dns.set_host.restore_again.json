@@ -1,0 +1,20 @@
+{
+  "request": {
+    "id": 13404,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "dns",
+      "set_host",
+      {
+        "content": "127.0.0.1 localhost\n\n::1     localhost ip6-localhost ip6-loopback\nff02::1 ip6-allnodes\nff02::2 ip6-allrouters\n"
+      }
+    ]
+  },
+  "response": {
+    "id": 13404,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

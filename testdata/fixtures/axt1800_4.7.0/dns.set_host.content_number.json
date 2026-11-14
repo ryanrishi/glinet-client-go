@@ -1,0 +1,18 @@
+{
+  "request": {
+    "id": 13316,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "dns",
+      "set_host",
+      {
+        "content": 1
+      }
+    ]
+  },
+  "response": {
+    "http_status": 500
+  }
+}
