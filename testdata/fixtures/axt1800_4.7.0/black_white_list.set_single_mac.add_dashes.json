@@ -1,0 +1,22 @@
+{
+  "request": {
+    "id": 16009,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "black_white_list",
+      "set_single_mac",
+      {
+        "mac": "02-00-00-00-00-a3",
+        "mode": "black",
+        "operate": "add"
+      }
+    ]
+  },
+  "response": {
+    "id": 16009,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

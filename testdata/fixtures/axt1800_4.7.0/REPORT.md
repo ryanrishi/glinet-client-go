@@ -373,6 +373,41 @@ Not verified: the error when another DNS feature is active (that needs a DNS mod
 - `get_list`: extra per client: `ipv6`, `last_rx`, `last_tx`, `last_update_rate`, `total_rx_init`, `total_tx_init`.
 - `get_status`: matches.
 
+### black_white_list block list (write test, 2026-11-14)
+
+Verified on the router in mode `black` only, with made-up MACs `02:00:00:00:00:a1` to `a9` (no real client). Mode `white` was never written. The config was `{"mode":"black"}` (empty list) before and after the test, and the mode stayed `black` after each write. The fixtures `black_white_list.*.json` with request IDs 16000-16060 are one sequence (`glinettest/accesscontrol_test.go` replays them; the `clients.block_client` calls 16045-16058 and their reads are not in the fixtures, see below).
+
+| Call | Params | Result |
+|---|---|---|
+| `get_config` | none | `{"mode":string, "black_mac":[string]}`; no `black_mac` when the list is empty |
+| `set_single_mac` | `{mode, operate, mac}` | `[]` |
+| `set_config` | `{mode, mac:[string]}` | `[]`, or `{"err_code":-1,"err_msg":"mac required"}` |
+
+Formats:
+- `black_mac` is the block list, an array of strings in the order of the writes. The web UI code also reads `white_mac` (the allow list); it was not seen, because mode `white` was not tested.
+- The router keeps each MAC as written, also its letter case (`"02:00:00:00:00:A2"` stays upper case).
+
+Behavior of `set_single_mac` (the web UI uses it for the block switch of one client, with `mode` = the current mode):
+- `operate: "add"` appends `mac`. A MAC that is in the list with the same letter case is not added again; the same MAC in the other letter case is added as a second entry.
+- `operate: "del"` removes `mac` only with the same letter case (`del 02:00:00:00:00:a2` did not remove `02:00:00:00:00:A2`). A MAC that is not in the list gives `[]` and no change.
+- `mac` is not checked: `"not-a-mac"` was added. A MAC with `-` separators (`"02-00-00-00-00-a3"`) was not added, and `[]` was returned.
+- No `mac`, an unknown `operate` (`"toggle"`) or no `operate` gives `[]` and no change. `mac: null` gives `-32602 Invalid params` (no `err`).
+- Each write returned in about 10-50 ms. The next read, 4 ms later, had the new list.
+
+Behavior of `set_config` (the web UI uses it for the access control dialog, with the MACs in upper case):
+- It replaces the whole list with `mac`, as written: duplicates (`[a4, a4, A4]`), `"not-a-mac"` and `-` separators were kept. `mac: []` empties the list (`get_config` then has no `black_mac`).
+- No `mac` or `mac` as a string gives the result `{"err_code":-1,"err_msg":"mac required"}` and no change. `mac: null` gives `-32602`.
+- Each write returned in about 10 ms. The next read had the new list.
+
+`clients.block_client {mac, block}` (not in the web UI; named in the 2023 reference and `gli4py`):
+- It exists on 4.7.0 and returns `[]` after about 850-890 ms, also for `"not-a-mac"` and without `block`.
+- It changes the same list (`black_mac`), in upper case (`a6` was stored as `"02:00:00:00:00:A6"`), but not reliably and not at once: in one test the MAC was in the list 6 ms after the call; in another, `block: true` for `a7` (two times) was not in the list after the call, but `"02:00:00:00:00:A7"` and `"NOT-A-MAC"` appeared some seconds later, after a `set_config` had emptied the list; in a third test, `block: true` for `a7` did not change the list within 15 s. `block: false` with either letter case did not remove `"02:00:00:00:00:A6"`. The list was emptied with `set_config` and then stayed empty for 2.5 minutes, also after `block: false` for each test MAC.
+- So the client does not use `clients.block_client`.
+
+Same list or two features: one list. `clients.block_client` writes the `black_mac` list of `black_white_list`, and the web UI shows a client as blocked when its MAC is in `black_mac` (compared without letter case) and does not read the `blocked` field of `clients.get_list`. Not verified: whether `clients.get_list[].blocked` is computed from `black_mac` (that needs the MAC of a real client in the list). The made-up MACs did not appear in `clients.get_list`, and the `blocked` flags of the real clients stayed `false`.
+
+Not verified: that the router really blocks a MAC (no real client was blocked), how long the firewall takes to apply a write, mode `white` and `white_mac`, what `set_single_mac` and `set_config` do with `mode: "white"` or no `mode` (never sent, because mode `white` cuts the access of all clients that are not in the list), the maximum list size (the web UI allows 1000).
+
 ### wg-server
 - `get_status`: server fields are nested in `server{initialization,log,rx_bytes,status,tunnel_ip,tx_bytes}`. The reference has them at top level. `peers` is a top-level list (empty here).
 - `get_config`, `get_setting`: match.

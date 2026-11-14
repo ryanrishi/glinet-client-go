@@ -1,0 +1,25 @@
+{
+  "request": {
+    "id": 16015,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "black_white_list",
+      "set_single_mac",
+      {
+        "mac": null,
+        "mode": "black",
+        "operate": "add"
+      }
+    ]
+  },
+  "response": {
+    "error": {
+      "code": -32602,
+      "message": "Invalid params"
+    },
+    "id": 16015,
+    "jsonrpc": "2.0"
+  }
+}

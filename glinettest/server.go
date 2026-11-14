@@ -60,17 +60,18 @@ type Server struct {
 	Username string
 	Password string
 
-	System      *System
-	AdGuardHome *AdGuardHome
-	Cable       *Cable
-	Clients     *Clients
-	DNS         *DNS
-	Firewall    *Firewall
-	LAN         *LAN
-	LED         *LED
-	Network     *Network
-	Timer       *Timer
-	Wifi        *Wifi
+	System        *System
+	AccessControl *AccessControl
+	AdGuardHome   *AdGuardHome
+	Cable         *Cable
+	Clients       *Clients
+	DNS           *DNS
+	Firewall      *Firewall
+	LAN           *LAN
+	LED           *LED
+	Network       *Network
+	Timer         *Timer
+	Wifi          *Wifi
 
 	srv *httptest.Server
 
@@ -99,6 +100,8 @@ func NewServer(t testing.TB) *Server {
 
 	s.System = newSystem()
 	s.System.register(s)
+	s.AccessControl = newAccessControl()
+	s.AccessControl.register(s)
 	s.AdGuardHome = newAdGuardHome()
 	s.AdGuardHome.register(s)
 	s.Cable = newCable()
