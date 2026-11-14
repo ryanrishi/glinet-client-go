@@ -304,6 +304,33 @@ Differences from the 2023 reference: `set_host` returns `[]`, not `null`. The re
 
 Not verified: whether a reboot or another write makes the DNS server use the new file; the maximum size.
 
+### dns config (write test, 2026-11-14)
+
+Verified on the router in mode `auto`, with a WireGuard client tunnel that supplies DNS (`wg 192.168.5.1` in `server`). The config was `{"mode":"auto","force_dns":false,"rebind_protection":false,"override_vpn":true,"dot_provider":"0","nextdns_id":"","controld_id":"","free_controld_id":"","server":["wwan 192.168.4.253","wg 192.168.5.1"]}` before and after the test, and `server` did not change during it. Only `rebind_protection` and `force_dns` were changed on purpose, one at a time. The fixtures `dns.*_config*.json` with request IDs 14000-14315 are one sequence (`glinettest/dns_test.go` replays them).
+
+| Call | Params | Result |
+|---|---|---|
+| `get_config` | none | `{"mode":string, "force_dns":bool, "rebind_protection":bool, "override_vpn":bool, "server":[string], "dot_provider":string, "nextdns_id":string, "controld_id":string, "free_controld_id":string}` |
+| `set_config` | `{mode?, force_dns, rebind_protection, override_vpn}` | `[]` |
+
+Formats:
+- In mode `auto`, `server` is the upstream DNS servers that the router learned, one string `"<interface> <ip>"` for each. It is runtime data.
+- `dot_provider` is a string (`"0"`). The web UI reads `"1"` as NextDNS and `"2"`/`"3"` as ControlD plans.
+
+Behavior:
+- `force_dns`, `rebind_protection` and `override_vpn` are read as flags: no value gives `false`, `false` gives `false`, each other value gives `true` (`rebind_protection: 0` gave `true`). The first test, `{"rebind_protection":true}` alone, also set `override_vpn` from `true` to `false`; it was restored 12 s later. `server` and the DNS answers did not change in that time.
+- No `mode` keeps the mode (`{"force_dns":false,"rebind_protection":false,"override_vpn":true}` kept `auto`). This is what the web UI sends when AdGuard Home is enabled; otherwise it sends `mode` too, and the fields of that mode (`server` for `manual` and `proxy`; `proto`, `dot_provider` and an ID for `secure`).
+- `null` for a field returns `-32602 Invalid params` (no `err`) and changes nothing.
+- Each write returned in about 0.6-1.1 s. The next read, 7 ms later, had the new values. DNS queries to the router (every 250 ms) were answered during each write; the WireGuard client stayed connected.
+- A `set_config` while AdGuard Home was enabled returned `[]` (no "DNS is occupied" error).
+
+Differences from the 2023 reference:
+- No `proto` in mode `auto`. Extra fields: `override_vpn`, `dot_provider`, `controld_id`, `free_controld_id`.
+- `mode` is optional. The booleans are not optional: a missing boolean is written as `false`.
+- `set_config` returns `[]`, not `null`.
+
+Not verified: modes other than `auto` (the active tunnel supplies DNS, so no mode change was tested); `server`, `proto`, `dot_provider` and the IDs on write; an invalid `mode`; the errors `-1` (DNS is occupied) and `-2`/`-3` of the reference and the web UI; a write of `override_vpn` on purpose and what it does with the tunnel DNS.
+
 ### dns
 - `get_config`: no `proto`. Extra: `controld_id`, `dot_provider` (string, `"0"`), `free_controld_id`, `override_vpn`. `server` items are strings like `"wwan 192.168.4.253"`.
 - `get_host`, `get_info`: match.

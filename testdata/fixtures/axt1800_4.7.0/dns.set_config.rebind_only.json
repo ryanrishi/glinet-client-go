@@ -1,0 +1,20 @@
+{
+  "request": {
+    "id": 14001,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "dns",
+      "set_config",
+      {
+        "rebind_protection": true
+      }
+    ]
+  },
+  "response": {
+    "id": 14001,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}
