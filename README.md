@@ -32,7 +32,7 @@ if err != nil {
 tz, err := client.System.GetTimezoneConfig(ctx)
 ```
 
-The client has the services `AccessControl`, `AdGuard`, `Cable`, `Clients`, `DDNS`, `Digest`, `DNS`, `Firewall`, `LAN`, `LED`, `Network`, `System`, `Tailscale`, `Timer`, `Wifi` and `ZeroTier`.
+The client has the services `AccessControl`, `AdGuard`, `Cable`, `Clients`, `DDNS`, `Digest`, `DNS`, `Firewall`, `IPv6`, `LAN`, `LED`, `Network`, `System`, `Tailscale`, `Timer`, `Wifi` and `ZeroTier`.
 `NewClientUnauthenticated` returns a client that has no session. Only `Digest` works without a session.
 
 `Call` calls a module method that has no typed method yet. A nil `params` sends `{}`. A nil `result` discards the response.

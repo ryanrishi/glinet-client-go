@@ -535,6 +535,26 @@ Unknown: the types and presence of the optional fields in the `get_config` resul
 
 Proposal for a supervised write test: write `{"protocol":"dhcp","secondwan":false}` (the current value) and read back; then `{"protocol":"dhcp","mtu":1500,"secondwan":false}` and read back to learn the type of `mtu`; restore with `{"protocol":"dhcp","secondwan":false}` and check that `mtu` is gone. Do not test `static` or `pppoe` unless no cable is in the WAN port. Risks: a write probably restarts the `wan` interface; the WAN has no cable and is not the uplink, so the uplink (`wwan`) should not drop, but `kmwan` gives `wan` metric 10 before `wwan` 20, so a wrong static gateway could matter when a cable is plugged in later. Watch `lan.get_wan_info` and `system.get_status` `network[]` for `wwan` during the test.
 
+### ipv6 (from the UI code, not tested)
+
+Read (verified): `ipv6.get_ipv6` returns `{"enable":false,"lan_dns_mode":true,"lan_mode":"nat6"}`. The web UI also reads `lan_dns1`, `lan_dns2` and `lan_ip` (with the default `"fd05:0e25:8607::1/64"` when there is none); the router did not return them while IPv6 was disabled.
+
+Write (view `ipv6`): one `ipv6.set_ipv6`, then the page stays locked and reads `get_ipv6` again after 10 s:
+
+```js
+t.enable=this.ipv6.enable,this.ipv6.enable&&(t.lan_mode=this.ipv6.lan_mode,t.lan_dns_mode=this.ipv6.lan_dns_mode,"static"===this.ipv6.lan_mode&&(t.lan_ip=this.ipv6.lan_ip),this.ipv6.lan_dns_mode||(t.lan_dns1=this.ipv6.lan_dns1,this.ipv6.lan_dns2&&(t.lan_dns2=this.ipv6.lan_dns2)))
+```
+
+So a disable sends only `{enable: false}`. The page has no WAN setting for IPv6: only "LAN" mode and DNS. The WAN IPv6 address is a static field of `cable.set_config` (see above).
+
+Validation in the UI: `lan_mode` is one of `native` ("Native"), `relay` ("Passthrough"), `nat6` ("NAT6"), `static` ("Static IPv6"). A change to `relay` sets `lan_dns_mode` to true. `lan_ip` (static) is an IPv6 address with a prefix length 48-64 (regex ends with `\/((?:4[8-9]|5[0-9]|6[0-4]))$`). `lan_dns1` is required and `lan_dns2` is optional when `lan_dns_mode` is false; both pass `checkIpv6`. A result with `err_msg` is an error.
+
+The page shows the tip `ipv6.use_tip` with the names of the firewall page, VPN and Cloud as `features`, and `ipv6.note` when the router supports VPN. The texts are loaded at run time with `ui.load_locales`, which this run did not call, so the exact words are not known; the tip says that these features and IPv6 have a limit together.
+
+Unknown: which fields a disable keeps; the read shape while IPv6 is enabled; the errors; whether the write restarts the network or the firewall, and how long it takes.
+
+Proposal for a supervised write test: write `{"enable":false}` (the current value) and read back. Do not enable IPv6 without the owner: the uplink (`wwan`) has no IPv6 (`wwan6` is down), and a WireGuard client runs, which the tip says may not work together with IPv6. If the owner agrees to an enable test, use `{"enable":true,"lan_mode":"nat6","lan_dns_mode":true}` for at most one minute, check that the WireGuard client and the LAN still work, and restore with `{"enable":false}`. Risk: a network or firewall restart drops the management connection for some seconds.
+
 ## Methods not called
 
 Not read-only or not sure: all `set_*`, `add_*`, `remove_*`, etc. Also these `get_*` methods: `upgrade.check_firmware_online`, `tailscale.get_auth_url`, `wg-client.get_third_config`, `ovpn-client.get_third_config` (send credentials to a third-party VPN service), `wg-client.get_recommend_config`, `ovpn-client.get_recommend_config` (query an external service).

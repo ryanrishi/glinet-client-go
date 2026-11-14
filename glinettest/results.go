@@ -447,4 +447,10 @@ const (
 	cableConfig = `{
 		"protocol": "dhcp"
 	}`
+
+	ipv6Config = `{
+		"enable": false,
+		"lan_dns_mode": true,
+		"lan_mode": "nat6"
+	}`
 )
