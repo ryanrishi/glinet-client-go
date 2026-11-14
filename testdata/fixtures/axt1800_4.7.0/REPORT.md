@@ -463,28 +463,34 @@ From the UI code, not tested (`/views/gl-sdk4-ui-tailscaleview.common.js.gz`, re
 
 Not verified: the login, `status` values other than 1, `login_name` and `address_v4`, the exit node list items, what `lan_enabled` and `wan_enabled` do in the firewall when the router is in a tailnet (the zone list did not change, but the firewall sections that the API does not show were not read), `wan_enabled: true` while enabled.
 
-### zerotier (write test with ZeroTier disabled, 2026-11-14)
+### zerotier (write test, 2026-11-14)
 
-Verified on the router only with `enabled: false`; no write enabled ZeroTier and no network ID was written. The config was `{"enabled":false,"lan_enabled":false,"wan_enabled":false}` before and after the test, and `system.get_status` had the `zerotier` service at status `0` after each test group. The fixtures `zerotier.*_config*.json` with request IDs 20000-20017 are one sequence (`glinettest/zerotier_test.go` replays them).
+First test (request IDs 20000-20017): only `enabled: false`, no network ID. Second test (request IDs 23000-23021, with the permission of the owner of the router): ZeroTier was enabled with the made-up network ID `0123456789abcdef` (it joins no real network) for 58 s (14:40:10-14:41:08) and again for 2.4 s (14:41:46-14:41:49) to restore `lan_enabled`. The config was `{"enabled":false,"lan_enabled":false,"wan_enabled":false}` before the second test and is `{"enabled":false,"id":"0123456789abcdef","lan_enabled":false,"wan_enabled":false}` after it: no write removes the ID (see below). `system.get_status` had the `zerotier` service at status `0` after each test. The fixtures `zerotier.*_config*.json` of each block are one sequence (`glinettest/zerotier_test.go` replays them).
 
 | Call | Params | Result |
 |---|---|---|
-| `get_config` | none | `{"enabled":bool, "lan_enabled":bool, "wan_enabled":bool}` (no `id` on the test router) |
-| `set_config` | `{enabled, id?, lan_enabled?, wan_enabled?}` | `[]` |
-| `get_status` | none | `[]` while disabled |
+| `get_config` | none | `{"enabled":bool, "id"?:string, "lan_enabled":bool, "wan_enabled":bool}` (no `id` before the first write of an ID) |
+| `set_config` | `{enabled, id, lan_enabled, wan_enabled}` | `[]`, `{"err_code":1,"err_msg":"parameter error"}`, or HTTP 500 |
+| `get_status` | none | `[]` while disabled; `{"status":int}` while enabled |
 
-Behavior (all with `enabled: false`):
-- A write that does not enable ZeroTier ignores `lan_enabled` and `wan_enabled`: `{"enabled":false,"lan_enabled":true,...}`, `{"enabled":false,...,"wan_enabled":true}`, `lan_enabled: 1`, `{"enabled":false}` and `{}` all left `{"enabled":false,"lan_enabled":false,"wan_enabled":false}`, also 15 s later. (This is unlike `tailscale`, which stores them.)
+Behavior with `enabled: false`:
+- A write that does not enable ZeroTier only disables it. It ignores `id`, `lan_enabled` and `wan_enabled`: `{"enabled":false,"lan_enabled":true,...}`, `{"enabled":false,...,"wan_enabled":true}`, `lan_enabled: 1`, `{"enabled":false}`, `{}` and `{"enabled":false,"id":"","lan_enabled":false,"wan_enabled":false}` did not change them, also 15 s later. (This is unlike `tailscale`, which stores them.)
+- The disable `{"enabled":false}` keeps `id`, `lan_enabled` and `wan_enabled`: after the disable, `get_config` had `{"enabled":false,"id":"0123456789abcdef","lan_enabled":true,"wan_enabled":false}`.
 - `lan_enabled: null` returned `-32602 Invalid params` (no `err`).
-- Each write returned in about 0.95-1 s (a write that fails with `-32602` in 4 ms).
+- Each write returned in about 0.95-1 s, a disable of a running ZeroTier in 1.6-1.8 s (a write that fails with `-32602` in 4 ms).
 
-A write of a made-up network ID with `enabled: false` was planned, but the tool permission system of this session refused the call, so it was not sent.
+Behavior with `enabled: true`:
+- `{"enabled":true,"id":"0123456789abcdef","lan_enabled":false,"wan_enabled":false}` returned `[]` after 10.7 s (the first join). Later enabled writes returned after 2.4 s. The next `get_config` had the sent values; `id` is the string as written.
+- An enabled write stores `lan_enabled` and `wan_enabled`: `lan_enabled: true` was in `get_config` at once.
+- `get_status` was `[]` 20 ms after the first enabled write, and `{"status":1}` ("connecting" in the UI code) from 1 s later until the disable (47 s). Status 3 ("network not found") did not appear. `system.get_status` had the `zerotier` service at status `2` while enabled. After the disable, `get_status` was `[]` and the service status `0` at once.
+- `id: ""` returned `{"err_code":1,"err_msg":"parameter error"}` in 6 ms and changed nothing. A write without `id` returned HTTP status 500 (nginx error page) and changed nothing, also with an ID stored. `id: null` returned `-32602`. So a stored ID cannot be removed with `set_config`.
+- While ZeroTier was enabled (also with `lan_enabled: true`), these did not change: firewall zone list, rule list, port forward list, DMZ, WAN access, DNS config, static binds, block list, hosts, LED, timers, AdGuard Home, time zone, `system.get_status.system` flags and the WireGuard client (connected, same peer). After the test, all guards were as before, except the stored `id` in `zerotier.get_config`.
 
 From the UI code, not tested (`/views/gl-sdk4-ui-zerotierview.common.js.gz`, read on 2026-11-14):
 - To disable, the UI sends only `{"enabled":false}`. To enable, it sends `{"enabled":true, "id", "lan_enabled", "wan_enabled"}`, with a timeout of 30 s, and reads `get_config` again 5 s after the write. The UI accepts `id` only as 16 hex digits.
 - The UI reads `id`, `enabled`, `lan_enabled` and `wan_enabled` from `get_config` (each may be missing), and `status` (0 connected, 1 connecting, 2 not authorized, 3 network not found), `zerotier_ip`, `lan_ip`, `wan_ip`, `wwan_ip` and `secondwan_ip` from `get_status`.
 
-Not verified: any write with `enabled: true` (it joins a ZeroTier network and contacts the ZeroTier servers), a write of `id`, the format of `id` in `get_config`, the status when enabled.
+Not verified: a real ZeroTier network (join, status 0, 2 or 3, `zerotier_ip` and the other addresses of `get_status`), an `id` that is not 16 hex digits, `wan_enabled: true` while enabled, what `lan_enabled` and `wan_enabled` do in the firewall when ZeroTier is connected (the firewall sections that the API does not show were not read), how to remove a stored ID (only `set_config` was tried).
 
 ### wg-server
 - `get_status`: server fields are nested in `server{initialization,log,rx_bytes,status,tunnel_ip,tx_bytes}`. The reference has them at top level. `peers` is a top-level list (empty here).
