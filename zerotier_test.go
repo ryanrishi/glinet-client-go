@@ -60,3 +60,39 @@ func TestZeroTierConfigEnable(t *testing.T) {
 		t.Errorf("GetConfig = %+v, want %+v", *res, disabled)
 	}
 }
+
+func TestZeroTierStatus(t *testing.T) {
+	c, _ := newClient(t)
+	ctx := context.Background()
+
+	res, err := c.ZeroTier.GetStatus(ctx)
+	if err != nil {
+		t.Fatalf("GetStatus: %v", err)
+	}
+	if res.Status != nil {
+		t.Errorf("Status = %d while disabled, want nil", *res.Status)
+	}
+
+	if err := c.ZeroTier.SetConfig(ctx, glinet.ZeroTierConfig{Enabled: true, ID: "0123456789abcdef"}); err != nil {
+		t.Fatalf("SetConfig: %v", err)
+	}
+	res, err = c.ZeroTier.GetStatus(ctx)
+	if err != nil {
+		t.Fatalf("GetStatus: %v", err)
+	}
+	checkLossless(t, res, fixtureResult(t, "zerotier.get_status.enabled.json"))
+}
+
+func TestZeroTierConfigEmptyID(t *testing.T) {
+	c, srv := newClient(t)
+	initial := glinettest.ZeroTierConfig{ID: "0123456789abcdef"}
+	srv.ZeroTier.SetConfig(initial)
+
+	err := c.ZeroTier.SetConfig(context.Background(), glinet.ZeroTierConfig{Enabled: true})
+	if code := rpcCode(t, err); code != 1 {
+		t.Errorf("code = %d, want 1", code)
+	}
+	if got := srv.ZeroTier.Config(); got != initial {
+		t.Errorf("server state = %+v, want %+v", got, initial)
+	}
+}

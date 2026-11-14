@@ -410,70 +410,87 @@ Same list or two features: one list. `clients.block_client` writes the `black_ma
 
 Not verified: that the router really blocks a MAC (no real client was blocked), how long the firewall takes to apply a write, mode `white` and `white_mac`, what `set_single_mac` and `set_config` do with `mode: "white"` or no `mode` (never sent, because mode `white` cuts the access of all clients that are not in the list), the maximum list size (the web UI allows 1000).
 
-### ddns (2026-11-14, reads only)
+### ddns (write test, 2026-11-14)
 
-No write was sent: the only field of `set_config` is the enable flag, and enabling DDNS registers the router with an external service of GL.iNet. The config was `{"enable_ddns":false, "device_id":<redacted>}` before and after the work, and `system.get_status` had `ddns_enabled: false`.
+The owner of the router allowed DDNS to be enabled for a short time. DDNS was enabled for 27 s (14:37:50-14:38:17). No access over the WAN was enabled. The config was `{"enable_ddns":false, "device_id":<redacted>}` before and after the test. The fixtures `ddns.*.json` with request IDs 21000-21010 are one sequence (`glinettest/ddns_test.go` replays the config fixtures).
 
 | Call | Params | Result |
 |---|---|---|
 | `get_config` | none | `{"enable_ddns":bool, "device_id":string}` |
-| `get_status` | none | `{"ips":[{"interface":string, "ip":[string]}], "status":int}` (`status` 2 on the test router) |
+| `get_status` | none | `{"ddns"?:string, "ips":[{"interface":string, "ip":[string]}], "status":int}` |
+| `set_config` | `{enable_ddns}` | `[]`, or `{"err_code":-1,"err_msg":"missing parameters"}` |
 
 - `device_id` is the device ID for the GL.iNet DDNS name (the same value as `system.get_info.ddns`). It is a secret and is redacted in the fixtures.
+- `set_config {"enable_ddns":true}` and `{"enable_ddns":false}` each returned `[]` in about 30 ms. The next `get_config`, 15 ms later, had the new value, and `system.get_status.system.ddns_enabled` had it at once.
+- `set_config {}` (sent while DDNS was enabled) returned `{"err_code":-1,"err_msg":"missing parameters"}` and changed nothing.
+- `get_status` takes about 0.6 s. `status` was 2 before, during and after the test (meaning not known). About 5 s after the enable, the result had a new key `ddns`: an IPv4 address (a public one, redacted in the fixtures). It was gone 2 s after the disable.
+- While DDNS was enabled, these did not change: firewall rule list, port forward list, DMZ, zone list, WAN access (`get_wan_access`), DNS config, static binds, block list, hosts, LED, timers, AdGuard Home, time zone, the services in `system.get_status` and the WireGuard client (connected, same peer).
 
 From the UI code, not tested (`/views/gl-sdk4-ui-dynamicdns.common.js.gz`, read on 2026-11-14):
 - The view calls `ddns.get_config {}`, `ddns.get_status {}` (the "DDNS test"), `ddns.set_config` and `firewall.get_wan_access {}`.
 - The write is `ddns.set_config {"enable_ddns": bool}`, nothing else. The UI enables it only after the user accepts the terms. It reads `get_config` again 3 s after the write. A result with `err_msg` is shown as an error (`err_code` + `err_msg`).
 - The UI reads `ddns`, `ddnsv6`, `status` and `ips` from `get_status`. The access over the WAN (`enable_ssh_access`, `enable_http_access`, `enable_https_access` of the 2023 reference) is not in the DDNS write; the view shows `firewall.get_wan_access` (`enable_https`, `enable_ssh`) instead.
 
-Not verified: any `set_config` call, its result and errors, and what an enabled DDNS does.
+Not verified: non-boolean values of `enable_ddns`, `ddnsv6` in `get_status`, the meaning of `status`, that the DDNS name resolves (no DNS lookup was made), DDNS on a router with a public WAN address.
 
-### tailscale (write test with Tailscale disabled, 2026-11-14)
+### tailscale (write test, 2026-11-14)
 
-Verified on the router only with `enabled: false`; no write enabled Tailscale, and `get_auth_url`, `logout` and every login method were not called. The config was `{"enabled":false,"lan_enabled":false,"wan_enabled":false,"lan_ip":"192.168.8.0/24"}` before and after the test, and `system.get_status` had the `tailscale` service at status `0` after each test group. The fixtures `tailscale.*_config*.json` with request IDs 19000-19039 are one sequence (`glinettest/tailscale_test.go` replays them).
+First test (request IDs 19000-19039): only `enabled: false`. Second test (request IDs 22000-22011, with the permission of the owner of the router): Tailscale was enabled for 38 s (14:38:50-14:39:28). `get_auth_url`, `logout` and every login method were not called, so the router was never logged in to a tailnet. The config was `{"enabled":false,"lan_enabled":false,"wan_enabled":false,"lan_ip":"192.168.8.0/24"}` before and after each test, and `system.get_status` had the `tailscale` service at status `0` after each test. The fixtures `tailscale.*_config*.json` of each block are one sequence (`glinettest/tailscale_test.go` replays them).
 
 | Call | Params | Result |
 |---|---|---|
 | `get_config` | none | `{"enabled":bool, "lan_enabled":bool, "wan_enabled":bool, "lan_ip":string, "exit_node_ip"?:string}` |
 | `set_config` | `{enabled, lan_enabled, wan_enabled, exit_node_ip?}` | `[]` |
-| `get_status` | none | `{"dns":[string]}` while disabled (took 2 s once) |
-| `get_exit_node_list` | none | `[]` while disabled |
+| `get_status` | none | `{"dns":[string]}` while disabled (takes 2 s); `{"dns":[string], "status":1}` while enabled and not logged in (takes 45 ms) |
+| `get_exit_node_list` | none | `[]` while disabled and while enabled and not logged in |
 
-Behavior (all with `enabled: false`):
+Behavior with `enabled: false`:
 - The router stores `lan_enabled`, `wan_enabled` and `exit_node_ip` also while Tailscale is disabled; the next read, 5 ms later, had them.
 - `enabled`, `lan_enabled` and `wan_enabled` are set to the sent values: a missing one is written as `false` (`{"enabled":false}` and `{}` set `lan_enabled` from `true` to `false`). `lan_enabled: 1` gave `true`. `lan_enabled: null` returned `-32602 Invalid params` (no `err`) and changed nothing.
 - `exit_node_ip` (`"100.64.0.1"`) was stored and is then in `get_config`. `exit_node_ip: ""` and a write without `exit_node_ip` remove it (the key is then not in `get_config`).
 - `lan_ip` is not changed by a write.
 - Each write returned in about 5-16 ms.
 
+Behavior with `enabled: true` (the writes of the web UI):
+- `{"enabled":true,"lan_enabled":false,"wan_enabled":false,"exit_node_ip":""}` returned `[]` in 17 ms. The next `get_config`, 30 ms later, had `enabled: true`. The first `get_status`, sent 50 ms after the write (it took 1.7 s), had `status: 1` ("login needed" in the UI code), and it stayed 1. `system.get_status` had the `tailscale` service at status `2`.
+- A second enabled write with `lan_enabled: true` returned `[]` in 14 ms and was in `get_config` at once.
+- The disable `{"enabled":false}` (sent with `lan_enabled: true` stored) returned `[]` in 13 ms. `get_config` then had `lan_enabled: false`: a disable does not keep the other fields. One `get_status` 50 ms after the disable still had `status: 1`; the next, 1 s later, had no `status`. The service status in `system.get_status` was `0` at once.
+- While Tailscale was enabled (also with `lan_enabled: true`), these did not change: firewall zone list, rule list, port forward list, DMZ, WAN access, DNS config (`server` list), `get_status.dns`, static binds, block list, hosts, LED, timers, AdGuard Home, time zone, `system.get_status.system` flags and the WireGuard client (connected, same peer). After the disable, all guards were as before the test.
+
 From the UI code, not tested (`/views/gl-sdk4-ui-tailscaleview.common.js.gz`, read on 2026-11-14):
 - To disable, the UI sends only `{"enabled":false}`. To enable, it sends `{"enabled":true, "lan_enabled", "wan_enabled", "exit_node_ip":""}`. To set an exit node, it sends `{"enabled", "lan_enabled", "wan_enabled", "exit_node_ip"}`. It reads `get_config` again 5 s after a write.
 - When enabled, the UI reads `status` (1 login needed, 4 connecting; 3 is shown as running in the service list), `login_name`, `address_v4` and `dns` from `get_status`, and `exit_node_list` from `get_exit_node_list`. It calls `get_auth_url` (timeout 30 s, result `auth_url`, `err_code -1` = no URL) for the login, and `logout`.
 
-Not verified: any write with `enabled: true` (it starts Tailscale and contacts the Tailscale servers), the login, the status values when enabled, the exit node list items.
+Not verified: the login, `status` values other than 1, `login_name` and `address_v4`, the exit node list items, what `lan_enabled` and `wan_enabled` do in the firewall when the router is in a tailnet (the zone list did not change, but the firewall sections that the API does not show were not read), `wan_enabled: true` while enabled.
 
-### zerotier (write test with ZeroTier disabled, 2026-11-14)
+### zerotier (write test, 2026-11-14)
 
-Verified on the router only with `enabled: false`; no write enabled ZeroTier and no network ID was written. The config was `{"enabled":false,"lan_enabled":false,"wan_enabled":false}` before and after the test, and `system.get_status` had the `zerotier` service at status `0` after each test group. The fixtures `zerotier.*_config*.json` with request IDs 20000-20017 are one sequence (`glinettest/zerotier_test.go` replays them).
+First test (request IDs 20000-20017): only `enabled: false`, no network ID. Second test (request IDs 23000-23021, with the permission of the owner of the router): ZeroTier was enabled with the made-up network ID `0123456789abcdef` (it joins no real network) for 58 s (14:40:10-14:41:08) and again for 2.4 s (14:41:46-14:41:49) to restore `lan_enabled`. The config was `{"enabled":false,"lan_enabled":false,"wan_enabled":false}` before the second test and is `{"enabled":false,"id":"0123456789abcdef","lan_enabled":false,"wan_enabled":false}` after it: no write removes the ID (see below). `system.get_status` had the `zerotier` service at status `0` after each test. The fixtures `zerotier.*_config*.json` of each block are one sequence (`glinettest/zerotier_test.go` replays them).
 
 | Call | Params | Result |
 |---|---|---|
-| `get_config` | none | `{"enabled":bool, "lan_enabled":bool, "wan_enabled":bool}` (no `id` on the test router) |
-| `set_config` | `{enabled, id?, lan_enabled?, wan_enabled?}` | `[]` |
-| `get_status` | none | `[]` while disabled |
+| `get_config` | none | `{"enabled":bool, "id"?:string, "lan_enabled":bool, "wan_enabled":bool}` (no `id` before the first write of an ID) |
+| `set_config` | `{enabled, id, lan_enabled, wan_enabled}` | `[]`, `{"err_code":1,"err_msg":"parameter error"}`, or HTTP 500 |
+| `get_status` | none | `[]` while disabled; `{"status":int}` while enabled |
 
-Behavior (all with `enabled: false`):
-- A write that does not enable ZeroTier ignores `lan_enabled` and `wan_enabled`: `{"enabled":false,"lan_enabled":true,...}`, `{"enabled":false,...,"wan_enabled":true}`, `lan_enabled: 1`, `{"enabled":false}` and `{}` all left `{"enabled":false,"lan_enabled":false,"wan_enabled":false}`, also 15 s later. (This is unlike `tailscale`, which stores them.)
+Behavior with `enabled: false`:
+- A write that does not enable ZeroTier only disables it. It ignores `id`, `lan_enabled` and `wan_enabled`: `{"enabled":false,"lan_enabled":true,...}`, `{"enabled":false,...,"wan_enabled":true}`, `lan_enabled: 1`, `{"enabled":false}`, `{}` and `{"enabled":false,"id":"","lan_enabled":false,"wan_enabled":false}` did not change them, also 15 s later. (This is unlike `tailscale`, which stores them.)
+- The disable `{"enabled":false}` keeps `id`, `lan_enabled` and `wan_enabled`: after the disable, `get_config` had `{"enabled":false,"id":"0123456789abcdef","lan_enabled":true,"wan_enabled":false}`.
 - `lan_enabled: null` returned `-32602 Invalid params` (no `err`).
-- Each write returned in about 0.95-1 s (a write that fails with `-32602` in 4 ms).
+- Each write returned in about 0.95-1 s, a disable of a running ZeroTier in 1.6-1.8 s (a write that fails with `-32602` in 4 ms).
 
-A write of a made-up network ID with `enabled: false` was planned, but the tool permission system of this session refused the call, so it was not sent.
+Behavior with `enabled: true`:
+- `{"enabled":true,"id":"0123456789abcdef","lan_enabled":false,"wan_enabled":false}` returned `[]` after 10.7 s (the first join). Later enabled writes returned after 2.4 s. The next `get_config` had the sent values; `id` is the string as written.
+- An enabled write stores `lan_enabled` and `wan_enabled`: `lan_enabled: true` was in `get_config` at once.
+- `get_status` was `[]` 20 ms after the first enabled write, and `{"status":1}` ("connecting" in the UI code) from 1 s later until the disable (47 s). Status 3 ("network not found") did not appear. `system.get_status` had the `zerotier` service at status `2` while enabled. After the disable, `get_status` was `[]` and the service status `0` at once.
+- `id: ""` returned `{"err_code":1,"err_msg":"parameter error"}` in 6 ms and changed nothing. A write without `id` returned HTTP status 500 (nginx error page) and changed nothing, also with an ID stored. `id: null` returned `-32602`. So a stored ID cannot be removed with `set_config`.
+- While ZeroTier was enabled (also with `lan_enabled: true`), these did not change: firewall zone list, rule list, port forward list, DMZ, WAN access, DNS config, static binds, block list, hosts, LED, timers, AdGuard Home, time zone, `system.get_status.system` flags and the WireGuard client (connected, same peer). After the test, all guards were as before, except the stored `id` in `zerotier.get_config`.
 
 From the UI code, not tested (`/views/gl-sdk4-ui-zerotierview.common.js.gz`, read on 2026-11-14):
 - To disable, the UI sends only `{"enabled":false}`. To enable, it sends `{"enabled":true, "id", "lan_enabled", "wan_enabled"}`, with a timeout of 30 s, and reads `get_config` again 5 s after the write. The UI accepts `id` only as 16 hex digits.
 - The UI reads `id`, `enabled`, `lan_enabled` and `wan_enabled` from `get_config` (each may be missing), and `status` (0 connected, 1 connecting, 2 not authorized, 3 network not found), `zerotier_ip`, `lan_ip`, `wan_ip`, `wwan_ip` and `secondwan_ip` from `get_status`.
 
-Not verified: any write with `enabled: true` (it joins a ZeroTier network and contacts the ZeroTier servers), a write of `id`, the format of `id` in `get_config`, the status when enabled.
+Not verified: a real ZeroTier network (join, status 0, 2 or 3, `zerotier_ip` and the other addresses of `get_status`), an `id` that is not 16 hex digits, `wan_enabled: true` while enabled, what `lan_enabled` and `wan_enabled` do in the firewall when ZeroTier is connected (the firewall sections that the API does not show were not read), how to remove a stored ID (only `set_config` was tried).
 
 ### wg-server
 - `get_status`: server fields are nested in `server{initialization,log,rx_bytes,status,tunnel_ip,tx_bytes}`. The reference has them at top level. `peers` is a top-level list (empty here).

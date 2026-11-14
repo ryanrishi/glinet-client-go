@@ -1,0 +1,20 @@
+{
+  "request": {
+    "id": 21002,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "ddns",
+      "set_config",
+      {
+        "enable_ddns": true
+      }
+    ]
+  },
+  "response": {
+    "id": 21002,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

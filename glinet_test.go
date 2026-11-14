@@ -337,8 +337,8 @@ func TestSystemTimezoneConfig(t *testing.T) {
 		Zonename:            "Europe/Berlin",
 		TZOffset:            "+0100",
 		AutoTimezoneEnabled: true,
-		Localtime:           int(initial.Localtime),
-		Timestamp:           int(initial.Timestamp),
+		Localtime:           initial.Localtime,
+		Timestamp:           initial.Timestamp,
 		Timezone:            "CET-1CEST,M3.5.0,M10.5.0/3",
 	}
 	if *res != want {
@@ -362,6 +362,24 @@ func TestSystemTimezoneConfigLocaltime(t *testing.T) {
 
 	if got := srv.System.TimezoneConfig().Timestamp; got != localtime {
 		t.Errorf("server timestamp = %d, want %d", got, localtime)
+	}
+}
+
+func TestSystemTimezoneConfigAfter2038(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+
+	config := srv.System.TimezoneConfig()
+	config.Localtime = 4102444800
+	config.Timestamp = 4102444800
+	srv.System.SetTimezoneConfig(config)
+
+	res, err := c.System.GetTimezoneConfig(ctx)
+	if err != nil {
+		t.Fatalf("GetTimezoneConfig: %v", err)
+	}
+	if res.Localtime != config.Localtime || res.Timestamp != config.Timestamp {
+		t.Errorf("localtime, timestamp = %d, %d, want %d", res.Localtime, res.Timestamp, config.Timestamp)
 	}
 }
 

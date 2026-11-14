@@ -1,0 +1,23 @@
+{
+  "request": {
+    "id": 23002,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "zerotier",
+      "set_config",
+      {
+        "enabled": true,
+        "id": "0123456789abcdef",
+        "lan_enabled": false,
+        "wan_enabled": false
+      }
+    ]
+  },
+  "response": {
+    "id": 23002,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

@@ -22,11 +22,22 @@ type TailscaleConfig struct {
 	LANIP      string `json:"lan_ip,omitempty"`
 }
 
+// TailscaleStatus is the result of tailscale get_status.
+//
+// Status is nil while Tailscale is disabled. While it is enabled and the router is not logged in
+// to a tailnet, Status is 1 ("login needed"). The other values are from the web UI code and not
+// verified: 3 running, 4 connecting. DNS is the DNS servers of the router.
+type TailscaleStatus struct {
+	Status *int     `json:"status,omitempty"`
+	DNS    []string `json:"dns"`
+}
+
 // SetTailscaleConfigRequest is the params of tailscale set_config.
 //
-// The router sets all fields to the sent values: a write without LANEnabled or WANEnabled sets it
-// to false, and a write without ExitNodeIP removes the exit node. This was verified with Enabled
-// false only.
+// The router sets all fields to the sent values, also with Enabled false: a write without
+// LANEnabled or WANEnabled sets it to false, and a write without ExitNodeIP removes the exit node.
+// So a disable ({"enabled":false}, as the web UI sends it) also sets LANEnabled and WANEnabled to
+// false.
 type SetTailscaleConfigRequest struct {
 	Enabled    bool   `json:"enabled"`
 	LANEnabled bool   `json:"lan_enabled"`
@@ -44,13 +55,26 @@ func (s *TailscaleService) GetConfig(ctx context.Context) (*TailscaleConfig, err
 	return &res, nil
 }
 
-// SetConfig sets the Tailscale configuration. With config.Enabled false, the router stores the
-// values, returns at once and the next GetConfig has them.
+// GetStatus returns the Tailscale status. The router takes about 2 s to answer while Tailscale is
+// disabled and about 45 ms while it is enabled.
+func (s *TailscaleService) GetStatus(ctx context.Context) (*TailscaleStatus, error) {
+	var res TailscaleStatus
+	if err := s.client.Call(ctx, "tailscale", "get_status", nil, &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+// SetConfig sets the Tailscale configuration. The router returns after about 15 ms, also when the
+// write starts or stops Tailscale, and the next GetConfig has the values. A write with Enabled
+// true starts Tailscale, which connects to the Tailscale servers. After a write with Enabled
+// false, GetStatus has no status within 1 s.
 //
-// Not verified on a router: a write with Enabled true, which starts Tailscale and connects to the
-// Tailscale servers. The web UI sends all four fields to enable it (ExitNodeIP "" when the user
-// chose no exit node), only Enabled false to disable it, and reads the configuration again 5 s
-// after the write.
+// Observed on a test router that was never logged in to Tailscale: GetStatus has status 1 within
+// 2 s of the enable, and the firewall zones, the firewall rules and the DNS servers did not
+// change, also with LANEnabled true. Not verified: the status and the firewall of a router that
+// is logged in.
 func (s *TailscaleService) SetConfig(ctx context.Context, config SetTailscaleConfigRequest) error {
 	return s.client.Call(ctx, "tailscale", "set_config", config, nil)
 }
