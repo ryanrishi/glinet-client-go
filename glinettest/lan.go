@@ -22,10 +22,12 @@ type StaticBind struct {
 // Like the router, it identifies a binding by its exact MAC string. A write removes each binding
 // that has the same MAC or IP and appends the new binding at the end of the list.
 //
-// The behaviour of set_config is an assumption, because it was not verified on a router: it sets
-// each field that it gets in the item of get_config_list with the same "interface" and keeps the
-// other fields. Not known: which fields the router keeps when a write does not send them. It does
-// not check the values. An unknown interface gives ErrInvalidParams.
+// set_config sets each field that it gets in the item of get_config_list with the same
+// "interface", keeps the other fields and returns []. The router was verified only for
+// {"interface": "guest", "enable": 0} while the guest DHCP server was off: it returned [] and
+// kept all fields. The rest is an assumption: which fields the router keeps when a write does not
+// send them is not known. It does not check the values. An unknown interface gives
+// ErrInvalidParams. It does not model the Wi-Fi restart that the router does after the write.
 type LAN struct {
 	mu    sync.Mutex
 	binds []StaticBind

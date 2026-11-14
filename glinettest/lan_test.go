@@ -16,3 +16,8 @@ func TestLANWANInfoMatchesRouterFixture(t *testing.T) {
 func TestLANConfigListMatchesRouterFixture(t *testing.T) {
 	replayFixtures(t, "lan.get_config_list.json")
 }
+
+// TestLANSetConfigMatchesRouterFixtures replays the guest DHCP write fixtures of the real router.
+func TestLANSetConfigMatchesRouterFixtures(t *testing.T) {
+	replayFixtures(t, "lan.*guest_dhcp_disable_noop.json")
+}

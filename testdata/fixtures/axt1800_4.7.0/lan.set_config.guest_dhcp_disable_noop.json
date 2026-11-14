@@ -1,0 +1,21 @@
+{
+  "request": {
+    "id": 24003,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "lan",
+      "set_config",
+      {
+        "enable": 0,
+        "interface": "guest"
+      }
+    ]
+  },
+  "response": {
+    "id": 24003,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}
