@@ -51,6 +51,7 @@ func TestRouterReadOnly(t *testing.T) {
 		"lan.get_wan_info":        func() error { _, err := c.LAN.GetWANInfo(ctx); return err },
 		"network.check_wan_cable": func() error { _, err := c.Network.CheckWANCable(ctx); return err },
 		"network.get_arp_list":    func() error { _, err := c.Network.ListARPEntries(ctx); return err },
+		"wifi.get_config":         func() error { _, err := c.Wifi.GetConfig(ctx); return err },
 		"wifi.get_status":         func() error { _, err := c.Wifi.GetStatus(ctx); return err },
 	}
 	for name, read := range reads {

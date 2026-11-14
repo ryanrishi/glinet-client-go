@@ -593,6 +593,45 @@ Unknown: whether the router keeps the fields that a partial write does not send 
 
 Proposal for a supervised write test (guest only; the guest network is off and has no clients): send `{interface:"guest", enable:0}` (the current value) and read back; then `{interface:"guest", enable:1, start:"192.168.9.100", end:"192.168.9.200", leasetime:"120m", gateway:"", dns:[]}`, read back, and restore with the same write with `end:"192.168.9.249"`, `leasetime:"720m"`, and then `{interface:"guest", enable:0}`; check whether the restored `leasetime` reads `"12h"` or `"720m"`. Then `{interface:"guest", ip:"192.168.9.1", netmask:"255.255.255.0", ap_isolate:1}` (no change). Do not write the `lan` item: a change of its IP, netmask or DHCP range cuts the management connection of the Mac (`192.168.8.1` on Ethernet), and a DHCP disable stops new leases. Risks also for `guest`: the write probably restarts the network and the DHCP server, so the LAN may drop for some seconds; a guest IP inside `192.168.8.0/24` gives a conflict.
 
+### wifi config (from the UI code, not tested)
+
+Read (verified): `wifi.get_config` returns `{dfs_support, res[]}` with one item per radio (see "wifi" above). The test router has `radio0` (5G: interfaces `default_radio0`, `guest5g`) and `radio1` (2G: `default_radio1`, `guest2g`). A fresh read on 2026-11-14 had the same shape and values as the fixture (only the four get methods of this section were called), and each typed read in the client keeps all values of the real result (cable 1, ipv6 3, lan 19, wifi 179 leaf values). `key` is the Wi-Fi password in clear text; the fixture has made-up values.
+
+Write (view `wireless`): each radio has a tab per interface. The page sends:
+
+1. The enable switch of an interface sends at once `{iface_name, enabled}`:
+
+   ```js
+   changeWifiEnable(t,e,i){this.$emit("apply",{iface_name:e,enabled:i}),this.is5g&&!t&&this.$emit("updateStatus")}
+   ```
+
+2. "Apply" sends one `wifi.set_config` for the interface; a main interface also carries the radio settings:
+
+   ```js
+   i.iface_name=t.name,i.ssid=t.ssid,i.encryption=t.encryption,i.hidden=t.hidden,"none"!==t.encryption&&(i.key=t.key),!t.guest){...i.device=t,i.hwmode=e,this.repeaterIsUsing||(i.channel=a,i.htmode=n),i.txpower=s,i.random_bssid=r,this.is6g&&(i.chan_6g_only_psc=o)}
+   ```
+
+   So `enabled` is not in this write. While the repeater uses the radio (`repeater.status` `device` is the radio), the page disables the channel and width selects and does not send `channel` and `htmode`.
+
+3. The TX power select sends at once `wifi.set_txpower` with `{txpower, device}`.
+
+After each write the page stays locked for 5 s and then reads `get_config` again. After a write to a main 5G interface it polls `wifi.get_status` every 2 s; a radio `state` of `starting` or `cac` shows "DFS starting" and `conflict` shows a DFS conflict. A result with `err_msg` is an error. The UI shows no "Wi-Fi will restart" warning, but the 5 s lock and the status poll suggest that the radio restarts; whether other radios restart too is not known. MLO (`get_mlo_config` / `set_mlo_config`) is used only when `system.get_info` has `software_feature.mlo` true.
+
+Validation in the UI:
+- `ssid`: 1-32 bytes (UTF-8).
+- `key` (only when `encryption` is not `none`): 8-63 printable ASCII characters (`^[\x20-\x7F]{8,63}$`) or 64 hex digits; at most 63 characters for `sae` and `sae-mixed`.
+- `encryption`: one of the `encryptions` of the radio. Labels: `none` OPEN, `psk2` WPA2-PSK, `psk-mixed` WPA/WPA2-PSK, `sae` WPA3-SAE, `sae-mixed` WPA2-PSK/WPA3-SAE.
+- `hidden`: `false` (shown) or `true` (hidden).
+- `hwmode`: one of `hwmodes`.
+- `htmode`: "20", "40", ... up to `htmodes[hwmode]`, and "auto" when `htmodes.auto` is true. A change of `hwmode` that removes the current width selects the largest width.
+- `channel`: 0 (Auto) or a channel of `channels` that fits the width (5 GHz blocks of 2/4/8 channels from 36 for 40/80/160 MHz); DFS channels only when `dfs_support`. A change to a DFS channel or to 160 MHz shows a confirm dialog (`wireless.enable_dfs_tips`): the radio waits 60 s (10 min on some channels in Germany) before it sends.
+- `txpower`: `Max`, `High`, `Medium`, `Low`.
+- The guest tab is shown only in router mode (`system.mode` 0) and without the hidden feature `guestip`. The guest enable switch is disabled when the LAN and guest networks overlap.
+
+Unknown: whether a write without `enabled` keeps the state (the UI depends on it); whether a partial write such as `{iface_name, ssid}` keeps the other fields; whether `channel` and `htmode` are kept when they are not sent; whether `device` is required for the radio fields; whether a write restarts only the radio of the interface or all radios; the errors.
+
+Proposal for a supervised write test (only `radio1` interfaces, which are off): send `{iface_name:"guest2g", enabled:false}` (no change) and read back; then `{iface_name:"guest2g", ssid:<current>, encryption:"psk2", hidden:true, key:<current>}`, read back, and restore with `hidden:false`; then `wifi.set_txpower` `{device:"radio1", txpower:"High"}` and restore `"Max"`. Watch `wifi.get_status` for `radio0` and the uplink (`lan.get_wan_info`, `wwan`) during each step to learn whether a `radio1` write restarts `radio0`. Do not write `radio0` interfaces or radio fields: `radio0` carries the repeater uplink and the main Wi-Fi (`default_radio0`), so a restart drops the uplink and the Wi-Fi clients, and a channel or width change can make the repeater lose its AP. Never enable `guest2g` or `default_radio1` with a test key: that opens a new Wi-Fi network. The read returns all Wi-Fi keys: keep the raw results out of logs and commits.
+
 ## Methods not called
 
 Not read-only or not sure: all `set_*`, `add_*`, `remove_*`, etc. Also these `get_*` methods: `upgrade.check_firmware_online`, `tailscale.get_auth_url`, `wg-client.get_third_config`, `ovpn-client.get_third_config` (send credentials to a third-party VPN service), `wg-client.get_recommend_config`, `ovpn-client.get_recommend_config` (query an external service).
