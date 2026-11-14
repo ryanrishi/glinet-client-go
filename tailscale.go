@@ -68,9 +68,13 @@ func (s *TailscaleService) GetStatus(ctx context.Context) (*TailscaleStatus, err
 
 // SetConfig sets the Tailscale configuration. The router returns after about 15 ms, also when the
 // write starts or stops Tailscale, and the next GetConfig has the values. A write with Enabled
-// true starts Tailscale, which connects to the Tailscale servers: GetStatus has status 1 within
-// 2 s. After a write with Enabled false, GetStatus has no status within 1 s. Tailscale does not
-// change the firewall zones, the firewall rules or the DNS servers, also with LANEnabled true.
+// true starts Tailscale, which connects to the Tailscale servers. After a write with Enabled
+// false, GetStatus has no status within 1 s.
+//
+// Observed on a test router that was never logged in to Tailscale: GetStatus has status 1 within
+// 2 s of the enable, and the firewall zones, the firewall rules and the DNS servers did not
+// change, also with LANEnabled true. Not verified: the status and the firewall of a router that
+// is logged in.
 func (s *TailscaleService) SetConfig(ctx context.Context, config SetTailscaleConfigRequest) error {
 	return s.client.Call(ctx, "tailscale", "set_config", config, nil)
 }

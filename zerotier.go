@@ -69,8 +69,9 @@ func (s *ZeroTierService) GetStatus(ctx context.Context) (*ZeroTierStatus, error
 // LANEnabled and WANEnabled and ignores the sent values. So after the first write of an ID, the
 // router always has an ID: no write removes it.
 //
-// ZeroTier does not change the firewall zones, the firewall rules or the DNS servers, also with
-// LANEnabled true.
+// Observed on a test router with a network ID that does not exist: the firewall zones, the
+// firewall rules and the DNS servers did not change, also with LANEnabled true. Not verified:
+// the firewall of a router that is connected to a ZeroTier network.
 func (s *ZeroTierService) SetConfig(ctx context.Context, config ZeroTierConfig) error {
 	return s.client.Call(ctx, "zerotier", "set_config", config, nil)
 }
