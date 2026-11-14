@@ -14,10 +14,13 @@ type TailscaleConfig struct {
 	LANIP      string `json:"lan_ip"`
 }
 
-// Tailscale serves the config methods of the tailscale module. Like the router, set_config sets
-// enabled, lan_enabled and wan_enabled as flags (no value and false are false, and each other
-// value is true) and sets exit_node_ip to the sent string, or to "" without it. It keeps lan_ip.
-// A null value gives ErrInvalidParams. The router was verified with enabled false only.
+// Tailscale serves the tailscale module. Like the router, set_config sets enabled, lan_enabled and
+// wan_enabled as flags (no value and false are false, and each other value is true) and sets
+// exit_node_ip to the sent string, or to "" without it. It keeps lan_ip. A null value gives
+// ErrInvalidParams.
+//
+// get_status has the DNS server of the test router, and status 1 ("login needed") while Tailscale
+// is enabled: the fake router is never logged in to a tailnet.
 type Tailscale struct {
 	mu     sync.Mutex
 	config TailscaleConfig
@@ -45,7 +48,16 @@ func (m *Tailscale) register(s *Server) {
 	s.Handle("tailscale", "get_config", func(json.RawMessage) (any, error) {
 		return m.Config(), nil
 	})
+	s.Handle("tailscale", "get_status", m.status)
 	s.Handle("tailscale", "set_config", m.setConfig)
+}
+
+func (m *Tailscale) status(json.RawMessage) (any, error) {
+	status := map[string]any{"dns": []string{"192.168.4.253"}}
+	if m.Config().Enabled {
+		status["status"] = 1
+	}
+	return status, nil
 }
 
 func (m *Tailscale) setConfig(params json.RawMessage) (any, error) {

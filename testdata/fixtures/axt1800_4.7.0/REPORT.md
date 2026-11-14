@@ -433,29 +433,35 @@ From the UI code, not tested (`/views/gl-sdk4-ui-dynamicdns.common.js.gz`, read 
 
 Not verified: non-boolean values of `enable_ddns`, `ddnsv6` in `get_status`, the meaning of `status`, that the DDNS name resolves (no DNS lookup was made), DDNS on a router with a public WAN address.
 
-### tailscale (write test with Tailscale disabled, 2026-11-14)
+### tailscale (write test, 2026-11-14)
 
-Verified on the router only with `enabled: false`; no write enabled Tailscale, and `get_auth_url`, `logout` and every login method were not called. The config was `{"enabled":false,"lan_enabled":false,"wan_enabled":false,"lan_ip":"192.168.8.0/24"}` before and after the test, and `system.get_status` had the `tailscale` service at status `0` after each test group. The fixtures `tailscale.*_config*.json` with request IDs 19000-19039 are one sequence (`glinettest/tailscale_test.go` replays them).
+First test (request IDs 19000-19039): only `enabled: false`. Second test (request IDs 22000-22011, with the permission of the owner of the router): Tailscale was enabled for 38 s (14:38:50-14:39:28). `get_auth_url`, `logout` and every login method were not called, so the router was never logged in to a tailnet. The config was `{"enabled":false,"lan_enabled":false,"wan_enabled":false,"lan_ip":"192.168.8.0/24"}` before and after each test, and `system.get_status` had the `tailscale` service at status `0` after each test. The fixtures `tailscale.*_config*.json` of each block are one sequence (`glinettest/tailscale_test.go` replays them).
 
 | Call | Params | Result |
 |---|---|---|
 | `get_config` | none | `{"enabled":bool, "lan_enabled":bool, "wan_enabled":bool, "lan_ip":string, "exit_node_ip"?:string}` |
 | `set_config` | `{enabled, lan_enabled, wan_enabled, exit_node_ip?}` | `[]` |
-| `get_status` | none | `{"dns":[string]}` while disabled (took 2 s once) |
-| `get_exit_node_list` | none | `[]` while disabled |
+| `get_status` | none | `{"dns":[string]}` while disabled (takes 2 s); `{"dns":[string], "status":1}` while enabled and not logged in (takes 45 ms) |
+| `get_exit_node_list` | none | `[]` while disabled and while enabled and not logged in |
 
-Behavior (all with `enabled: false`):
+Behavior with `enabled: false`:
 - The router stores `lan_enabled`, `wan_enabled` and `exit_node_ip` also while Tailscale is disabled; the next read, 5 ms later, had them.
 - `enabled`, `lan_enabled` and `wan_enabled` are set to the sent values: a missing one is written as `false` (`{"enabled":false}` and `{}` set `lan_enabled` from `true` to `false`). `lan_enabled: 1` gave `true`. `lan_enabled: null` returned `-32602 Invalid params` (no `err`) and changed nothing.
 - `exit_node_ip` (`"100.64.0.1"`) was stored and is then in `get_config`. `exit_node_ip: ""` and a write without `exit_node_ip` remove it (the key is then not in `get_config`).
 - `lan_ip` is not changed by a write.
 - Each write returned in about 5-16 ms.
 
+Behavior with `enabled: true` (the writes of the web UI):
+- `{"enabled":true,"lan_enabled":false,"wan_enabled":false,"exit_node_ip":""}` returned `[]` in 17 ms. The next `get_config`, 30 ms later, had `enabled: true`. The first `get_status`, sent 50 ms after the write (it took 1.7 s), had `status: 1` ("login needed" in the UI code), and it stayed 1. `system.get_status` had the `tailscale` service at status `2`.
+- A second enabled write with `lan_enabled: true` returned `[]` in 14 ms and was in `get_config` at once.
+- The disable `{"enabled":false}` (sent with `lan_enabled: true` stored) returned `[]` in 13 ms. `get_config` then had `lan_enabled: false`: a disable does not keep the other fields. One `get_status` 50 ms after the disable still had `status: 1`; the next, 1 s later, had no `status`. The service status in `system.get_status` was `0` at once.
+- While Tailscale was enabled (also with `lan_enabled: true`), these did not change: firewall zone list, rule list, port forward list, DMZ, WAN access, DNS config (`server` list), `get_status.dns`, static binds, block list, hosts, LED, timers, AdGuard Home, time zone, `system.get_status.system` flags and the WireGuard client (connected, same peer). After the disable, all guards were as before the test.
+
 From the UI code, not tested (`/views/gl-sdk4-ui-tailscaleview.common.js.gz`, read on 2026-11-14):
 - To disable, the UI sends only `{"enabled":false}`. To enable, it sends `{"enabled":true, "lan_enabled", "wan_enabled", "exit_node_ip":""}`. To set an exit node, it sends `{"enabled", "lan_enabled", "wan_enabled", "exit_node_ip"}`. It reads `get_config` again 5 s after a write.
 - When enabled, the UI reads `status` (1 login needed, 4 connecting; 3 is shown as running in the service list), `login_name`, `address_v4` and `dns` from `get_status`, and `exit_node_list` from `get_exit_node_list`. It calls `get_auth_url` (timeout 30 s, result `auth_url`, `err_code -1` = no URL) for the login, and `logout`.
 
-Not verified: any write with `enabled: true` (it starts Tailscale and contacts the Tailscale servers), the login, the status values when enabled, the exit node list items.
+Not verified: the login, `status` values other than 1, `login_name` and `address_v4`, the exit node list items, what `lan_enabled` and `wan_enabled` do in the firewall when the router is in a tailnet (the zone list did not change, but the firewall sections that the API does not show were not read), `wan_enabled: true` while enabled.
 
 ### zerotier (write test with ZeroTier disabled, 2026-11-14)
 

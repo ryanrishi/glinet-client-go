@@ -1,0 +1,18 @@
+{
+  "request": {
+    "id": 22005,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "tailscale",
+      "get_exit_node_list",
+      {}
+    ]
+  },
+  "response": {
+    "id": 22005,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}
