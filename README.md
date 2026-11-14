@@ -2,7 +2,6 @@ glinet-client-go
 ===
 [![Tests](https://github.com/ryanrishi/glinet-client-go/actions/workflows/go.yml/badge.svg)](https://github.com/ryanrishi/glinet-client-go/actions/workflows/go.yml)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/ryanrishi/glinet-client-go)](https://github.com/ryanrishi/glinet-client-go/releases/latest)
-[![Go Report Card](https://goreportcard.com/badge/github.com/ryanrishi/glinet-client-go)](https://goreportcard.com/report/github.com/ryanrishi/glinet-client-go)
 
 
 A Go client to access [GL.iNet](https://www.gl-inet.com/) routers. Based on [v4 firmware](https://dev.gl-inet.com/router-4.x-api/).
