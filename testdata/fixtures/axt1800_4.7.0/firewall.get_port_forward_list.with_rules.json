@@ -1,0 +1,32 @@
+{
+  "request": {
+    "id": 3013,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "get_port_forward_list",
+      {}
+    ]
+  },
+  "response": {
+    "id": 3013,
+    "jsonrpc": "2.0",
+    "result": {
+      "res": [
+        {
+          "enabled": false,
+          "src_dport": "50010",
+          "id": "cfg243837",
+          "dest_ip": "192.168.8.250",
+          "dest_port": "50010",
+          "name": "tf-test-pf-1",
+          "src": "wan",
+          "dest": "lan",
+          "proto": "tcp"
+        }
+      ]
+    }
+  }
+}

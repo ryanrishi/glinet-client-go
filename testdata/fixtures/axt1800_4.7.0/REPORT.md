@@ -31,7 +31,7 @@ The 4.9.0-only methods also return -32601 on 4.7.0: `system.get_network_status`,
 
 ## Differences from the 2023 reference
 
-Many lists were empty on this router, so their item fields could not be compared: `firewall.get_port_forward_list.res` (later verified, see "firewall port forward"), `firewall.get_rule_list.res`, `firewall.get_wan_access.whitelist`, `wg-server.get_peer_list.peers`, `wg-server.get_route_list.*_route_rules`, `wg-server.get_status.peers`. DMZ is disabled, so `firewall.get_dmz` has only `enabled` (no `dest_ip`). Later phases must get fixtures with data for these (or use the reference shapes and mark them as not verified).
+Many lists were empty on this router, so their item fields could not be compared: `firewall.get_port_forward_list.res` (later verified, see "firewall port forward"), `firewall.get_rule_list.res` (later verified, see "firewall rule"), `firewall.get_wan_access.whitelist`, `wg-server.get_peer_list.peers`, `wg-server.get_route_list.*_route_rules`, `wg-server.get_status.peers`. DMZ is disabled, so `firewall.get_dmz` has only `enabled` (no `dest_ip`; later verified, see "firewall DMZ"). Later phases must get fixtures with data for these (or use the reference shapes and mark them as not verified).
 
 The reference marks `err_code` / `err_msg` as output of many methods. No ok response had them.
 
@@ -133,7 +133,86 @@ Differences from the 2023 reference:
 - The reference does not say that IDs change after a remove, that `set` without `name` removes the name, that values are not checked, or that duplicates are accepted.
 - The reference marks `src`, `src_dport`, `dest`, `dest_ip`, `dest_port` as required. The router accepts `add` without them.
 
-Not verified: `remove_port_forward` with `all` (remove all; not called); whether a write reloads the firewall (no API shows it, and no traffic was sent through a forward); whether the firewall uses a forward with invalid values; IDs after changes to other firewall sections (rules, zones, DMZ; not written), which can change the index part of the ID; `""` for `src`, `src_dport`, `dest`, `dest_ip`; `enabled: null` and other value types; other `proto` values such as `icmp`.
+Not verified: `remove_port_forward` with `all` (remove all; not called); whether a write reloads the firewall (no API shows it, and no traffic was sent through a forward); whether the firewall uses a forward with invalid values; IDs after changes to zones (not written), which can change the index part of the ID (for rules see "firewall rule"); `""` for `src`, `src_dport`, `dest`, `dest_ip`; `enabled: null` and other value types; other `proto` values such as `icmp`.
+
+### firewall rule (write test, 2026-11-14)
+
+Verified on the router with names `tf-test-N`, source zone `wan` in each rule, destination IP `192.168.8.250` (no known client) and ports `50001`-`50024`. Each rule was disabled, or enabled only when it matched only traffic from `wan` to `192.168.8.250`. The rule list and the port forward list were empty before and after the test. The fixtures `firewall.*rule*.json` and the `firewall.*port_forward*.json` fixtures with request IDs 3000-3999 are one sequence (`glinettest/firewall_test.go` replays them, with a new fake router for each block of 1000 request IDs). `firewall.remove_*.cleanup_N.json` were written from the log of the test program, which did not save them as files.
+
+| Call | Params | Result |
+|---|---|---|
+| `get_rule_list` | none | `{"res":[{id, name?, src?, src_ip?, src_mac?, src_port?, proto?, dest?, dest_ip?, dest_port?, target?, enabled}]}` |
+| `add_rule` | `{name?, src?, src_ip?, src_mac?, src_port?, proto?, dest?, dest_ip?, dest_port?, target?, enabled?}` | `{"id":"cfg2392bd"}` |
+| `set_rule` | `{id, ...}` | `[]` |
+| `remove_rule` | `{id}` | `[]` |
+
+Item fields:
+- `id`, `name`, `src`, `src_ip`, `src_mac`, `src_port`, `proto`, `dest`, `dest_ip`, `dest_port`, `target` are strings. Ports are strings also when they were written as numbers (`50002` gives `"50002"`), and can be a range (`"50004-50005"`).
+- Values used: `proto` `tcp`, `udp`, `tcp udp`; `target` `ACCEPT`, `REJECT`, `DROP`; `src` and `dest` `wan` and `lan`. A rule without `dest` (traffic to the router itself) and a rule without `proto` are accepted.
+- `enabled` is a JSON bool. On write, `true`/`false` and the numbers `0`/`1` work; the string `"false"` gives `true`. No `enabled` on add gives `true`.
+- A field without a value has no key. The router adds no default value: a rule added without `target` or `proto` has no `target` or `proto` key.
+
+ID:
+- The ID is the UCI name of an anonymous section: `cfg` + the section index in the firewall configuration (2 hex digits) + `92bd` (from the section type; port forwards have `3837`).
+- Rules and port forwards are in the same index. On this router the first rule was `cfg2392bd`, at the index of the first port forward (before the first `set_dmz`; see "firewall DMZ"). A port forward added after a rule gets `cfg243837`. After `remove` of a rule, each rule and port forward after it gets the index before it, and after `remove` of a port forward, the same is true for the rules after it (`firewall.get_*_list.after_rule_remove.json`, `firewall.get_rule_list.after_forward_remove.json`).
+- `add` appends at the end and does not change other IDs. `set` keeps the position and the ID.
+
+Behavior:
+- `add` and `set` do not check values. Accepted: `target: "FOO"`, `proto: "foo"`, `dest_port: "70000"`, `name: ""` (gives no `name` key), no `target`.
+- Duplicates are accepted: an `add` equal to an existing rule gets its own ID.
+- `set` writes each field that the params have. A field that is not in the params keeps its value, except `name`: no `name` removes the name. No `enabled` keeps `enabled`. `""` removes the field (verified for `name`, `src_ip`, `src_mac`, `src_port`, `proto`, `dest`, `dest_ip`, `dest_port`).
+- `set` with an unknown ID returns `[]` and changes nothing.
+- `remove` with an unknown ID, or with no `id`, returns HTTP 500 and changes nothing.
+- `remove` of a rule that has no `dest_port` returns HTTP 500 and changes nothing. After `set` of a `dest_port`, `remove` works. A rule without `proto` can be removed.
+- The methods do not check the section type of the ID: `remove_rule` with the ID of a port forward removes that port forward, `set_rule` with the ID of a port forward writes its `name`, and `remove_port_forward` with the ID of a rule removes that rule. Because the ID suffix comes from the type, an ID of a rule can only be the ID of a rule or of no section.
+- There is no method to move a rule. Its position is the order of the add calls.
+- Each write returned in about 15-25 ms. The next read worked about 5 ms later. No write made the router or the link slow or unreachable.
+
+Errors:
+
+| Response | Cause |
+|---|---|
+| `-32602 Invalid params`, `err: "id: string required"` | `set_rule` without `id` |
+| HTTP 500 | `remove_rule` with an unknown ID, without `id`, or of a rule that has no `dest_port` |
+
+Differences from the 2023 reference:
+- `src_port` and `dest_port` are strings in the list (reference: numbers). Both accept numbers on write. A port can be a range.
+- `target` is optional on add (reference: required).
+- `set` and `remove` return `[]`, not `null`.
+- `remove_rule` with an unknown ID, and of a rule without `dest_port`, is an HTTP 500, not a JSON-RPC error.
+- The reference does not say that IDs change after a remove of a rule or a port forward, that `set` without `name` removes the name, that values are not checked, that duplicates are accepted, or that the methods accept the ID of another section type.
+
+Not verified: `remove_rule` with `all` (remove all; not called); `""` for `src` and `target`; invalid values in `src`, `src_ip` and `src_mac` (not sent, so that no rule could match more traffic); other `proto` values such as `icmp` or `all`; `set_port_forward` with the ID of a rule; whether the firewall uses a rule with invalid values; whether a write reloads the firewall (no traffic was sent).
+
+### firewall DMZ (write test, 2026-11-14)
+
+Verified on the router with the DMZ host `192.168.8.250` (no known client), in the same session as "firewall rule". DMZ was disabled before and after the test, and was enabled for less than 1 s two times. The fixtures `firewall.*dmz*.json` are in the same sequence as the rule fixtures (request IDs 3069-3100); the rule and port forward fixtures after them show the effect on the IDs.
+
+| Call | Params | Result |
+|---|---|---|
+| `get_dmz` | none | `{"enabled":false}` before the first `set_dmz`; after it `{"enabled":bool, "dest_ip"?:string, "priority":false}` |
+| `set_dmz` | `{enabled?, dest_ip?}` | `[]` |
+
+Behavior:
+- `enabled` is a JSON bool. `set_dmz` without `enabled` enables the DMZ (`{"dest_ip":"192.168.8.250"}` gave `enabled: true`).
+- `set_dmz` without `dest_ip` removes `dest_ip`, also when it disables the DMZ. `{"enabled":false,"dest_ip":...}` keeps the IP in a disabled DMZ.
+- `dest_ip` is not checked: `"not-an-ip"` was accepted (with `enabled: false`).
+- `priority` appears after the first `set_dmz` and stays `false`. The test did not write it.
+- `set_dmz` does not add an item to the rule list or the port forward list, and does not change their IDs at once.
+
+DMZ section and IDs:
+- The first `set_dmz` adds a section without an ID at the end of the firewall configuration. It is not in the rule or port forward list, but it has an index. It stays when the DMZ is disabled. The test could not remove it, so it is still on the router: the next rule or port forward on an empty list gets index `0x24` (`cfg2492bd`, `firewall.add_rule.after_cleanup.json`), not `0x23` as before.
+- `add_port_forward` moves the DMZ section to the end of the configuration after it gives the ID. So when the DMZ section was before the new forward, the ID that `add_port_forward` returns is one more than the ID of the forward in the next list (`firewall.add_port_forward.after_dmz.json`: returned `cfg2f3837`, listed `cfg2e3837`), and the rules and forwards that were after the DMZ section get the index before it (`firewall.add_port_forward.after_dmz_second.json`: rule `cfg3092bd` became `cfg2f92bd`).
+- `add_rule` does not move the DMZ section (`firewall.add_rule.after_dmz_second.json`: the rule kept `cfg3092bd` for 17 s). A rule added when the DMZ section is not at the end gets the correct ID; `firewall.add_rule.after_dmz.json` returned `cfg2e92bd` because the DMZ section was at `0x2d` before the rule, and the rule moved to `cfg2d92bd` when the next `add_port_forward` moved the DMZ section.
+- The move was seen on the next read, 5 ms after the write.
+
+Differences from the 2023 reference:
+- `enabled` is optional on `set_dmz` (reference: required) and its default is `true`.
+- `get_dmz` has the extra field `priority`, after the first `set_dmz`.
+- `set_dmz` returns `[]`, not `null`.
+- The reference does not say that `dest_ip` is removed when it is not sent, or that the DMZ adds a firewall section that changes IDs.
+
+Not verified: `set_dmz` with `enabled: true` and no `dest_ip`, or with an invalid `dest_ip` (not sent, so that the DMZ could not take traffic for an unknown host); `priority` on write and what it does; whether `set_port_forward`, `remove_port_forward`, `set_rule` or `remove_rule` move the DMZ section (in the test the DMZ section was at the end at each of these calls); whether the firewall forwards traffic to the DMZ host (no traffic was sent).
 
 ### dns
 - `get_config`: no `proto`. Extra: `controld_id`, `dot_provider` (string, `"0"`), `free_controld_id`, `override_vpn`. `server` items are strings like `"wwan 192.168.4.253"`.

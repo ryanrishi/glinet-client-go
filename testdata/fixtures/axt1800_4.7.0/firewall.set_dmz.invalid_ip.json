@@ -1,0 +1,21 @@
+{
+  "request": {
+    "id": 3095,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "set_dmz",
+      {
+        "enabled": false,
+        "dest_ip": "not-an-ip"
+      }
+    ]
+  },
+  "response": {
+    "id": 3095,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

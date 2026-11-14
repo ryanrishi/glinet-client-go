@@ -1,0 +1,21 @@
+{
+  "request": {
+    "id": 3034,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "set_rule",
+      {
+        "id": "cfg2492bd",
+        "name": "tf-test-3"
+      }
+    ]
+  },
+  "response": {
+    "id": 3034,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

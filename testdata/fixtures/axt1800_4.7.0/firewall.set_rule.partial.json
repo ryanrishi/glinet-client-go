@@ -1,0 +1,22 @@
+{
+  "request": {
+    "id": 3029,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "set_rule",
+      {
+        "id": "cfg2392bd",
+        "dest_port": "50009",
+        "enabled": false
+      }
+    ]
+  },
+  "response": {
+    "id": 3029,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

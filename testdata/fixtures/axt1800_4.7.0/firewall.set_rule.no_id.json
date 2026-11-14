@@ -1,0 +1,30 @@
+{
+  "request": {
+    "id": 3040,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "set_rule",
+      {
+        "name": "tf-test-x",
+        "src": "wan",
+        "dest": "lan",
+        "dest_ip": "192.168.8.250",
+        "dest_port": "50012",
+        "target": "DROP",
+        "enabled": false
+      }
+    ]
+  },
+  "response": {
+    "id": 3040,
+    "jsonrpc": "2.0",
+    "error": {
+      "message": "Invalid params",
+      "err": "id: string required",
+      "code": -32602
+    }
+  }
+}

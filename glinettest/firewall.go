@@ -3,6 +3,7 @@ package glinettest
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"slices"
 	"strconv"
 	"sync"
@@ -21,80 +22,226 @@ type PortForward struct {
 	Enabled  bool   `json:"enabled"`
 }
 
-// Firewall serves the port forward methods of the firewall module. Like the router, it does not
-// check the values, accepts duplicates, and gives each forward the ID of its position in the list,
-// so the IDs after a removed forward change.
-type Firewall struct {
-	mu       sync.Mutex
-	forwards []PortForward
+// Rule is a traffic rule of the firewall module. An empty string means the router has no
+// value for that field. The ID is not stored: the router gives it from the position in the list.
+type Rule struct {
+	Name     string `json:"name,omitempty"`
+	Src      string `json:"src,omitempty"`
+	SrcIP    string `json:"src_ip,omitempty"`
+	SrcMAC   string `json:"src_mac,omitempty"`
+	SrcPort  string `json:"src_port,omitempty"`
+	Proto    string `json:"proto,omitempty"`
+	Dest     string `json:"dest,omitempty"`
+	DestIP   string `json:"dest_ip,omitempty"`
+	DestPort string `json:"dest_port,omitempty"`
+	Target   string `json:"target,omitempty"`
+	Enabled  bool   `json:"enabled"`
 }
 
-// firstPortForwardIndex is the section index of the first port forward on the test router,
-// where the firewall configuration has 35 other sections first.
-const firstPortForwardIndex = 0x23
+// DMZ is the DMZ configuration of the firewall module. An empty DestIP means the router has no value.
+type DMZ struct {
+	Enabled bool   `json:"enabled"`
+	DestIP  string `json:"dest_ip,omitempty"`
+}
 
-// PortForwardID returns the ID that the router gives to the forward at index i of the list.
+// Firewall serves the port forward, rule and DMZ methods of the firewall module. Like the router,
+// it does not check the values and accepts duplicates. It keeps the port forwards and rules in one
+// list of firewall sections and gives each one the ID of its position in that list, so the IDs
+// after a removed port forward or rule change. Like the router, the set and remove methods of
+// one type also write or remove a section of the other type when they get its ID.
+//
+// The first set_dmz adds a DMZ section without an ID at the end of the list. Like the router,
+// add_port_forward moves it to the end again after it gives the ID of the new port forward,
+// so that ID is one more than the ID in the list when the DMZ section was before the new forward.
+type Firewall struct {
+	mu       sync.Mutex
+	sections []section
+}
+
+type section struct {
+	suffix string
+	values map[string]any
+}
+
+// The ID suffixes that the router gives from the section type. The DMZ section has a name and no ID.
+const (
+	portForwardSuffix = "3837"
+	ruleSuffix        = "92bd"
+	dmzSuffix         = ""
+)
+
+// firstSectionIndex is the index of the first port forward or rule on the test router,
+// where the firewall configuration has 35 other sections first.
+const firstSectionIndex = 0x23
+
+var (
+	portForwardKeys = []string{"name", "proto", "src", "src_dport", "dest", "dest_ip", "dest_port"}
+	ruleKeys        = []string{"name", "src", "src_ip", "src_mac", "src_port", "proto", "dest", "dest_ip", "dest_port", "target"}
+)
+
+// PortForwardID returns the ID that the router gives to a port forward at index i of the
+// port forwards and rules together.
 func PortForwardID(i int) string {
-	return fmt.Sprintf("cfg%02x3837", firstPortForwardIndex+i)
+	return sectionID(i, portForwardSuffix)
+}
+
+// RuleID returns the ID that the router gives to a rule at index i of the
+// port forwards and rules together.
+func RuleID(i int) string {
+	return sectionID(i, ruleSuffix)
+}
+
+func sectionID(i int, suffix string) string {
+	return fmt.Sprintf("cfg%02x%s", firstSectionIndex+i, suffix)
 }
 
 func newFirewall() *Firewall {
-	return &Firewall{forwards: []PortForward{}}
+	return &Firewall{}
 }
 
 // PortForwards returns a copy of the port forwards.
 func (m *Firewall) PortForwards() []PortForward {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return slices.Clone(m.forwards)
+	return sectionsOf[PortForward](m.sections, portForwardSuffix)
 }
 
-// SetPortForwards replaces the port forwards.
+// SetPortForwards replaces the port forwards. The new port forwards go after the rules
+// and before the DMZ section.
 func (m *Firewall) SetPortForwards(forwards []PortForward) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.forwards = append([]PortForward{}, forwards...)
+	m.sections = replaceSections(m.sections, portForwardSuffix, forwards)
+	m.moveDMZToEnd()
+}
+
+// Rules returns a copy of the rules.
+func (m *Firewall) Rules() []Rule {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return sectionsOf[Rule](m.sections, ruleSuffix)
+}
+
+// SetRules replaces the rules. The new rules go after the port forwards
+// and before the DMZ section.
+func (m *Firewall) SetRules(rules []Rule) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.sections = replaceSections(m.sections, ruleSuffix, rules)
+	m.moveDMZToEnd()
+}
+
+// DMZ returns the DMZ configuration.
+func (m *Firewall) DMZ() DMZ {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	var dmz DMZ
+	if i := m.dmzIndex(); i >= 0 {
+		data, _ := json.Marshal(m.sections[i].values)
+		_ = json.Unmarshal(data, &dmz)
+	}
+	return dmz
+}
+
+// SetDMZ replaces the DMZ configuration. It adds the DMZ section at the end if there is none.
+func (m *Firewall) SetDMZ(dmz DMZ) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	values := map[string]any{"enabled": dmz.Enabled}
+	if dmz.DestIP != "" {
+		values["dest_ip"] = dmz.DestIP
+	}
+	m.setDMZValues(values)
+}
+
+func (m *Firewall) dmzIndex() int {
+	return slices.IndexFunc(m.sections, func(s section) bool { return s.suffix == dmzSuffix })
+}
+
+func (m *Firewall) setDMZValues(values map[string]any) {
+	if i := m.dmzIndex(); i >= 0 {
+		m.sections[i].values = values
+		return
+	}
+	m.sections = append(m.sections, section{suffix: dmzSuffix, values: values})
+}
+
+func (m *Firewall) moveDMZToEnd() {
+	if i := m.dmzIndex(); i >= 0 {
+		dmz := m.sections[i]
+		m.sections = append(slices.Delete(m.sections, i, i+1), dmz)
+	}
+}
+
+func sectionsOf[T any](sections []section, suffix string) []T {
+	res := []T{}
+	for _, s := range sections {
+		if s.suffix != suffix {
+			continue
+		}
+		var v T
+		data, _ := json.Marshal(s.values)
+		_ = json.Unmarshal(data, &v)
+		res = append(res, v)
+	}
+	return res
+}
+
+func replaceSections[T any](sections []section, suffix string, items []T) []section {
+	res := slices.DeleteFunc(slices.Clone(sections), func(s section) bool { return s.suffix == suffix })
+	for _, item := range items {
+		var values map[string]any
+		data, _ := json.Marshal(item)
+		_ = json.Unmarshal(data, &values)
+		res = append(res, section{suffix: suffix, values: values})
+	}
+	return res
 }
 
 func (m *Firewall) register(s *Server) {
-	s.Handle("firewall", "get_port_forward_list", m.getPortForwardList)
-	s.Handle("firewall", "add_port_forward", m.addPortForward)
-	s.Handle("firewall", "set_port_forward", m.setPortForward)
-	s.Handle("firewall", "remove_port_forward", m.removePortForward)
+	s.Handle("firewall", "get_port_forward_list", m.list(portForwardSuffix))
+	s.Handle("firewall", "add_port_forward", m.add(portForwardSuffix, portForwardKeys))
+	s.Handle("firewall", "set_port_forward", m.set(portForwardKeys))
+	s.Handle("firewall", "remove_port_forward", m.remove)
+	s.Handle("firewall", "get_rule_list", m.list(ruleSuffix))
+	s.Handle("firewall", "add_rule", m.add(ruleSuffix, ruleKeys))
+	s.Handle("firewall", "set_rule", m.set(ruleKeys))
+	s.Handle("firewall", "remove_rule", m.remove)
+	s.Handle("firewall", "get_dmz", m.getDMZ)
+	s.Handle("firewall", "set_dmz", m.setDMZ)
 }
 
-type listedPortForward struct {
-	ID string `json:"id"`
-	PortForward
-}
-
-func (m *Firewall) getPortForwardList(json.RawMessage) (any, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	res := make([]listedPortForward, len(m.forwards))
-	for i, f := range m.forwards {
-		res[i] = listedPortForward{ID: PortForwardID(i), PortForward: f}
+func (m *Firewall) list(suffix string) Method {
+	return func(json.RawMessage) (any, error) {
+		m.mu.Lock()
+		defer m.mu.Unlock()
+		res := []map[string]any{}
+		for i, s := range m.sections {
+			if s.suffix != suffix {
+				continue
+			}
+			item := maps.Clone(s.values)
+			item["id"] = sectionID(i, suffix)
+			res = append(res, item)
+		}
+		return map[string]any{"res": res}, nil
 	}
-	return map[string]any{"res": res}, nil
 }
 
 func (m *Firewall) index(id string) int {
-	for i := range m.forwards {
-		if PortForwardID(i) == id {
+	for i, s := range m.sections {
+		if s.suffix != dmzSuffix && sectionID(i, s.suffix) == id {
 			return i
 		}
 	}
 	return -1
 }
 
-// apply writes each field that params has to f. A string field takes a string or a number.
-// enabled takes a bool, or a number that is true when it is not 0; the router takes other values as true.
-func apply(f *PortForward, params map[string]json.RawMessage) error {
-	fields := map[string]*string{
-		"name": &f.Name, "proto": &f.Proto, "src": &f.Src, "src_dport": &f.SrcDport,
-		"dest": &f.Dest, "dest_ip": &f.DestIP, "dest_port": &f.DestPort,
-	}
-	for key, dst := range fields {
+// apply writes each of keys that params has to values. A string field takes a string or a
+// number, and "" removes it. enabled takes a bool, or a number that is true when it is not 0;
+// the router takes other values as true.
+func apply(values map[string]any, params map[string]json.RawMessage, keys []string) error {
+	for _, key := range keys {
 		raw, ok := params[key]
 		if !ok {
 			continue
@@ -105,9 +252,13 @@ func apply(f *PortForward, params map[string]json.RawMessage) error {
 		}
 		switch v := v.(type) {
 		case string:
-			*dst = v
+			if v == "" {
+				delete(values, key)
+			} else {
+				values[key] = v
+			}
 		case float64:
-			*dst = strconv.FormatFloat(v, 'f', -1, 64)
+			values[key] = strconv.FormatFloat(v, 'f', -1, 64)
 		default:
 			return ErrInvalidParams
 		}
@@ -120,64 +271,72 @@ func apply(f *PortForward, params map[string]json.RawMessage) error {
 		}
 		switch v := v.(type) {
 		case bool:
-			f.Enabled = v
+			values["enabled"] = v
 		case float64:
-			f.Enabled = v != 0
+			values["enabled"] = v != 0
 		default:
-			f.Enabled = true
+			values["enabled"] = true
 		}
 	}
 	return nil
 }
 
-func (m *Firewall) addPortForward(params json.RawMessage) (any, error) {
-	var p map[string]json.RawMessage
-	if err := json.Unmarshal(params, &p); err != nil {
-		return nil, ErrInvalidParams
-	}
-	f := PortForward{Enabled: true}
-	if err := apply(&f, p); err != nil {
-		return nil, err
-	}
+func (m *Firewall) add(suffix string, keys []string) Method {
+	return func(params json.RawMessage) (any, error) {
+		var p map[string]json.RawMessage
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, ErrInvalidParams
+		}
+		values := map[string]any{"enabled": true}
+		if err := apply(values, p, keys); err != nil {
+			return nil, err
+		}
 
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.forwards = append(m.forwards, f)
+		m.mu.Lock()
+		defer m.mu.Unlock()
+		m.sections = append(m.sections, section{suffix: suffix, values: values})
+		id := sectionID(len(m.sections)-1, suffix)
+		if suffix == portForwardSuffix {
+			m.moveDMZToEnd()
+		}
 
-	return map[string]string{"id": PortForwardID(len(m.forwards) - 1)}, nil
+		return map[string]string{"id": id}, nil
+	}
 }
 
-// setPortForward writes the fields that params has and keeps the others, except name:
-// no name removes the name, like the router.
-func (m *Firewall) setPortForward(params json.RawMessage) (any, error) {
-	var p map[string]json.RawMessage
-	if err := json.Unmarshal(params, &p); err != nil {
-		return nil, ErrInvalidParams
-	}
-	var id string
-	if err := json.Unmarshal(p["id"], &id); err != nil {
-		return nil, invalidParams("id: string required")
-	}
+// set writes the fields that params has and keeps the others, except name:
+// no name removes the name, like the router. An unknown ID changes nothing.
+func (m *Firewall) set(keys []string) Method {
+	return func(params json.RawMessage) (any, error) {
+		var p map[string]json.RawMessage
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, ErrInvalidParams
+		}
+		var id string
+		if err := json.Unmarshal(p["id"], &id); err != nil {
+			return nil, invalidParams("id: string required")
+		}
 
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	i := m.index(id)
-	if i < 0 {
+		m.mu.Lock()
+		defer m.mu.Unlock()
+		i := m.index(id)
+		if i < 0 {
+			return writeResult, nil
+		}
+		values := maps.Clone(m.sections[i].values)
+		delete(values, "name")
+		if err := apply(values, p, keys); err != nil {
+			return nil, err
+		}
+		m.sections[i].values = values
+
 		return writeResult, nil
 	}
-	f := m.forwards[i]
-	f.Name = ""
-	if err := apply(&f, p); err != nil {
-		return nil, err
-	}
-	m.forwards[i] = f
-
-	return writeResult, nil
 }
 
-// removePortForward fails with HTTP status 500 when no forward has the ID or the forward has
+// remove fails with HTTP status 500 when no section has the ID or the section has
 // no dest_port, like the router.
-func (m *Firewall) removePortForward(params json.RawMessage) (any, error) {
+func (m *Firewall) remove(params json.RawMessage) (any, error) {
 	var p struct {
 		ID string `json:"id"`
 	}
@@ -188,10 +347,41 @@ func (m *Firewall) removePortForward(params json.RawMessage) (any, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	i := m.index(p.ID)
-	if i < 0 || m.forwards[i].DestPort == "" {
+	if i < 0 || m.sections[i].values["dest_port"] == nil {
 		return nil, errInternalServerError
 	}
-	m.forwards = slices.Delete(m.forwards, i, i+1)
+	m.sections = slices.Delete(m.sections, i, i+1)
+
+	return writeResult, nil
+}
+
+// getDMZ returns only enabled until the first set_dmz, and priority false after it, like the router.
+func (m *Firewall) getDMZ(json.RawMessage) (any, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	i := m.dmzIndex()
+	if i < 0 {
+		return map[string]any{"enabled": false}, nil
+	}
+	res := maps.Clone(m.sections[i].values)
+	res["priority"] = false
+	return res, nil
+}
+
+// setDMZ writes enabled and dest_ip. No enabled is true and no dest_ip removes the IP, like the router.
+func (m *Firewall) setDMZ(params json.RawMessage) (any, error) {
+	var p map[string]json.RawMessage
+	if err := json.Unmarshal(params, &p); err != nil {
+		return nil, ErrInvalidParams
+	}
+	values := map[string]any{"enabled": true}
+	if err := apply(values, p, []string{"dest_ip"}); err != nil {
+		return nil, err
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.setDMZValues(values)
 
 	return writeResult, nil
 }

@@ -1,0 +1,107 @@
+{
+  "request": {
+    "id": 3076,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "get_rule_list",
+      {}
+    ]
+  },
+  "response": {
+    "id": 3076,
+    "jsonrpc": "2.0",
+    "result": {
+      "res": [
+        {
+          "enabled": false,
+          "id": "cfg2392bd",
+          "dest_port": "50009",
+          "name": "tf-test-2c",
+          "target": "REJECT",
+          "dest": "lan",
+          "src": "wan"
+        },
+        {
+          "enabled": false,
+          "id": "cfg2492bd",
+          "dest_ip": "192.168.8.250",
+          "dest_port": "50004-50005",
+          "name": "tf-test-3",
+          "src": "wan",
+          "target": "REJECT",
+          "proto": "udp"
+        },
+        {
+          "id": "cfg2592bd",
+          "dest_port": "50006",
+          "name": "tf-test-4",
+          "target": "DROP",
+          "enabled": false,
+          "src": "wan"
+        },
+        {
+          "id": "cfg2692bd",
+          "dest_ip": "192.168.8.250",
+          "enabled": true,
+          "dest_port": "50007",
+          "name": "tf-test-5",
+          "target": "DROP",
+          "dest": "lan",
+          "proto": "tcp",
+          "src": "wan"
+        },
+        {
+          "enabled": false,
+          "id": "cfg2792bd",
+          "dest_ip": "192.168.8.250",
+          "dest": "lan",
+          "dest_port": "70000",
+          "name": "tf-test-6",
+          "src": "wan",
+          "target": "FOO",
+          "proto": "foo"
+        },
+        {
+          "id": "cfg2892bd",
+          "dest_ip": "192.168.8.250",
+          "dest_port": "50014",
+          "enabled": false,
+          "target": "DROP",
+          "dest": "lan",
+          "src": "wan"
+        },
+        {
+          "id": "cfg2992bd",
+          "dest_ip": "192.168.8.250",
+          "dest_port": "50015",
+          "name": "tf-test-9",
+          "dest": "lan",
+          "enabled": false,
+          "src": "wan"
+        },
+        {
+          "id": "cfg2a92bd",
+          "dest_ip": "192.168.8.250",
+          "dest_port": "50015",
+          "name": "tf-test-9",
+          "dest": "lan",
+          "enabled": false,
+          "src": "wan"
+        },
+        {
+          "enabled": false,
+          "id": "cfg2b92bd",
+          "dest_ip": "192.168.8.250",
+          "dest": "lan",
+          "name": "tf-test-11",
+          "target": "DROP",
+          "src": "wan",
+          "proto": "tcp"
+        }
+      ]
+    }
+  }
+}
