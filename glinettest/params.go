@@ -22,3 +22,21 @@ func objectParams(params json.RawMessage) (map[string]json.RawMessage, error) {
 func truthy(raw json.RawMessage) bool {
 	return raw != nil && string(raw) != "false"
 }
+
+// paramsObject decodes params, which must be a JSON object, for the modules whose write methods
+// were not verified on a router. A value that is not an object gives ErrInvalidParams.
+func paramsObject(params json.RawMessage) (map[string]any, error) {
+	var p map[string]any
+	if err := json.Unmarshal(params, &p); err != nil || p == nil {
+		return nil, ErrInvalidParams
+	}
+	return p, nil
+}
+
+func mustMarshal(v any) json.RawMessage {
+	raw, err := json.Marshal(v)
+	if err != nil {
+		panic(err)
+	}
+	return raw
+}

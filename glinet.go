@@ -15,7 +15,7 @@ import (
 
 // Version is the version of this client. It is in the default User-Agent.
 const (
-	Version          = "v0.8.0"
+	Version          = "v0.9.0"
 	defaultBaseURL   = "http://192.168.8.1"
 	defaultUserAgent = "glinet-client-go" + "/" + Version
 )
@@ -42,6 +42,7 @@ type Client struct {
 	Digest        *DigestService
 	DNS           *DNSService
 	Firewall      *FirewallService
+	IPv6          *IPv6Service
 	LAN           *LANService
 	LED           *LEDService
 	Network       *NetworkService
@@ -106,6 +107,7 @@ func newClient(host string) (*Client, error) {
 	c.DDNS = (*DDNSService)(&c.common)
 	c.DNS = (*DNSService)(&c.common)
 	c.Firewall = (*FirewallService)(&c.common)
+	c.IPv6 = (*IPv6Service)(&c.common)
 	c.LAN = (*LANService)(&c.common)
 	c.LED = (*LEDService)(&c.common)
 	c.Network = (*NetworkService)(&c.common)

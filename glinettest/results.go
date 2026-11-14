@@ -6,7 +6,8 @@ import (
 	"sync"
 )
 
-// readResult is the result of a read-only method. A test can replace it.
+// readResult is the result of a read method. A test can replace it, and a write method of the
+// fake can change it with update.
 type readResult struct {
 	mu  sync.Mutex
 	raw json.RawMessage
@@ -26,6 +27,27 @@ func (r *readResult) set(raw json.RawMessage) {
 
 func (r *readResult) handle(json.RawMessage) (any, error) {
 	return r.get(), nil
+}
+
+// update decodes the result, calls f with it and stores the value that f returns.
+// An error of f leaves the result as it was.
+func (r *readResult) update(f func(v any) (any, error)) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	var v any
+	if err := json.Unmarshal(r.raw, &v); err != nil {
+		return err
+	}
+	v, err := f(v)
+	if err != nil {
+		return err
+	}
+	raw, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	r.raw = raw
+	return nil
 }
 
 // The default results of the read-only methods. They are the results of the real router in
@@ -418,6 +440,336 @@ const (
 			{
 				"name": "radio1",
 				"state": "ready"
+			}
+		]
+	}`
+
+	cableConfig = `{
+		"protocol": "dhcp"
+	}`
+
+	ipv6Config = `{
+		"enable": false,
+		"lan_dns_mode": true,
+		"lan_mode": "nat6"
+	}`
+
+	lanConfigList = `{
+		"interfaces": [
+			{
+				"ap_isolate": 0,
+				"dns": [],
+				"enable": 1,
+				"end": "192.168.8.249",
+				"gateway": "",
+				"interface": "lan",
+				"ip": "192.168.8.1",
+				"leasetime": "12h",
+				"lpr": [],
+				"netmask": "255.255.255.0",
+				"start": "192.168.8.100"
+			},
+			{
+				"ap_isolate": 1,
+				"dns": [],
+				"enable": 0,
+				"end": "192.168.9.249",
+				"gateway": "",
+				"interface": "guest",
+				"ip": "192.168.9.1",
+				"leasetime": "12h",
+				"lpr": [],
+				"netmask": "255.255.255.0",
+				"start": "192.168.9.100",
+				"transfer_enable": 0
+			}
+		]
+	}`
+
+	wifiConfig = `{
+		"dfs_support": true,
+		"res": [
+			{
+				"band": "5G",
+				"channel": 48,
+				"channels": [
+					{
+						"channel": 36,
+						"dfs": false,
+						"psc": false
+					},
+					{
+						"channel": 40,
+						"dfs": false,
+						"psc": false
+					},
+					{
+						"channel": 44,
+						"dfs": false,
+						"psc": false
+					},
+					{
+						"channel": 48,
+						"dfs": false,
+						"psc": false
+					},
+					{
+						"channel": 52,
+						"dfs": true,
+						"psc": false
+					},
+					{
+						"channel": 56,
+						"dfs": true,
+						"psc": false
+					},
+					{
+						"channel": 60,
+						"dfs": true,
+						"psc": false
+					},
+					{
+						"channel": 64,
+						"dfs": true,
+						"psc": false
+					},
+					{
+						"channel": 100,
+						"dfs": true,
+						"psc": false
+					},
+					{
+						"channel": 104,
+						"dfs": true,
+						"psc": false
+					},
+					{
+						"channel": 108,
+						"dfs": true,
+						"psc": false
+					},
+					{
+						"channel": 112,
+						"dfs": true,
+						"psc": false
+					},
+					{
+						"channel": 116,
+						"dfs": true,
+						"psc": false
+					},
+					{
+						"channel": 120,
+						"dfs": true,
+						"psc": false
+					},
+					{
+						"channel": 124,
+						"dfs": true,
+						"psc": false
+					},
+					{
+						"channel": 128,
+						"dfs": true,
+						"psc": false
+					},
+					{
+						"channel": 132,
+						"dfs": true,
+						"psc": false
+					},
+					{
+						"channel": 136,
+						"dfs": true,
+						"psc": false
+					},
+					{
+						"channel": 140,
+						"dfs": true,
+						"psc": false
+					},
+					{
+						"channel": 144,
+						"dfs": true,
+						"psc": false
+					},
+					{
+						"channel": 149,
+						"dfs": false,
+						"psc": false
+					},
+					{
+						"channel": 153,
+						"dfs": false,
+						"psc": false
+					},
+					{
+						"channel": 157,
+						"dfs": false,
+						"psc": false
+					},
+					{
+						"channel": 161,
+						"dfs": false,
+						"psc": false
+					},
+					{
+						"channel": 165,
+						"dfs": false,
+						"psc": false
+					}
+				],
+				"device": "radio0",
+				"encryptions": [
+					"none",
+					"psk2",
+					"psk-mixed",
+					"sae",
+					"sae-mixed"
+				],
+				"htmode": "40",
+				"htmodes": {
+					"11a/n/ac": 80,
+					"11a/n/ac/ax": 80,
+					"11ac/ax": 80,
+					"11n/ac/ax": 80,
+					"auto": false
+				},
+				"hwmode": "11a/n/ac/ax",
+				"hwmodes": [
+					"11ac/ax",
+					"11n/ac/ax",
+					"11a/n/ac/ax",
+					"11a/n/ac"
+				],
+				"ifaces": [
+					{
+						"enabled": true,
+						"encryption": "psk2",
+						"guest": false,
+						"hidden": false,
+						"key": "redacted-passwd-1",
+						"name": "default_radio0",
+						"ssid": "ssid-1"
+					},
+					{
+						"enabled": false,
+						"encryption": "psk2",
+						"guest": true,
+						"hidden": false,
+						"key": "redacted-passwd-2",
+						"name": "guest5g",
+						"ssid": "ssid-2"
+					}
+				],
+				"random_bssid": true,
+				"txpower": "Medium"
+			},
+			{
+				"band": "2G",
+				"channel": 6,
+				"channels": [
+					{
+						"channel": 1,
+						"dfs": false,
+						"psc": false
+					},
+					{
+						"channel": 2,
+						"dfs": false,
+						"psc": false
+					},
+					{
+						"channel": 3,
+						"dfs": false,
+						"psc": false
+					},
+					{
+						"channel": 4,
+						"dfs": false,
+						"psc": false
+					},
+					{
+						"channel": 5,
+						"dfs": false,
+						"psc": false
+					},
+					{
+						"channel": 6,
+						"dfs": false,
+						"psc": false
+					},
+					{
+						"channel": 7,
+						"dfs": false,
+						"psc": false
+					},
+					{
+						"channel": 8,
+						"dfs": false,
+						"psc": false
+					},
+					{
+						"channel": 9,
+						"dfs": false,
+						"psc": false
+					},
+					{
+						"channel": 10,
+						"dfs": false,
+						"psc": false
+					},
+					{
+						"channel": 11,
+						"dfs": false,
+						"psc": false
+					}
+				],
+				"device": "radio1",
+				"encryptions": [
+					"none",
+					"psk2",
+					"psk-mixed",
+					"sae",
+					"sae-mixed"
+				],
+				"htmode": "auto",
+				"htmodes": {
+					"11b/g/n": 40,
+					"11b/g/n/ax": 40,
+					"11g/n/ax": 40,
+					"11n/ax": 40,
+					"auto": true
+				},
+				"hwmode": "11g/n/ax",
+				"hwmodes": [
+					"11n/ax",
+					"11g/n/ax",
+					"11b/g/n/ax",
+					"11b/g/n"
+				],
+				"ifaces": [
+					{
+						"enabled": false,
+						"encryption": "psk2",
+						"guest": false,
+						"hidden": false,
+						"key": "redacted-passwd-2",
+						"name": "default_radio1",
+						"ssid": "ssid-1"
+					},
+					{
+						"enabled": false,
+						"encryption": "psk2",
+						"guest": true,
+						"hidden": false,
+						"key": "redacted-passwd-2",
+						"name": "guest2g",
+						"ssid": "ssid-3"
+					}
+				],
+				"random_bssid": true,
+				"txpower": "Max"
 			}
 		]
 	}`

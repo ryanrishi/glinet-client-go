@@ -68,6 +68,7 @@ type Server struct {
 	DDNS          *DDNS
 	DNS           *DNS
 	Firewall      *Firewall
+	IPv6          *IPv6
 	LAN           *LAN
 	LED           *LED
 	Network       *Network
@@ -117,6 +118,8 @@ func NewServer(t testing.TB) *Server {
 	s.DNS.register(s)
 	s.Firewall = newFirewall()
 	s.Firewall.register(s)
+	s.IPv6 = newIPv6()
+	s.IPv6.register(s)
 	s.LAN = newLAN()
 	s.LAN.register(s)
 	s.LED = newLED()

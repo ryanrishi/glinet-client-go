@@ -2,7 +2,9 @@ package glinet_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"reflect"
 	"slices"
 	"testing"
 
@@ -205,4 +207,87 @@ func TestLANWANInfoDecodesRouterFixture(t *testing.T) {
 		t.Fatalf("GetWANInfo: %v", err)
 	}
 	checkLossless(t, map[string]any{"wan_info": got}, wanInfo)
+}
+
+func TestLANConfigsDecodeRouterFixture(t *testing.T) {
+	c, _ := newClient(t)
+	ctx := context.Background()
+
+	configs, err := c.LAN.ListConfigs(ctx)
+	if err != nil {
+		t.Fatalf("ListConfigs: %v", err)
+	}
+	checkLossless(t, map[string]any{"interfaces": configs}, fixtureResult(t, "lan.get_config_list.json"))
+
+	guest, err := c.LAN.GetConfig(ctx, "guest")
+	if err != nil {
+		t.Fatalf("GetConfig guest: %v", err)
+	}
+	if guest == nil || guest.IP != "192.168.9.1" || guest.Enable != 0 || guest.APIsolate != 1 || guest.TransferEnable == nil {
+		t.Errorf("GetConfig guest = %+v", guest)
+	}
+	if lan := configs[0]; lan.Interface != "lan" || lan.TransferEnable != nil || lan.LeaseTime != "12h" {
+		t.Errorf("lan = %+v, want no transfer_enable and leasetime 12h", lan)
+	}
+
+	none, err := c.LAN.GetConfig(ctx, "wan")
+	if err != nil || none != nil {
+		t.Errorf("GetConfig wan = %+v, %v, want nil, nil", none, err)
+	}
+}
+
+func TestLANSetAddressAndDHCP(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+	var sent map[string]any
+	setConfig := srv.Handler("lan", "set_config")
+	srv.Handle("lan", "set_config", func(params json.RawMessage) (any, error) {
+		sent = nil
+		_ = json.Unmarshal(params, &sent)
+		return setConfig(params)
+	})
+
+	if err := c.LAN.SetAddress(ctx, glinet.LANAddress{Interface: "guest", IP: "192.168.10.1", Netmask: "255.255.255.0"}); err != nil {
+		t.Fatalf("SetAddress: %v", err)
+	}
+	want := map[string]any{"interface": "guest", "ip": "192.168.10.1", "netmask": "255.255.255.0", "ap_isolate": float64(0)}
+	if !reflect.DeepEqual(sent, want) {
+		t.Errorf("SetAddress params = %v, want %v", sent, want)
+	}
+
+	dhcp := glinet.LANDHCP{Interface: "guest", Enable: 1, Start: "192.168.10.100", End: "192.168.10.200", LeaseTime: "120m"}
+	if err := c.LAN.SetDHCP(ctx, dhcp); err != nil {
+		t.Fatalf("SetDHCP: %v", err)
+	}
+	want = map[string]any{"interface": "guest", "enable": float64(1), "start": "192.168.10.100", "end": "192.168.10.200", "leasetime": "120m", "gateway": "", "dns": []any{}}
+	if !reflect.DeepEqual(sent, want) {
+		t.Errorf("SetDHCP params = %v, want %v", sent, want)
+	}
+
+	guest, err := c.LAN.GetConfig(ctx, "guest")
+	if err != nil {
+		t.Fatalf("GetConfig: %v", err)
+	}
+	zero := 0
+	wantGuest := glinet.LANConfig{
+		Interface: "guest", IP: "192.168.10.1", Netmask: "255.255.255.0", Enable: 1,
+		Start: "192.168.10.100", End: "192.168.10.200", LeaseTime: "120m",
+		DNS: []string{}, LPR: []string{}, TransferEnable: &zero,
+	}
+	if !reflect.DeepEqual(*guest, wantGuest) {
+		t.Errorf("GetConfig = %+v, want %+v", *guest, wantGuest)
+	}
+
+	if err := c.LAN.SetDHCP(ctx, glinet.LANDHCP{Interface: "guest", Start: "192.168.10.2"}); err != nil {
+		t.Fatalf("SetDHCP disable: %v", err)
+	}
+	want = map[string]any{"interface": "guest", "enable": float64(0)}
+	if !reflect.DeepEqual(sent, want) {
+		t.Errorf("SetDHCP disable params = %v, want %v", sent, want)
+	}
+
+	err = c.LAN.SetAddress(ctx, glinet.LANAddress{Interface: "wan", IP: "192.168.11.1", Netmask: "255.255.255.0"})
+	if rpcCode(t, err) != glinettest.ErrInvalidParams.Code {
+		t.Errorf("SetAddress wan: error = %v, want invalid params", err)
+	}
 }
