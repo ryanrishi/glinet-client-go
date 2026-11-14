@@ -71,6 +71,7 @@ type Server struct {
 	LAN           *LAN
 	LED           *LED
 	Network       *Network
+	Tailscale     *Tailscale
 	Timer         *Timer
 	Wifi          *Wifi
 
@@ -121,6 +122,8 @@ func NewServer(t testing.TB) *Server {
 	s.LED.register(s)
 	s.Network = newNetwork()
 	s.Network.register(s)
+	s.Tailscale = newTailscale()
+	s.Tailscale.register(s)
 	s.Timer = newTimer()
 	s.Timer.register(s)
 	s.Wifi = newWifi()

@@ -428,6 +428,30 @@ From the UI code, not tested (`/views/gl-sdk4-ui-dynamicdns.common.js.gz`, read 
 
 Not verified: any `set_config` call, its result and errors, and what an enabled DDNS does.
 
+### tailscale (write test with Tailscale disabled, 2026-11-14)
+
+Verified on the router only with `enabled: false`; no write enabled Tailscale, and `get_auth_url`, `logout` and every login method were not called. The config was `{"enabled":false,"lan_enabled":false,"wan_enabled":false,"lan_ip":"192.168.8.0/24"}` before and after the test, and `system.get_status` had the `tailscale` service at status `0` after each test group. The fixtures `tailscale.*_config*.json` with request IDs 19000-19039 are one sequence (`glinettest/tailscale_test.go` replays them).
+
+| Call | Params | Result |
+|---|---|---|
+| `get_config` | none | `{"enabled":bool, "lan_enabled":bool, "wan_enabled":bool, "lan_ip":string, "exit_node_ip"?:string}` |
+| `set_config` | `{enabled, lan_enabled, wan_enabled, exit_node_ip?}` | `[]` |
+| `get_status` | none | `{"dns":[string]}` while disabled (took 2 s once) |
+| `get_exit_node_list` | none | `[]` while disabled |
+
+Behavior (all with `enabled: false`):
+- The router stores `lan_enabled`, `wan_enabled` and `exit_node_ip` also while Tailscale is disabled; the next read, 5 ms later, had them.
+- `enabled`, `lan_enabled` and `wan_enabled` are set to the sent values: a missing one is written as `false` (`{"enabled":false}` and `{}` set `lan_enabled` from `true` to `false`). `lan_enabled: 1` gave `true`. `lan_enabled: null` returned `-32602 Invalid params` (no `err`) and changed nothing.
+- `exit_node_ip` (`"100.64.0.1"`) was stored and is then in `get_config`. `exit_node_ip: ""` and a write without `exit_node_ip` remove it (the key is then not in `get_config`).
+- `lan_ip` is not changed by a write.
+- Each write returned in about 5-16 ms.
+
+From the UI code, not tested (`/views/gl-sdk4-ui-tailscaleview.common.js.gz`, read on 2026-11-14):
+- To disable, the UI sends only `{"enabled":false}`. To enable, it sends `{"enabled":true, "lan_enabled", "wan_enabled", "exit_node_ip":""}`. To set an exit node, it sends `{"enabled", "lan_enabled", "wan_enabled", "exit_node_ip"}`. It reads `get_config` again 5 s after a write.
+- When enabled, the UI reads `status` (1 login needed, 4 connecting; 3 is shown as running in the service list), `login_name`, `address_v4` and `dns` from `get_status`, and `exit_node_list` from `get_exit_node_list`. It calls `get_auth_url` (timeout 30 s, result `auth_url`, `err_code -1` = no URL) for the login, and `logout`.
+
+Not verified: any write with `enabled: true` (it starts Tailscale and contacts the Tailscale servers), the login, the status values when enabled, the exit node list items.
+
 ### wg-server
 - `get_status`: server fields are nested in `server{initialization,log,rx_bytes,status,tunnel_ip,tx_bytes}`. The reference has them at top level. `peers` is a top-level list (empty here).
 - `get_config`, `get_setting`: match.

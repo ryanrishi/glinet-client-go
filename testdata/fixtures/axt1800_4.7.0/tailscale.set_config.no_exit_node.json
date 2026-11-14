@@ -1,0 +1,22 @@
+{
+  "request": {
+    "id": 19036,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "tailscale",
+      "set_config",
+      {
+        "enabled": false,
+        "lan_enabled": false,
+        "wan_enabled": false
+      }
+    ]
+  },
+  "response": {
+    "id": 19036,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}
