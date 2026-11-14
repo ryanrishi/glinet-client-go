@@ -11,7 +11,7 @@
 
 ## Error format
 
-All errors are a JSON-RPC `error` object. No response had `err_code` inside `result`.
+All errors in the probe were a JSON-RPC `error` object. No probe response had `err_code` inside `result`. Some write methods return `{"err_code":...,"err_msg":...}` as the result (see "timer LED schedule").
 
 - Unknown method: `{"error":{"code":-32601,"message":"Method not found"}}` (37 calls).
 - Invalid or expired sid: `{"error":{"code":-32000,"message":"Access denied"}}`. See `invalid_sid.system.get_info.json`.
@@ -233,6 +233,35 @@ Behavior:
 Differences from the 2023 reference: `set_config` returns `[]`, not `null`. The reference does not say that no `led_enable` disables the LEDs.
 
 Not verified: the physical LEDs (no one looked at the router).
+
+### timer LED schedule (write test, 2026-11-14)
+
+Verified on the router. The schedule was `{"enable":false,"turnon_hour":"07","turnon_min":"00","turnoff_hour":"22","turnoff_min":"00","week":[0,1,2,3,4,5,6]}` before and after the test. The fixtures `timer.*_led*.json` are one sequence (request IDs 11000-11219; `glinettest/timer_test.go` replays them). The fixtures named `*.disabled_*` are the writes with `enable: false`.
+
+| Call | Params | Result |
+|---|---|---|
+| `get_led` | none | `{"enable":bool, "turnon_hour":string, "turnon_min":string, "turnoff_hour":string, "turnoff_min":string, "week":[int]}` |
+| `set_led` | `{enable, turnon_hour, turnon_min, turnoff_hour, turnoff_min, week}` | `[]`, or `{"err_code":-1,"err_msg":"parameter missing"}` |
+
+Formats:
+- Times are strings: hour and minute, in the router's local time (the time zone of `system.get_timezone_config`). The router has `"07"`, `"00"` (two digits); the web UI splits `"HH:MM"` and writes the parts. The router does not change a written value: `9` (number) and `"9"` give `"9"`, `"0"` gives `"0"`.
+- `week` is an array of numbers. The web UI labels the days 0 Sunday, 1 Monday, ..., 6 Saturday. The router keeps the array as written: `[5,1,1]` stays `[5,1,1]`, and `[7]` stays `[7]`. Strings with numbers are written as numbers (`["1","2"]` gives `[1,2]`). An empty array gives `[0,1,2,3,4,5,6]`.
+
+Behavior:
+- `enable` is read as a flag: no `enable` and `false` are false; each other value is true, also `0` and `"false"`.
+- When the write does not enable the schedule, the router sets `enable` to `false` and ignores all other fields, also when they are valid (`{"enable":false,"turnon_hour":"08",...}` changed nothing else). The web UI also sends `week` in this case.
+- When the write enables the schedule, all five other fields are necessary. If one is missing, or a time is `""`, the result is `{"err_code":-1,"err_msg":"parameter missing"}` (a successful JSON-RPC response) and nothing changes. `{"enable":true}` alone also gives this error.
+- No value is checked: `"25"`, `"60"`, `"ab"`, `[7]`, and the same on and off time were accepted and stored.
+- `null` for any field returns `-32602 Invalid params` (no `err`) and changes nothing. `week` as a string (`"1,2"`) returns `-32602`, also when `enable` is `false`.
+- Each write returned in about 5-20 ms. The next read, 4 ms later, had the new values.
+- The schedule does not change `led.get_config`.
+
+Differences from the 2023 reference:
+- All fields are required only when `enable` is true. A write that disables the schedule keeps the times and days.
+- The "parameter missing" error is in the result, not a JSON-RPC error.
+- `set_led` returns `[]`, not `null`.
+
+Not verified: whether the LEDs turn off and on at the set times (enabled for less than 1 s); the day numbering of the router itself (only the web UI labels); times that are not two digits, which the web UI does not write.
 
 ### dns
 - `get_config`: no `proto`. Extra: `controld_id`, `dot_provider` (string, `"0"`), `free_controld_id`, `override_vpn`. `server` items are strings like `"wwan 192.168.4.253"`.

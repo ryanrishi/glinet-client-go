@@ -9,8 +9,9 @@ const (
 	CodeInvalidParams  = -32602
 )
 
-// RPCError is a JSON-RPC error object that the router returned.
-// Err is the detail that some methods add, for example "invalid mac".
+// RPCError is an error that the router returned: a JSON-RPC error object, or the err_code and
+// err_msg of a result, which some methods return, for example -1 "parameter missing".
+// Err is the detail that some methods add to a JSON-RPC error, for example "invalid mac".
 type RPCError struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`

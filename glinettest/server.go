@@ -65,6 +65,7 @@ type Server struct {
 	Firewall    *Firewall
 	LAN         *LAN
 	LED         *LED
+	Timer       *Timer
 
 	srv *httptest.Server
 
@@ -101,6 +102,8 @@ func NewServer(t testing.TB) *Server {
 	s.LAN.register(s)
 	s.LED = newLED()
 	s.LED.register(s)
+	s.Timer = newTimer()
+	s.Timer.register(s)
 
 	s.srv = httptest.NewServer(http.HandlerFunc(s.serveHTTP))
 	s.URL = s.srv.URL

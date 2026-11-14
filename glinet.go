@@ -40,6 +40,7 @@ type Client struct {
 	LAN      *LANService
 	LED      *LEDService
 	System   *SystemService
+	Timer    *TimerService
 }
 
 type service struct {
@@ -94,6 +95,7 @@ func newClient(host string) (*Client, error) {
 	c.LAN = (*LANService)(&c.common)
 	c.LED = (*LEDService)(&c.common)
 	c.System = (*SystemService)(&c.common)
+	c.Timer = (*TimerService)(&c.common)
 
 	return c, nil
 }
@@ -107,6 +109,7 @@ func (c *Client) GetSid() string {
 
 // Call calls method of module on the router and decodes the result into result.
 // A nil params sends an empty object. A nil result discards the response.
+// A result object with a non-zero err_code is an *RPCError.
 // If the session is not valid, Call logs in again one time and repeats the call.
 func (c *Client) Call(ctx context.Context, module, method string, params, result any) error {
 	if params == nil {
@@ -188,6 +191,14 @@ func (c *Client) rpc(ctx context.Context, method string, params, result any) err
 
 	if rpcRes.Error != nil {
 		return rpcRes.Error
+	}
+
+	var resErr struct {
+		Code    int    `json:"err_code"`
+		Message string `json:"err_msg"`
+	}
+	if json.Unmarshal(rpcRes.Result, &resErr) == nil && resErr.Code != 0 {
+		return &RPCError{Code: resErr.Code, Message: resErr.Message}
 	}
 
 	if result == nil {

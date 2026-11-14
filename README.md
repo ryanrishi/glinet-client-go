@@ -32,7 +32,7 @@ if err != nil {
 tz, err := client.System.GetTimezoneConfig(ctx)
 ```
 
-The client has the services `AdGuard`, `Digest`, `Firewall`, `LAN`, `LED` and `System`.
+The client has the services `AdGuard`, `Digest`, `Firewall`, `LAN`, `LED`, `System` and `Timer`.
 `NewClientUnauthenticated` returns a client that has no session. Only `Digest` works without a session.
 
 `Call` calls a module method that has no typed method yet. A nil `params` sends `{}`. A nil `result` discards the response.
@@ -47,7 +47,7 @@ var res struct {
 err := client.Call(ctx, "lan", "get_config_list", nil, &res)
 ```
 
-Router errors are `*glinet.RPCError`:
+Router errors are `*glinet.RPCError`. This includes a result with a non-zero `err_code`, which some write methods return:
 
 ```go
 var rpcErr *glinet.RPCError

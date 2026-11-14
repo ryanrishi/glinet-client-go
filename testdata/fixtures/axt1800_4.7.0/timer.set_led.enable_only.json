@@ -1,0 +1,23 @@
+{
+  "request": {
+    "id": 11103,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "timer",
+      "set_led",
+      {
+        "enable": true
+      }
+    ]
+  },
+  "response": {
+    "id": 11103,
+    "jsonrpc": "2.0",
+    "result": {
+      "err_msg": "parameter missing",
+      "err_code": -1
+    }
+  }
+}

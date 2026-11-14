@@ -368,3 +368,16 @@ func TestAdGuardConfig(t *testing.T) {
 		t.Errorf("server state = %+v, want enabled=true dns_enabled=false", got)
 	}
 }
+
+func TestCallResultError(t *testing.T) {
+	c, srv := newClient(t)
+	srv.Handle("test", "result_error", func(json.RawMessage) (any, error) {
+		return map[string]any{"err_code": -1, "err_msg": "parameter missing"}, nil
+	})
+
+	err := c.Call(context.Background(), "test", "result_error", nil, nil)
+	var rpcErr *glinet.RPCError
+	if !errors.As(err, &rpcErr) || rpcErr.Code != -1 || rpcErr.Message != "parameter missing" {
+		t.Errorf("error = %v, want *RPCError -1 parameter missing", err)
+	}
+}
