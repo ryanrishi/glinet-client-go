@@ -302,7 +302,9 @@ Behavior:
 
 Differences from the 2023 reference: `set_host` returns `[]`, not `null`. The reference does not say that the content is not checked, that a newline is added, or that the DNS server is not reloaded.
 
-Not verified: whether a reboot or another write makes the DNS server use the new file; the maximum size.
+Timing test (2026-11-14, request IDs 17000-17004, fixtures `dns.*_host.timing_*.json`): one line `192.0.2.1 tf-test-host.invalid tf-test-host.lan` was added to the initial file. `dig @192.168.8.1` for `tf-test-host.invalid` and `tf-test-host.lan` (A record) was NXDOMAIN at each query, every 15 s from 0 s to 300 s after the write. So the router does not answer with a name from a new hosts file within 5 minutes, for a `.invalid` name and for a `.lan` name. No service was restarted and no DNS setting was changed. The exact initial string was written back and read back after the test.
+
+Not verified: whether a reboot, a restart of dnsmasq or another write makes the DNS server use the new file; the maximum size.
 
 What the web UI does when the user saves the hosts file (from the UI code, not tested). Source: `/views/gl-sdk4-ui-dnsview.common.js.gz` of the router web server (`/views/gl-sdk4-ui-dnsview.common.js` redirects with 302), 77187 bytes unpacked, read on 2026-11-14.
 - The API object of the DNS view has only these methods: `dns.get_info {}`, `dns.get_config {}`, `dns.set_config`, `dns.get_host {}` and `setDnsHost(t)`, which is `$rpcRequest("call", ["sid", "dns", "set_host", t], {errTips: {keep: true}})`.
