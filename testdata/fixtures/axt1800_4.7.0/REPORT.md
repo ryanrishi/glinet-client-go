@@ -503,6 +503,38 @@ Not verified: a real ZeroTier network (join, status 0, 2 or 3, `zerotier_ip` and
 - `get_netnat_config`: extra `conflict_features`, `qos_enabled`, `wifi_reload`.
 - `get_arp_list`: matches.
 
+## Network configuration (from the UI code, not tested)
+
+The write methods in this section were never called on a router. The parameters, the call sequence and the validation rules come from the JavaScript of the web UI of the test router (firmware 4.7.0), which the router serves as static files: `/views/gl-sdk4-ui-<view>.common.js.gz`. The views are `internet` (WAN), `ipv6`, `lanip` and `guestip` (LAN and guest network, one shared component with `netInterface` `lan` or `guest`), and `wireless`. The reads are verified by the fixtures `cable.get_config.json`, `ipv6.get_ipv6.json`, `lan.get_config_list.json` and `wifi.get_config.json` (probe of 2026-11-12). Each write test proposal below needs the owner at the router.
+
+### cable WAN config (from the UI code, not tested)
+
+Read (verified): `cable.get_config` with `{}` returns `{"protocol":"dhcp"}` on the test router. The wired WAN port has no cable; the uplink is the Wi-Fi repeater (`wwan`).
+
+The web UI reads with `{secondwan: false}` and uses these fields of the result (not verified): `protocol, ipv6, ipv4, username, password, vlanid, ttl, ttl_ipv6, mtu`. For `dhcp` it shows the runtime addresses from `cable.status`, not from `get_config`.
+
+Write (view `internet`, component `CableSettingDialog`): one `cable.set_config` with the full configuration of the protocol, then the UI waits 4 s:
+
+```js
+r={protocol:t};if(e&&(r.vlanid=e),a&&(r.ttl=a),n&&(r.ttl_ipv6=n),o&&(r.mtu=o),"pppoe"===t)r.username=i,r.password=s;else if("static"===t){...r.ipv4={...i,dns:s},this.ipv6Enable&&this.ipv6Required){...r.ipv6=s}}
+```
+
+The page adds `secondwan: "secondwan"===this.currentWan` to the params. So the params are:
+
+| Protocol | Params |
+|---|---|
+| `dhcp` | `{protocol, vlanid?, ttl?, ttl_ipv6?, mtu?, secondwan}` |
+| `static` | `{protocol, ipv4{ip, netmask, gateway, dns[1-2]}, ipv6{ip, gateway, dns[1-2]}?, vlanid?, ttl?, ttl_ipv6?, mtu?, secondwan}` |
+| `pppoe` | `{protocol, username, password, vlanid?, ttl?, ttl_ipv6?, mtu?, secondwan}` |
+
+Validation in the UI: `protocol` is one of `dhcp`, `static`, `pppoe`. `vlanid` is a number 1-4094 (`e<1||e>4094`). `ttl` and `ttl_ipv6` are 1-255. `mtu` is 576-9200 (regex `^(57[6-9]|...|9200)$`); the UI warns when IPv6 is enabled and `mtu` is less than 1280. Static: `ipv4.ip` and `ipv4.gateway` pass `checkStaticIp`, `ipv4.netmask` passes `isMask`, `dns1` is required and `dns2` is optional. `ipv6` is sent only while IPv6 is enabled (`system.ipv6_enabled`) and one of its fields is set; then `ipv6.ip` is a CIDR and gateway and `dns1` are IPv6 addresses. PPPoE `username` has at most 256 characters; `username` and `password` have no other check (the username field says "optional"). The error `-1` is shown as `cable.vlan_id_conflict_tips` (VLAN ID conflict). The write button is shown only in router mode (`system.mode` 0).
+
+MAC clone is not part of this write (it is in another view; `macclone.get_mac` is -32601 on 4.7.0).
+
+Unknown: the types and presence of the optional fields in the `get_config` result (the UI treats `vlanid`, `ttl`, `mtu` as numbers); whether `{}` and `{"secondwan":false}` give the same read; whether a write keeps fields that it does not send (the UI always sends the full configuration, so the client does too); how long the router takes to apply it; the errors other than `-1`.
+
+Proposal for a supervised write test: write `{"protocol":"dhcp","secondwan":false}` (the current value) and read back; then `{"protocol":"dhcp","mtu":1500,"secondwan":false}` and read back to learn the type of `mtu`; restore with `{"protocol":"dhcp","secondwan":false}` and check that `mtu` is gone. Do not test `static` or `pppoe` unless no cable is in the WAN port. Risks: a write probably restarts the `wan` interface; the WAN has no cable and is not the uplink, so the uplink (`wwan`) should not drop, but `kmwan` gives `wan` metric 10 before `wwan` 20, so a wrong static gateway could matter when a cable is plugged in later. Watch `lan.get_wan_info` and `system.get_status` `network[]` for `wwan` during the test.
+
 ## Methods not called
 
 Not read-only or not sure: all `set_*`, `add_*`, `remove_*`, etc. Also these `get_*` methods: `upgrade.check_firmware_online`, `tailscale.get_auth_url`, `wg-client.get_third_config`, `ovpn-client.get_third_config` (send credentials to a third-party VPN service), `wg-client.get_recommend_config`, `ovpn-client.get_recommend_config` (query an external service).

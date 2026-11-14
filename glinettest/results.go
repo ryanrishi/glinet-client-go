@@ -6,7 +6,8 @@ import (
 	"sync"
 )
 
-// readResult is the result of a read-only method. A test can replace it.
+// readResult is the result of a read method. A test can replace it, and a write method of the
+// fake can change it with update.
 type readResult struct {
 	mu  sync.Mutex
 	raw json.RawMessage
@@ -26,6 +27,27 @@ func (r *readResult) set(raw json.RawMessage) {
 
 func (r *readResult) handle(json.RawMessage) (any, error) {
 	return r.get(), nil
+}
+
+// update decodes the result, calls f with it and stores the value that f returns.
+// An error of f leaves the result as it was.
+func (r *readResult) update(f func(v any) (any, error)) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	var v any
+	if err := json.Unmarshal(r.raw, &v); err != nil {
+		return err
+	}
+	v, err := f(v)
+	if err != nil {
+		return err
+	}
+	raw, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	r.raw = raw
+	return nil
 }
 
 // The default results of the read-only methods. They are the results of the real router in
@@ -420,5 +442,9 @@ const (
 				"state": "ready"
 			}
 		]
+	}`
+
+	cableConfig = `{
+		"protocol": "dhcp"
 	}`
 )
