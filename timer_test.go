@@ -87,3 +87,15 @@ func TestTimerRebootSchedule(t *testing.T) {
 		t.Errorf("code = %d, want -1", code)
 	}
 }
+
+func TestTimerLEDScheduleEmptyWeek(t *testing.T) {
+	c, srv := newClient(t)
+
+	schedule := glinet.LEDSchedule{Enabled: true, TurnOnHour: "06", TurnOnMin: "10", TurnOffHour: "20", TurnOffMin: "50", Week: []int{}}
+	if err := c.Timer.SetLEDSchedule(context.Background(), schedule); err != nil {
+		t.Fatalf("SetLEDSchedule: %v", err)
+	}
+	if got, want := srv.Timer.LEDSchedule().Week, []int{0, 1, 2, 3, 4, 5, 6}; !reflect.DeepEqual(got, want) {
+		t.Errorf("week = %v, want %v", got, want)
+	}
+}

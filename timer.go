@@ -18,7 +18,7 @@ type LEDSchedule struct {
 	TurnOnMin   string `json:"turnon_min,omitempty"`
 	TurnOffHour string `json:"turnoff_hour,omitempty"`
 	TurnOffMin  string `json:"turnoff_min,omitempty"`
-	Week        []int  `json:"week,omitempty"`
+	Week        []int  `json:"week,omitzero"`
 }
 
 // GetLEDSchedule returns the LED schedule.
@@ -45,7 +45,7 @@ type RebootSchedule struct {
 	Enabled bool   `json:"enable"`
 	Hour    string `json:"hour,omitempty"`
 	Min     string `json:"min,omitempty"`
-	Week    []int  `json:"week,omitempty"`
+	Week    []int  `json:"week,omitzero"`
 }
 
 // GetRebootSchedule returns the reboot schedule.
