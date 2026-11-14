@@ -11,3 +11,8 @@ func TestLANMatchesRouterFixtures(t *testing.T) {
 func TestLANWANInfoMatchesRouterFixture(t *testing.T) {
 	replayFixtures(t, "lan.get_wan_info.json")
 }
+
+// TestLANConfigListMatchesRouterFixture replays the get_config_list fixture of the real router.
+func TestLANConfigListMatchesRouterFixture(t *testing.T) {
+	replayFixtures(t, "lan.get_config_list.json")
+}

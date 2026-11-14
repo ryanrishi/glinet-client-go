@@ -453,4 +453,36 @@ const (
 		"lan_dns_mode": true,
 		"lan_mode": "nat6"
 	}`
+
+	lanConfigList = `{
+		"interfaces": [
+			{
+				"ap_isolate": 0,
+				"dns": [],
+				"enable": 1,
+				"end": "192.168.8.249",
+				"gateway": "",
+				"interface": "lan",
+				"ip": "192.168.8.1",
+				"leasetime": "12h",
+				"lpr": [],
+				"netmask": "255.255.255.0",
+				"start": "192.168.8.100"
+			},
+			{
+				"ap_isolate": 1,
+				"dns": [],
+				"enable": 0,
+				"end": "192.168.9.249",
+				"gateway": "",
+				"interface": "guest",
+				"ip": "192.168.9.1",
+				"leasetime": "12h",
+				"lpr": [],
+				"netmask": "255.255.255.0",
+				"start": "192.168.9.100",
+				"transfer_enable": 0
+			}
+		]
+	}`
 )

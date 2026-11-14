@@ -39,12 +39,10 @@ The client has the services `AccessControl`, `AdGuard`, `Cable`, `Clients`, `DDN
 
 ```go
 var res struct {
-	Interfaces []struct {
-		Interface string `json:"interface"`
-		IP        string `json:"ip"`
-	} `json:"interfaces"`
+	Device  string `json:"device"`
+	Network string `json:"network"`
 }
-err := client.Call(ctx, "lan", "get_config_list", nil, &res)
+err := client.Call(ctx, "repeater", "get_status", nil, &res)
 ```
 
 Router errors are `*glinet.RPCError`. This includes a result with a non-zero `err_code`, which some write methods return:

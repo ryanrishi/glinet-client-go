@@ -555,6 +555,44 @@ Unknown: which fields a disable keeps; the read shape while IPv6 is enabled; the
 
 Proposal for a supervised write test: write `{"enable":false}` (the current value) and read back. Do not enable IPv6 without the owner: the uplink (`wwan`) has no IPv6 (`wwan6` is down), and a WireGuard client runs, which the tip says may not work together with IPv6. If the owner agrees to an enable test, use `{"enable":true,"lan_mode":"nat6","lan_dns_mode":true}` for at most one minute, check that the WireGuard client and the LAN still work, and restore with `{"enable":false}`. Risk: a network or firewall restart drops the management connection for some seconds.
 
+### lan config and guest network (from the UI code, not tested)
+
+Read (verified): `lan.get_config_list` returns `interfaces[]` with the items `lan` and `guest` (see "lan" above). Flags are 0/1 numbers; `leasetime` is `"12h"`; `transfer_enable` is only in `guest`.
+
+Write (views `lanip` and `guestip`, one component `NetMain` with `netInterface` `lan` or `guest`): the page has two cards, and each sends its own partial `lan.set_config`:
+
+1. Address card: `{interface, ip, netmask, ap_isolate}`.
+
+   ```js
+   const t={interface:this.netInterface,ip:this.lan.ip,netmask:this.lan.netmask,ap_isolate:this.lan.ap_isolate};this.setLanConfig(t,"lan"===this.netInterface&&this.oldLan.ip!==t.ip)
+   ```
+
+2. DHCP card: `{interface, enable, leasetime, gateway, start, end, dns, lpr?}`, or `{interface, enable: 0}` to disable (after a confirm dialog `lan_ip.dhcp_disable_warning_tips`).
+
+   ```js
+   c={interface:this.netInterface,enable:t};t&&(c.leasetime=r+"m",c.gateway=a,c.start=s,c.end=o,c.dns=[],e&&(c.dns=[e]),i&&(c.dns=[...c.dns,i]),n.length&&(c.lpr=n))
+   ```
+
+   The UI keeps `lpr` as `[""]` when the read had `[]`, so it sends `"lpr":[""]` in that case. The client sends `lpr` only when it has items.
+
+After the write: when the `lan` IP changed, the page waits 13.5 s, shows "changed to <ip>" and after 1.5 s more loads `http://<new ip>/`. Else it polls `http://<ip>/ping.svg` until the router answers, with a first wait of `api_extra + 10` s, where `api_extra` is an optional number in the result (seconds), and then reads `get_config_list` again.
+
+Errors that the UI maps: `-7` IP conflict with the uplink (`internet.lan_ip_tips` / `internet.guest_ip_tips`), `-8` conflict with the LAN, `-9` conflict with the guest network.
+
+Validation in the UI:
+- `ip`: a private IPv4 address that can be a gateway (`checkPrivateIpGateway`); for `guest`, and for `lan` while the guest Wi-Fi is up, the new network must not contain the IP of the other network.
+- `netmask`: the select offers `255.255.255.0` and `255.255.0.0` and also accepts typed values; the prefix length is 8-30, at least 16 for `192.*` and at least 12 for `172.*`.
+- `ap_isolate`: switch with values 1 and 0; shown only on a router with Wi-Fi.
+- DHCP `start` and `end`: private IPv4 addresses inside the current network, `start` < `end`.
+- `leasetime`: minutes, 2 to 71582788, sent as `"<n>m"`; the presets are 2, 30, 120, 720, 1440 and 2880 minutes. The UI reads `h`, `m` and `s` units and converts them to minutes.
+- `gateway`, `dns1`, `dns2`: optional IPv4 addresses (`isIp`). `dns` has at most two items.
+- `lpr`: optional strings without duplicates; the UI does not check their format. The meaning is not known (label `lan_ip.lpr_serve_label`).
+- The guest DHCP card is shown only while a guest Wi-Fi is up. `transfer_enable` is not in the UI.
+
+Unknown: whether the router keeps the fields that a partial write does not send (the UI depends on it, so it probably does); the effect and meaning of `lpr` and `transfer_enable`; whether `"12h"` is accepted in a write; the duration of the restart.
+
+Proposal for a supervised write test (guest only; the guest network is off and has no clients): send `{interface:"guest", enable:0}` (the current value) and read back; then `{interface:"guest", enable:1, start:"192.168.9.100", end:"192.168.9.200", leasetime:"120m", gateway:"", dns:[]}`, read back, and restore with the same write with `end:"192.168.9.249"`, `leasetime:"720m"`, and then `{interface:"guest", enable:0}`; check whether the restored `leasetime` reads `"12h"` or `"720m"`. Then `{interface:"guest", ip:"192.168.9.1", netmask:"255.255.255.0", ap_isolate:1}` (no change). Do not write the `lan` item: a change of its IP, netmask or DHCP range cuts the management connection of the Mac (`192.168.8.1` on Ethernet), and a DHCP disable stops new leases. Risks also for `guest`: the write probably restarts the network and the DHCP server, so the LAN may drop for some seconds; a guest IP inside `192.168.8.0/24` gives a conflict.
+
 ## Methods not called
 
 Not read-only or not sure: all `set_*`, `add_*`, `remove_*`, etc. Also these `get_*` methods: `upgrade.check_firmware_online`, `tailscale.get_auth_url`, `wg-client.get_third_config`, `ovpn-client.get_third_config` (send credentials to a third-party VPN service), `wg-client.get_recommend_config`, `ovpn-client.get_recommend_config` (query an external service).

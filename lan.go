@@ -92,3 +92,111 @@ func (s *LANService) GetWANInfo(ctx context.Context) ([]WANInfo, error) {
 
 	return res.WANInfo, nil
 }
+
+// LANConfig is an item of the result of lan get_config_list: the configuration of the network
+// Interface "lan" or "guest" and of its DHCP server. The flags are numbers: 1 is on and 0 is off.
+//
+//   - IP and Netmask are the address of the router in the network.
+//   - APIsolate 1 stops the Wi-Fi clients of the network from reaching each other.
+//   - Enable 1 enables the DHCP server. Start and End are the first and the last address that it
+//     gives. LeaseTime is a duration with a unit, for example "12h" on the test router; the web
+//     UI sends minutes, for example "720m".
+//   - Gateway and DNS are the gateway and the DNS servers that the DHCP server gives; empty means
+//     the router. DNS has at most two items in the web UI.
+//   - LPR is a list of strings that the web UI does not check; its meaning is not known.
+//   - TransferEnable is only in the "guest" item (0 on the test router). The web UI does not
+//     show or send it; its meaning is not known.
+type LANConfig struct {
+	Interface      string   `json:"interface"`
+	IP             string   `json:"ip"`
+	Netmask        string   `json:"netmask"`
+	APIsolate      int      `json:"ap_isolate"`
+	Enable         int      `json:"enable"`
+	Start          string   `json:"start"`
+	End            string   `json:"end"`
+	LeaseTime      string   `json:"leasetime"`
+	Gateway        string   `json:"gateway"`
+	DNS            []string `json:"dns"`
+	LPR            []string `json:"lpr"`
+	TransferEnable *int     `json:"transfer_enable,omitempty"`
+}
+
+// LANAddress is the address part of the params of lan set_config, as the web UI sends it.
+type LANAddress struct {
+	Interface string `json:"interface"`
+	IP        string `json:"ip"`
+	Netmask   string `json:"netmask"`
+	APIsolate int    `json:"ap_isolate"`
+}
+
+// LANDHCP is the DHCP part of the params of lan set_config. See LANConfig for the fields.
+type LANDHCP struct {
+	Interface string
+	Enable    int
+	Start     string
+	End       string
+	LeaseTime string
+	Gateway   string
+	DNS       []string
+	LPR       []string
+}
+
+// ListConfigs returns the configuration of the networks "lan" and "guest".
+func (s *LANService) ListConfigs(ctx context.Context) ([]LANConfig, error) {
+	var res struct {
+		Interfaces []LANConfig `json:"interfaces"`
+	}
+	if err := s.client.Call(ctx, "lan", "get_config_list", nil, &res); err != nil {
+		return nil, err
+	}
+
+	return res.Interfaces, nil
+}
+
+// GetConfig returns the configuration of the network iface, "lan" or "guest". It returns nil and
+// no error when there is no such network.
+func (s *LANService) GetConfig(ctx context.Context, iface string) (*LANConfig, error) {
+	configs, err := s.ListConfigs(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, c := range configs {
+		if c.Interface == iface {
+			return &c, nil
+		}
+	}
+
+	return nil, nil
+}
+
+// SetAddress sets the address and the AP isolation of a network with one lan set_config, as the
+// web UI does. A change of the "lan" IP cuts the connection to the router: the web UI goes to
+// the new IP 15 s after the write. The web UI shows the errors -7 (the IP conflicts with the
+// uplink), -8 (with the LAN) and -9 (with the guest network).
+//
+// Not verified on a router: the parameters come from the web UI code.
+func (s *LANService) SetAddress(ctx context.Context, address LANAddress) error {
+	return s.client.Call(ctx, "lan", "set_config", address, nil)
+}
+
+// SetDHCP sets the DHCP server of a network with one lan set_config, as the web UI does: with
+// Enable 0 it sends only interface and enable; else it sends all fields, with an empty DNS as []
+// and LPR only when it has items. The web UI waits until the router answers again, for at least
+// 10 s.
+//
+// Not verified on a router: the parameters come from the web UI code.
+func (s *LANService) SetDHCP(ctx context.Context, dhcp LANDHCP) error {
+	params := map[string]any{"interface": dhcp.Interface, "enable": dhcp.Enable}
+	if dhcp.Enable != 0 {
+		params["start"] = dhcp.Start
+		params["end"] = dhcp.End
+		params["leasetime"] = dhcp.LeaseTime
+		params["gateway"] = dhcp.Gateway
+		params["dns"] = append([]string{}, dhcp.DNS...)
+		if len(dhcp.LPR) > 0 {
+			params["lpr"] = dhcp.LPR
+		}
+	}
+	return s.client.Call(ctx, "lan", "set_config", params, nil)
+}
