@@ -269,7 +269,7 @@ func TestSystemTimezoneConfig(t *testing.T) {
 	}
 	want := glinet.GetSystemTimezoneConfigResponse{
 		Zonename:            "Europe/Berlin",
-		TZOffset:            state.TZOffset,
+		TZOffset:            "+0100",
 		AutoTimezoneEnabled: true,
 		Localtime:           int(initial.Localtime),
 		Timestamp:           int(initial.Timestamp),

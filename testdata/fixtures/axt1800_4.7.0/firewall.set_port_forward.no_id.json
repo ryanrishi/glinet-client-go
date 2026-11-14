@@ -1,0 +1,24 @@
+{
+  "request": {
+    "id": 2017,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "set_port_forward",
+      {
+        "name": "tf-test-x"
+      }
+    ]
+  },
+  "response": {
+    "id": 2017,
+    "jsonrpc": "2.0",
+    "error": {
+      "message": "Invalid params",
+      "err": "id: string required",
+      "code": -32602
+    }
+  }
+}

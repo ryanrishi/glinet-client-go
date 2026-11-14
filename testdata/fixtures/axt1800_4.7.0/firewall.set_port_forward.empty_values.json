@@ -1,0 +1,23 @@
+{
+  "request": {
+    "id": 2009,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "set_port_forward",
+      {
+        "dest_port": "",
+        "id": "cfg243837",
+        "name": "",
+        "proto": ""
+      }
+    ]
+  },
+  "response": {
+    "id": 2009,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

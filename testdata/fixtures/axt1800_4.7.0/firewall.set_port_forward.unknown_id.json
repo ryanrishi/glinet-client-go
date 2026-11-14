@@ -1,0 +1,28 @@
+{
+  "request": {
+    "id": 2016,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "set_port_forward",
+      {
+        "dest": "lan",
+        "dest_ip": "192.168.8.250",
+        "dest_port": "50009",
+        "enabled": true,
+        "id": "cfg993837",
+        "name": "tf-test-x",
+        "proto": "tcp",
+        "src": "wan",
+        "src_dport": "50009"
+      }
+    ]
+  },
+  "response": {
+    "id": 2016,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

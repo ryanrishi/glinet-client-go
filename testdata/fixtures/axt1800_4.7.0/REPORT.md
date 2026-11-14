@@ -31,7 +31,7 @@ The 4.9.0-only methods also return -32601 on 4.7.0: `system.get_network_status`,
 
 ## Differences from the 2023 reference
 
-Many lists were empty on this router, so their item fields could not be compared: `firewall.get_port_forward_list.res`, `firewall.get_rule_list.res`, `firewall.get_wan_access.whitelist`, `wg-server.get_peer_list.peers`, `wg-server.get_route_list.*_route_rules`, `wg-server.get_status.peers`. DMZ is disabled, so `firewall.get_dmz` has only `enabled` (no `dest_ip`). Later phases must get fixtures with data for these (or use the reference shapes and mark them as not verified).
+Many lists were empty on this router, so their item fields could not be compared: `firewall.get_port_forward_list.res` (later verified, see "firewall port forward"), `firewall.get_rule_list.res`, `firewall.get_wan_access.whitelist`, `wg-server.get_peer_list.peers`, `wg-server.get_route_list.*_route_rules`, `wg-server.get_status.peers`. DMZ is disabled, so `firewall.get_dmz` has only `enabled` (no `dest_ip`). Later phases must get fixtures with data for these (or use the reference shapes and mark them as not verified).
 
 The reference marks `err_code` / `err_msg` as output of many methods. No ok response had them.
 
@@ -86,7 +86,54 @@ The Ethernet link of the test Mac (`en8`) lost its IPv4 address two times for ab
 
 ### firewall
 - `get_zone_list`: matches.
-- `get_dmz`, `get_port_forward_list`, `get_rule_list`, `get_wan_access`: no data to compare (see above). Top-level fields match.
+- `get_dmz`, `get_rule_list`, `get_wan_access`: no data to compare (see above). Top-level fields match.
+
+### firewall port forward (write test, 2026-11-14)
+
+Verified on the router with names `tf-test-N`, external ports `50001`-`50034`, and destination IPs `192.168.8.250` and `192.168.8.251` (no known client). The list was empty before and after the test. The fixtures `firewall.*port_forward*.json` are one sequence; sorted by request `id`, they replay the state changes in order (`glinettest/firewall_test.go` does this). A fixture with `"response": {"http_status": 500}` is an HTTP 500 response with an nginx HTML page and no JSON-RPC body.
+
+| Call | Params | Result |
+|---|---|---|
+| `get_port_forward_list` | none | `{"res":[{id, name?, proto?, src?, src_dport?, dest?, dest_ip?, dest_port?, enabled}]}` |
+| `add_port_forward` | `{name?, proto?, src, src_dport, dest, dest_ip, dest_port?, enabled?}` | `{"id":"cfg233837"}` |
+| `set_port_forward` | `{id, ...}` | `[]` |
+| `remove_port_forward` | `{id}` | `[]` |
+
+Item fields:
+- `id`, `name`, `proto`, `src`, `src_dport`, `dest`, `dest_ip`, `dest_port` are strings. Ports are strings also when they were written as numbers (`50002` gives `"50002"`), and can be a range (`"50004-50005"`).
+- `proto` values used: `tcp`, `udp`, `tcp udp`.
+- `enabled` is a JSON bool (not 0/1). On write, `true`/`false` and the numbers `0`/`1` work; the string `"false"` gives `true`. No `enabled` on add gives `true`.
+- A field without a value has no key. `name`, `proto` and `dest_port` written as `""` have no key. Other fields were not written as `""`.
+
+ID:
+- The ID is the UCI name of an anonymous section: `cfg` + the section index in the firewall configuration (2 hex digits) + `3837` (from the section type). On this router the first port forward is `cfg233837`.
+- The ID is not stable. After `remove` of a forward, each forward after it gets the ID of the forward before it (`firewall.get_port_forward_list.after_remove.json`). `add` appends at the end and does not change other IDs. `set` keeps the position and the ID.
+- After all forwards are removed, the next `add` gets `cfg233837` again.
+
+Behavior:
+- `add` and `set` do not check values. Accepted: `proto: "foo"`, zones `"nope"`, no zones, `dest_ip: "not-an-ip"` and `"192.168.8.256"`, `src_dport: "abc"` and `"70000"`, `dest_port: "70000"`, no `src_dport`, no `dest_ip`.
+- Duplicates are accepted: an `add` equal to an existing forward, and two forwards with the same external port and protocol, both get their own ID.
+- `set` writes each field that the params have. A field that is not in the params keeps its value, except `name`: no `name` removes the name. `""` removes `name`, `proto` and `dest_port`.
+- `set` with an unknown ID returns `[]` and changes nothing.
+- `remove` with an unknown ID, or with no `id`, returns HTTP 500 and changes nothing.
+- `remove` of a forward that has no `dest_port` returns HTTP 500 and changes nothing. After `set` of a `dest_port`, `remove` works. A forward without `proto` can be removed.
+- Each write returned in about 20 ms. The next read worked about 5-10 ms later. No write made the router or the link slow or unreachable.
+
+Errors:
+
+| Response | Cause |
+|---|---|
+| `-32602 Invalid params`, `err: "id: string required"` | `set_port_forward` without `id` |
+| HTTP 500 | `remove_port_forward` with an unknown ID, without `id`, or of a forward that has no `dest_port` |
+
+Differences from the 2023 reference:
+- `src_dport` and `dest_port` are strings in the list (reference: `dest_port` number). Both accept numbers on write.
+- `add_port_forward` returns `{"id":...}` as the reference says; `set` and `remove` return `[]`, not `null`.
+- `remove_port_forward` with an unknown ID, and of a forward without `dest_port`, is an HTTP 500, not a JSON-RPC error.
+- The reference does not say that IDs change after a remove, that `set` without `name` removes the name, that values are not checked, or that duplicates are accepted.
+- The reference marks `src`, `src_dport`, `dest`, `dest_ip`, `dest_port` as required. The router accepts `add` without them.
+
+Not verified: `remove_port_forward` with `all` (remove all; not called); whether a write reloads the firewall (no API shows it, and no traffic was sent through a forward); whether the firewall uses a forward with invalid values; IDs after changes to other firewall sections (rules, zones, DMZ; not written), which can change the index part of the ID; `""` for `src`, `src_dport`, `dest`, `dest_ip`; `enabled: null` and other value types; other `proto` values such as `icmp`.
 
 ### dns
 - `get_config`: no `proto`. Extra: `controld_id`, `dot_provider` (string, `"0"`), `free_controld_id`, `override_vpn`. `server` items are strings like `"wwan 192.168.4.253"`.

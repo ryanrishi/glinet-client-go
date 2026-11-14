@@ -1,0 +1,28 @@
+{
+  "request": {
+    "id": 2004,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "add_port_forward",
+      {
+        "dest": "lan",
+        "dest_ip": "192.168.8.250",
+        "dest_port": "50004-50005",
+        "name": "tf-test-3",
+        "proto": "tcp udp",
+        "src": "wan",
+        "src_dport": "50004-50005"
+      }
+    ]
+  },
+  "response": {
+    "id": 2004,
+    "jsonrpc": "2.0",
+    "result": {
+      "id": "cfg253837"
+    }
+  }
+}

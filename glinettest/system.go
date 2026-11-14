@@ -1,8 +1,10 @@
 package glinettest
 
 import (
+	"encoding/binary"
 	"encoding/json"
 	"sync"
+	"time"
 )
 
 // TimezoneConfig is the time zone configuration of the system module.
@@ -16,7 +18,9 @@ type TimezoneConfig struct {
 }
 
 // System serves the system module. Timestamp is the router clock: set_timezone_config sets it
-// from localtime and ignores autotimezone_enabled, like the router.
+// from localtime and ignores autotimezone_enabled, like the router. It also sets TZOffset to the
+// UTC offset of the POSIX TZ string timezone at that clock, with daylight saving time.
+// A timezone that is not a valid POSIX TZ string gives "+0000".
 type System struct {
 	mu       sync.Mutex
 	timezone TimezoneConfig
@@ -117,6 +121,31 @@ func (m *System) setTimezoneConfig(params json.RawMessage) (any, error) {
 	if p.Localtime != nil {
 		m.timezone.Timestamp = *p.Localtime
 	}
+	m.timezone.TZOffset = tzOffset(m.timezone.Timezone, m.timezone.Timestamp)
 
 	return json.RawMessage(`[]`), nil
+}
+
+// tzOffset returns the UTC offset, such as "+0530", of the POSIX TZ string tz at the Unix time t.
+// The time package applies a POSIX TZ string only as the footer of TZif data (RFC 8536),
+// so tzOffset makes TZif data with one zone, no transitions, and tz as the footer.
+func tzOffset(tz string, t int64) string {
+	header := append([]byte("TZif2"), make([]byte, 15)...)
+	for _, n := range []uint32{0, 0, 0, 0, 1, 1} { // isutcnt, isstdcnt, leapcnt, timecnt, typecnt, charcnt
+		header = binary.BigEndian.AppendUint32(header, n)
+	}
+	zone := make([]byte, 7) // one ttinfo with UTC offset 0 and an empty abbreviation
+
+	var data []byte
+	for range 2 { // the version 1 block and the version 2 block
+		data = append(data, header...)
+		data = append(data, zone...)
+	}
+	data = append(data, "\n"+tz+"\n"...)
+
+	loc, err := time.LoadLocationFromTZData("", data)
+	if err != nil {
+		return "+0000"
+	}
+	return time.Unix(t, 0).In(loc).Format("-0700")
 }
