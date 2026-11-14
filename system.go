@@ -158,8 +158,8 @@ type GetSystemTimezoneConfigResponse struct {
 	Zonename            string `json:"zonename"`
 	TZOffset            string `json:"tzoffset"`
 	AutoTimezoneEnabled bool   `json:"autotimezone_enabled"`
-	Localtime           int    `json:"localtime"`
-	Timestamp           int    `json:"timestamp"`
+	Localtime           int64  `json:"localtime"`
+	Timestamp           int64  `json:"timestamp"`
 	Timezone            string `json:"timezone"`
 }
 
