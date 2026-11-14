@@ -12,14 +12,9 @@ API reference: [archived copy of the GL.iNet 4.x API documentation](https://web.
 ## Usage
 
 ### Installing
-Use `go get` to retrieve the SDK to add it to your `GOPATH` workspace, or
-project's Go module dependencies.
+Add the module to your project:
 
-	go get github.com/ryanrishi/glinet-client-go
-
-To update the SDK use `go get -u` to retrieve the latest version of the SDK.
-
-	go get -u github.com/ryanrishi/glinet-client-go
+	go get github.com/ryanrishi/glinet-client-go@latest
 
 
 ### Client
@@ -36,6 +31,9 @@ if err != nil {
 
 tz, err := client.System.GetTimezoneConfig(ctx)
 ```
+
+The client has the services `AdGuard`, `Digest`, `LAN` and `System`.
+`NewClientUnauthenticated` returns a client that has no session. Only `Digest` works without a session.
 
 `Call` calls a module method that has no typed method yet. A nil `params` sends `{}`. A nil `result` discards the response.
 
@@ -69,7 +67,7 @@ srv.ExpireSessions()                    // the next call gets -32000
 srv.Handle("system", "get_info", method) // add or replace a method
 ```
 
-To run the read-only test against a real router, set `GLINET_USERNAME` and `GLINET_PASSWORD` (in the environment or in `.env`) and run:
+To run the read-only test against a real router, set `GLINET_USERNAME` and `GLINET_PASSWORD`, and `GLINET_HOST` if the router is not at `http://192.168.8.1` (in the environment or in `.env`) and run:
 
 	GLINET_ROUTER_TEST=1 go test -run TestRouterReadOnly .
 
