@@ -4,5 +4,5 @@ import "testing"
 
 // TestNetworkMatchesRouterFixtures replays the network fixtures of the real router.
 func TestNetworkMatchesRouterFixtures(t *testing.T) {
-	replayFixtures(t, "network.check_wan_cable.json")
+	replayFixtures(t, "network.check_wan_cable.json", "network.get_arp_list.json")
 }

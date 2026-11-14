@@ -27,3 +27,15 @@ func TestNetworkWANCableDecodesRouterFixture(t *testing.T) {
 	}
 	checkLossless(t, got, wanCable)
 }
+
+func TestNetworkARPListDecodesRouterFixture(t *testing.T) {
+	c, srv := newClient(t)
+	arpList := fixtureResult(t, "network.get_arp_list.json")
+	srv.Network.SetARPList(arpList)
+
+	got, err := c.Network.ListARPEntries(context.Background())
+	if err != nil {
+		t.Fatalf("ListARPEntries: %v", err)
+	}
+	checkLossless(t, map[string]any{"entries": got}, arpList)
+}

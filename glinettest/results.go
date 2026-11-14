@@ -392,4 +392,19 @@ const (
 		"cable_inserted": false,
 		"macclone_enabled": true
 	}`
+
+	networkARPList = `{
+		"entries": [
+			{
+				"device": "br-lan",
+				"ip": "192.168.8.193",
+				"mac": "02:00:00:00:00:16"
+			},
+			{
+				"device": "sta0",
+				"ip": "192.168.0.1",
+				"mac": "02:00:00:00:00:37"
+			}
+		]
+	}`
 )

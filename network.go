@@ -25,3 +25,22 @@ func (s *NetworkService) CheckWANCable(ctx context.Context) (*WANCableStatus, er
 
 	return &res, nil
 }
+
+// ARPEntry is an entry of the ARP table of the router. The values are runtime values.
+type ARPEntry struct {
+	IP     string `json:"ip"`
+	MAC    string `json:"mac"`
+	Device string `json:"device"`
+}
+
+// ListARPEntries returns the ARP table of the router.
+func (s *NetworkService) ListARPEntries(ctx context.Context) ([]ARPEntry, error) {
+	var res struct {
+		Entries []ARPEntry `json:"entries"`
+	}
+	if err := s.client.Call(ctx, "network", "get_arp_list", nil, &res); err != nil {
+		return nil, err
+	}
+
+	return res.Entries, nil
+}
