@@ -74,6 +74,7 @@ type Server struct {
 	Tailscale     *Tailscale
 	Timer         *Timer
 	Wifi          *Wifi
+	ZeroTier      *ZeroTier
 
 	srv *httptest.Server
 
@@ -128,6 +129,8 @@ func NewServer(t testing.TB) *Server {
 	s.Timer.register(s)
 	s.Wifi = newWifi()
 	s.Wifi.register(s)
+	s.ZeroTier = newZeroTier()
+	s.ZeroTier.register(s)
 
 	s.srv = httptest.NewServer(http.HandlerFunc(s.serveHTTP))
 	s.URL = s.srv.URL

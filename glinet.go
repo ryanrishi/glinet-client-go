@@ -49,6 +49,7 @@ type Client struct {
 	Tailscale     *TailscaleService
 	Timer         *TimerService
 	Wifi          *WifiService
+	ZeroTier      *ZeroTierService
 }
 
 type service struct {
@@ -112,6 +113,7 @@ func newClient(host string) (*Client, error) {
 	c.Tailscale = (*TailscaleService)(&c.common)
 	c.Timer = (*TimerService)(&c.common)
 	c.Wifi = (*WifiService)(&c.common)
+	c.ZeroTier = (*ZeroTierService)(&c.common)
 
 	return c, nil
 }

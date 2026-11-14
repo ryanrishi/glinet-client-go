@@ -452,6 +452,29 @@ From the UI code, not tested (`/views/gl-sdk4-ui-tailscaleview.common.js.gz`, re
 
 Not verified: any write with `enabled: true` (it starts Tailscale and contacts the Tailscale servers), the login, the status values when enabled, the exit node list items.
 
+### zerotier (write test with ZeroTier disabled, 2026-11-14)
+
+Verified on the router only with `enabled: false`; no write enabled ZeroTier and no network ID was written. The config was `{"enabled":false,"lan_enabled":false,"wan_enabled":false}` before and after the test, and `system.get_status` had the `zerotier` service at status `0` after each test group. The fixtures `zerotier.*_config*.json` with request IDs 20000-20017 are one sequence (`glinettest/zerotier_test.go` replays them).
+
+| Call | Params | Result |
+|---|---|---|
+| `get_config` | none | `{"enabled":bool, "lan_enabled":bool, "wan_enabled":bool}` (no `id` on the test router) |
+| `set_config` | `{enabled, id?, lan_enabled?, wan_enabled?}` | `[]` |
+| `get_status` | none | `[]` while disabled |
+
+Behavior (all with `enabled: false`):
+- A write that does not enable ZeroTier ignores `lan_enabled` and `wan_enabled`: `{"enabled":false,"lan_enabled":true,...}`, `{"enabled":false,...,"wan_enabled":true}`, `lan_enabled: 1`, `{"enabled":false}` and `{}` all left `{"enabled":false,"lan_enabled":false,"wan_enabled":false}`, also 15 s later. (This is unlike `tailscale`, which stores them.)
+- `lan_enabled: null` returned `-32602 Invalid params` (no `err`).
+- Each write returned in about 0.95-1 s (a write that fails with `-32602` in 4 ms).
+
+A write of a made-up network ID with `enabled: false` was planned, but the tool permission system of this session refused the call, so it was not sent.
+
+From the UI code, not tested (`/views/gl-sdk4-ui-zerotierview.common.js.gz`, read on 2026-11-14):
+- To disable, the UI sends only `{"enabled":false}`. To enable, it sends `{"enabled":true, "id", "lan_enabled", "wan_enabled"}`, with a timeout of 30 s, and reads `get_config` again 5 s after the write. The UI accepts `id` only as 16 hex digits.
+- The UI reads `id`, `enabled`, `lan_enabled` and `wan_enabled` from `get_config` (each may be missing), and `status` (0 connected, 1 connecting, 2 not authorized, 3 network not found), `zerotier_ip`, `lan_ip`, `wan_ip`, `wwan_ip` and `secondwan_ip` from `get_status`.
+
+Not verified: any write with `enabled: true` (it joins a ZeroTier network and contacts the ZeroTier servers), a write of `id`, the format of `id` in `get_config`, the status when enabled.
+
 ### wg-server
 - `get_status`: server fields are nested in `server{initialization,log,rx_bytes,status,tunnel_ip,tx_bytes}`. The reference has them at top level. `peers` is a top-level list (empty here).
 - `get_config`, `get_setting`: match.
