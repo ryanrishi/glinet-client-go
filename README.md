@@ -1,24 +1,20 @@
 glinet-client-go
 ===
 [![Tests](https://github.com/ryanrishi/glinet-client-go/actions/workflows/go.yml/badge.svg)](https://github.com/ryanrishi/glinet-client-go/actions/workflows/go.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/ryanrishi/glinet-client-go.svg)](https://pkg.go.dev/github.com/ryanrishi/glinet-client-go)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/ryanrishi/glinet-client-go)](https://github.com/ryanrishi/glinet-client-go/releases/latest)
-[![Go Report Card](https://goreportcard.com/badge/github.com/ryanrishi/glinet-client-go)](https://goreportcard.com/report/github.com/ryanrishi/glinet-client-go)
 
 
-A Go client to access [GL.iNet](https://www.gl-inet.com/) routers. Based on [v4 firmware](https://dev.gl-inet.com/router-4.x-api/).
+A Go client to access [GL.iNet](https://www.gl-inet.com/) routers that run [v4 firmware](https://docs.gl-inet.com/router/en/4/).
+API reference: [archived copy of the GL.iNet 4.x API documentation](https://web.archive.org/web/20240121142533/https://dev.gl-inet.com/router-4.x-api/).
 
 
 ## Usage
 
 ### Installing
-Use `go get` to retrieve the SDK to add it to your `GOPATH` workspace, or
-project's Go module dependencies.
+Add the module to your project:
 
-	go get github.com/ryanrishi/glinet-client-go
-
-To update the SDK use `go get -u` to retrieve the latest version of the SDK.
-
-	go get -u github.com/ryanrishi/glinet-client-go
+	go get github.com/ryanrishi/glinet-client-go@latest
 
 
 ### Client
@@ -35,6 +31,9 @@ if err != nil {
 
 tz, err := client.System.GetTimezoneConfig(ctx)
 ```
+
+The client has the services `AdGuard`, `Digest`, `Firewall`, `LAN` and `System`.
+`NewClientUnauthenticated` returns a client that has no session. Only `Digest` works without a session.
 
 `Call` calls a module method that has no typed method yet. A nil `params` sends `{}`. A nil `result` discards the response.
 
@@ -68,7 +67,7 @@ srv.ExpireSessions()                    // the next call gets -32000
 srv.Handle("system", "get_info", method) // add or replace a method
 ```
 
-To run the read-only test against a real router, set `GLINET_USERNAME` and `GLINET_PASSWORD` (in the environment or in `.env`) and run:
+To run the read-only test against a real router, set `GLINET_USERNAME` and `GLINET_PASSWORD`, and `GLINET_HOST` if the router is not at `http://192.168.8.1` (in the environment or in `.env`) and run:
 
 	GLINET_ROUTER_TEST=1 go test -run TestRouterReadOnly .
 
