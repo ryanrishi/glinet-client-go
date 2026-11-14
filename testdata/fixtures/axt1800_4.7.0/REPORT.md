@@ -338,6 +338,27 @@ Not verified: modes other than `auto` (the active tunnel supplies DNS, so no mod
 ### adguardhome
 - `get_config`: extra `dns_enabled` (reference has it only as `set_config` input).
 
+### adguardhome (write test, 2026-11-14)
+
+Verified on the router. The config was `{"enabled":false,"dns_enabled":true}` before and after the test. AdGuard Home was enabled two times, for 13 s and 38 s. The fixtures `adguardhome.*.json` with request IDs 15000-15501 are one sequence (`glinettest/adguardhome_test.go` replays them).
+
+| Call | Params | Result |
+|---|---|---|
+| `get_config` | none | `{"enabled":bool, "dns_enabled":bool}` |
+| `set_config` | `{enabled, dns_enabled?}` | `[]` |
+
+Behavior:
+- No `enabled` disables AdGuard Home: `{"dns_enabled":true}` while it was enabled gave `enabled: false`.
+- No `dns_enabled` keeps `dns_enabled` (`{}` and `{"enabled":false}` kept `true`). `dns_enabled` can be changed while AdGuard Home is disabled. The web UI sends `{enabled: true, dns_enabled}` to enable and only `{enabled: false}` to disable.
+- `enabled: null` returns `-32602 Invalid params` (no `err`) and changes nothing. Other value types were not sent.
+- A write that enables AdGuard Home returned in about 270 ms, and `get_config` had the new values at once. The service started later: `system.get_status` showed `adguard` status `0` 1 s after the write and `1` 38 s after it. The DNS server of the router did not answer (`dig` timeout) from 1 s after `{"enabled":true,"dns_enabled":false}` until 3 s after the next disable (16 s); in the second test, after `{"enabled":true,"dns_enabled":true}`, one query 8 s after the write timed out and the others were answered. The web UI waits 6 s after it enables and 3 s after it disables.
+- A write that disables it returned in about 20-50 ms. DNS queries were answered after it.
+- No write returned an error. The "other DNS not turned off" error (`err_code 1` in the result, from the web UI and the reference) did not occur in DNS mode `auto`.
+
+Differences from the 2023 reference: `dns_enabled` is in the `get_config` result. `enabled` is not required (no value disables), `dns_enabled` is not required (no value keeps it). `set_config` returns `[]`, not `null`.
+
+Not verified: the error when another DNS feature is active (that needs a DNS mode change); whether AdGuard Home answers queries after it started (it was disabled after 38 s); what `dns_enabled: false` does while AdGuard Home runs.
+
 ### wifi
 - `get_config`: extra `res[].random_bssid`. `res[].channels` items are objects `{channel, dfs, psc}`. `res[].htmodes` is an object (mode → max bandwidth, plus `auto`), as the reference says.
 - `get_status`: matches.

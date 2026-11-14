@@ -1,0 +1,20 @@
+{
+  "request": {
+    "id": 15109,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "adguardhome",
+      "set_config",
+      {
+        "dns_enabled": true
+      }
+    ]
+  },
+  "response": {
+    "id": 15109,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

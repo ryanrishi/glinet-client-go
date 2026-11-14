@@ -27,7 +27,9 @@ func (s *AdGuardService) GetAdGuardConfig(ctx context.Context) (*GetAdGuardConfi
 	return &res, nil
 }
 
-// SetAdGuardConfig sets the AdGuard Home configuration.
+// SetAdGuardConfig sets the AdGuard Home configuration. DNSEnabled makes AdGuard Home answer the
+// DNS queries of the clients. The router returns before AdGuard Home has started: in the test,
+// the DNS server of the router did not answer for up to 16 s after a write that enabled it.
 func (s *AdGuardService) SetAdGuardConfig(ctx context.Context, config *SetAdGuardConfigRequest) error {
 	return s.client.Call(ctx, "adguardhome", "set_config", config, nil)
 }
