@@ -7,3 +7,8 @@ import "testing"
 func TestFirewallMatchesRouterFixtures(t *testing.T) {
 	replayFixtures(t, "firewall.*port_forward*.json", "firewall.*rule*.json", "firewall.*dmz*.json")
 }
+
+// TestFirewallZonesMatchRouterFixture replays the get_zone_list fixture of the real router.
+func TestFirewallZonesMatchRouterFixture(t *testing.T) {
+	replayFixtures(t, "firewall.get_zone_list.json")
+}

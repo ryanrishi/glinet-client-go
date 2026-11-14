@@ -36,3 +36,8 @@ func TestSetTimezoneConfigTZOffset(t *testing.T) {
 		})
 	}
 }
+
+// TestSystemReadsMatchRouterFixtures replays the fixtures of the read-only system methods.
+func TestSystemReadsMatchRouterFixtures(t *testing.T) {
+	replayFixtures(t, "system.get_info.json", "system.get_status.json", "system.disk_info.json")
+}

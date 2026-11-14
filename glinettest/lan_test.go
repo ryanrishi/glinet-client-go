@@ -6,3 +6,8 @@ import "testing"
 func TestLANMatchesRouterFixtures(t *testing.T) {
 	replayFixtures(t, "lan.*static_bind*.json")
 }
+
+// TestLANWANInfoMatchesRouterFixture replays the get_wan_info fixture of the real router.
+func TestLANWANInfoMatchesRouterFixture(t *testing.T) {
+	replayFixtures(t, "lan.get_wan_info.json")
+}

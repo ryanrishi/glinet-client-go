@@ -37,6 +37,24 @@ func TestRouterReadOnly(t *testing.T) {
 		t.Fatalf("adguardhome.get_config: %v", err)
 	}
 	t.Logf("adguardhome.get_config: %+v", *ag)
+
+	reads := map[string]func() error{
+		"system.get_info":         func() error { _, err := c.System.GetInfo(ctx); return err },
+		"system.get_status":       func() error { _, err := c.System.GetStatus(ctx); return err },
+		"system.disk_info":        func() error { _, err := c.System.GetDiskInfo(ctx); return err },
+		"clients.get_list":        func() error { _, err := c.Clients.ListClients(ctx); return err },
+		"firewall.get_zone_list":  func() error { _, err := c.Firewall.GetZones(ctx); return err },
+		"cable.get_status":        func() error { _, err := c.Cable.GetStatus(ctx); return err },
+		"lan.get_wan_info":        func() error { _, err := c.LAN.GetWANInfo(ctx); return err },
+		"network.check_wan_cable": func() error { _, err := c.Network.CheckWANCable(ctx); return err },
+		"network.get_arp_list":    func() error { _, err := c.Network.ListARPEntries(ctx); return err },
+		"wifi.get_status":         func() error { _, err := c.Wifi.GetStatus(ctx); return err },
+	}
+	for name, read := range reads {
+		if err := read(); err != nil {
+			t.Errorf("%s: %v", name, err)
+		}
+	}
 }
 
 // TestRouterStaticBind adds, updates and removes one static bind with an invented MAC on a real router.

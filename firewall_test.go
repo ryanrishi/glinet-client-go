@@ -352,3 +352,15 @@ func TestFirewallAddPortForwardAfterDMZ(t *testing.T) {
 		t.Errorf("ListPortForwards = %+v, want ID %q (the DMZ section moved to the end)", forwards, glinettest.PortForwardID(0))
 	}
 }
+
+func TestFirewallZonesDecodeRouterFixture(t *testing.T) {
+	c, srv := newClient(t)
+	zones := fixtureResult(t, "firewall.get_zone_list.json")
+	srv.Firewall.SetZones(zones)
+
+	got, err := c.Firewall.GetZones(context.Background())
+	if err != nil {
+		t.Fatalf("GetZones: %v", err)
+	}
+	checkLossless(t, got, zones)
+}

@@ -62,11 +62,15 @@ type Server struct {
 
 	System      *System
 	AdGuardHome *AdGuardHome
+	Cable       *Cable
+	Clients     *Clients
 	DNS         *DNS
 	Firewall    *Firewall
 	LAN         *LAN
 	LED         *LED
+	Network     *Network
 	Timer       *Timer
+	Wifi        *Wifi
 
 	srv *httptest.Server
 
@@ -97,6 +101,10 @@ func NewServer(t testing.TB) *Server {
 	s.System.register(s)
 	s.AdGuardHome = newAdGuardHome()
 	s.AdGuardHome.register(s)
+	s.Cable = newCable()
+	s.Cable.register(s)
+	s.Clients = newClients()
+	s.Clients.register(s)
 	s.DNS = newDNS()
 	s.DNS.register(s)
 	s.Firewall = newFirewall()
@@ -105,8 +113,12 @@ func NewServer(t testing.TB) *Server {
 	s.LAN.register(s)
 	s.LED = newLED()
 	s.LED.register(s)
+	s.Network = newNetwork()
+	s.Network.register(s)
 	s.Timer = newTimer()
 	s.Timer.register(s)
+	s.Wifi = newWifi()
+	s.Wifi.register(s)
 
 	s.srv = httptest.NewServer(http.HandlerFunc(s.serveHTTP))
 	s.URL = s.srv.URL

@@ -63,3 +63,32 @@ func (s *LANService) RemoveStaticBind(ctx context.Context, mac string) error {
 	}{Mode: 0, MAC: mac}
 	return s.client.Call(ctx, "lan", "remove_static_bind", params, nil)
 }
+
+// WANInfo is an item of the result of lan get_wan_info: the IPv4 address of an uplink interface,
+// for example "wan" or "wwan". The values are runtime values.
+type WANInfo struct {
+	Interface string     `json:"interface"`
+	Info      WANAddress `json:"info"`
+}
+
+// WANAddress is the IPv4 address and network of an uplink interface.
+type WANAddress struct {
+	IPAddr    string `json:"ipaddr"`
+	Netmask   string `json:"netmask"`
+	Prefix    int    `json:"prefix"`
+	Network   string `json:"network"`
+	Broadcast string `json:"broadcast"`
+}
+
+// GetWANInfo returns the IPv4 addresses of the uplink interfaces. On the test router, the result
+// had only the interface that was connected.
+func (s *LANService) GetWANInfo(ctx context.Context) ([]WANInfo, error) {
+	var res struct {
+		WANInfo []WANInfo `json:"wan_info"`
+	}
+	if err := s.client.Call(ctx, "lan", "get_wan_info", nil, &res); err != nil {
+		return nil, err
+	}
+
+	return res.WANInfo, nil
+}
