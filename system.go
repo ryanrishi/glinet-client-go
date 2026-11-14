@@ -43,20 +43,20 @@ type GetSystemStatusResponse struct {
 		GuestIP         string    `json:"guest_ip"`
 		GuestNetmask    string    `json:"guest_netmask"`
 		NetNATEnabled   bool      `json:"netnat_enabled"`
-		FlashApp        int       `json:"flash_app"`
-		FlashTotal      int       `json:"flash_total"`
-		MemoryTotal     int       `json:"memory_total"`
-		MemoryFree      int       `json:"memory_free"`
+		FlashApp        int64     `json:"flash_app"`
+		FlashTotal      int64     `json:"flash_total"`
+		MemoryTotal     int64     `json:"memory_total"`
+		MemoryFree      int64     `json:"memory_free"`
 		Ipv6Enabled     bool      `json:"ipv6_enabled"`
-		MemoryBuffCache int       `json:"memory_buff_cache"`
+		MemoryBuffCache int64     `json:"memory_buff_cache"`
 		Uptime          float64   `json:"uptime"`
 		LoadAverage     []float64 `json:"load_average"`
 		CPU             struct {
 			Temperature int `json:"temperature"`
 		} `json:"cpu"`
-		Mode      int `json:"mode"`
-		FlashFree int `json:"flash_free"`
-		Timestamp int `json:"timestamp"`
+		Mode      int   `json:"mode"`
+		FlashFree int64 `json:"flash_free"`
+		Timestamp int64 `json:"timestamp"`
 	} `json:"system"`
 }
 
