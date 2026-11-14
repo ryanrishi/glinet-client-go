@@ -56,6 +56,11 @@ func (s *FirewallService) FindPortForward(ctx context.Context, id string) (*Port
 
 // AddPortForward adds forward at the end of the list and returns its ID. It ignores forward.ID.
 // Enabled false adds a disabled forward.
+//
+// After the first SetDMZ, the firewall configuration has a DMZ section, and the router moves it
+// to the end after each AddPortForward. When the DMZ section was before the new forward, the
+// returned ID is one more than the ID of the forward in the list, and the IDs of the rules and
+// forwards that were after the DMZ section change. Read the list to get the IDs.
 func (s *FirewallService) AddPortForward(ctx context.Context, forward PortForward) (string, error) {
 	forward.ID = ""
 	var res struct {
@@ -140,7 +145,7 @@ func (s *FirewallService) FindRule(ctx context.Context, id string) (*Rule, error
 }
 
 // AddRule adds rule at the end of the list and returns its ID. It ignores rule.ID.
-// Enabled false adds a disabled rule.
+// Enabled false adds a disabled rule. AddPortForward can change the ID later.
 func (s *FirewallService) AddRule(ctx context.Context, rule Rule) (string, error) {
 	rule.ID = ""
 	var res struct {
@@ -169,4 +174,28 @@ func (s *FirewallService) RemoveRule(ctx context.Context, id string) error {
 		ID string `json:"id"`
 	}{ID: id}
 	return s.client.Call(ctx, "firewall", "remove_rule", params, nil)
+}
+
+// DMZ is the DMZ host configuration. When Enabled, the router forwards incoming traffic
+// from the wan zone to the host DestIP. The router does not check DestIP.
+type DMZ struct {
+	Enabled bool   `json:"enabled"`
+	DestIP  string `json:"dest_ip,omitempty"`
+}
+
+// GetDMZ returns the DMZ configuration. DestIP is empty when the router has no DMZ host.
+func (s *FirewallService) GetDMZ(ctx context.Context) (*DMZ, error) {
+	var res DMZ
+	if err := s.client.Call(ctx, "firewall", "get_dmz", nil, &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+// SetDMZ replaces the DMZ configuration. An empty DestIP removes the DMZ host.
+// The first SetDMZ adds a DMZ section to the firewall configuration, which can change the IDs
+// that AddPortForward returns. The router keeps that section when the DMZ is disabled.
+func (s *FirewallService) SetDMZ(ctx context.Context, dmz DMZ) error {
+	return s.client.Call(ctx, "firewall", "set_dmz", dmz, nil)
 }

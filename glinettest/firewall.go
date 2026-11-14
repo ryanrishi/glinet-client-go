@@ -38,11 +38,21 @@ type Rule struct {
 	Enabled  bool   `json:"enabled"`
 }
 
-// Firewall serves the port forward and rule methods of the firewall module. Like the router, it
-// does not check the values and accepts duplicates. It keeps the port forwards and rules in one
+// DMZ is the DMZ configuration of the firewall module. An empty DestIP means the router has no value.
+type DMZ struct {
+	Enabled bool   `json:"enabled"`
+	DestIP  string `json:"dest_ip,omitempty"`
+}
+
+// Firewall serves the port forward, rule and DMZ methods of the firewall module. Like the router,
+// it does not check the values and accepts duplicates. It keeps the port forwards and rules in one
 // list of firewall sections and gives each one the ID of its position in that list, so the IDs
 // after a removed port forward or rule change. Like the router, the set and remove methods of
 // one type also write or remove a section of the other type when they get its ID.
+//
+// The first set_dmz adds a DMZ section without an ID at the end of the list. Like the router,
+// add_port_forward moves it to the end again after it gives the ID of the new port forward,
+// so that ID is one more than the ID in the list when the DMZ section was before the new forward.
 type Firewall struct {
 	mu       sync.Mutex
 	sections []section
@@ -53,10 +63,11 @@ type section struct {
 	values map[string]any
 }
 
-// The ID suffixes that the router gives from the section type.
+// The ID suffixes that the router gives from the section type. The DMZ section has a name and no ID.
 const (
 	portForwardSuffix = "3837"
 	ruleSuffix        = "92bd"
+	dmzSuffix         = ""
 )
 
 // firstSectionIndex is the index of the first port forward or rule on the test router,
@@ -95,11 +106,13 @@ func (m *Firewall) PortForwards() []PortForward {
 	return sectionsOf[PortForward](m.sections, portForwardSuffix)
 }
 
-// SetPortForwards replaces the port forwards. The new port forwards go after the rules.
+// SetPortForwards replaces the port forwards. The new port forwards go after the rules
+// and before the DMZ section.
 func (m *Firewall) SetPortForwards(forwards []PortForward) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.sections = replaceSections(m.sections, portForwardSuffix, forwards)
+	m.moveDMZToEnd()
 }
 
 // Rules returns a copy of the rules.
@@ -109,11 +122,55 @@ func (m *Firewall) Rules() []Rule {
 	return sectionsOf[Rule](m.sections, ruleSuffix)
 }
 
-// SetRules replaces the rules. The new rules go after the port forwards.
+// SetRules replaces the rules. The new rules go after the port forwards
+// and before the DMZ section.
 func (m *Firewall) SetRules(rules []Rule) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.sections = replaceSections(m.sections, ruleSuffix, rules)
+	m.moveDMZToEnd()
+}
+
+// DMZ returns the DMZ configuration.
+func (m *Firewall) DMZ() DMZ {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	var dmz DMZ
+	if i := m.dmzIndex(); i >= 0 {
+		data, _ := json.Marshal(m.sections[i].values)
+		_ = json.Unmarshal(data, &dmz)
+	}
+	return dmz
+}
+
+// SetDMZ replaces the DMZ configuration. It adds the DMZ section at the end if there is none.
+func (m *Firewall) SetDMZ(dmz DMZ) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	values := map[string]any{"enabled": dmz.Enabled}
+	if dmz.DestIP != "" {
+		values["dest_ip"] = dmz.DestIP
+	}
+	m.setDMZValues(values)
+}
+
+func (m *Firewall) dmzIndex() int {
+	return slices.IndexFunc(m.sections, func(s section) bool { return s.suffix == dmzSuffix })
+}
+
+func (m *Firewall) setDMZValues(values map[string]any) {
+	if i := m.dmzIndex(); i >= 0 {
+		m.sections[i].values = values
+		return
+	}
+	m.sections = append(m.sections, section{suffix: dmzSuffix, values: values})
+}
+
+func (m *Firewall) moveDMZToEnd() {
+	if i := m.dmzIndex(); i >= 0 {
+		dmz := m.sections[i]
+		m.sections = append(slices.Delete(m.sections, i, i+1), dmz)
+	}
 }
 
 func sectionsOf[T any](sections []section, suffix string) []T {
@@ -150,6 +207,8 @@ func (m *Firewall) register(s *Server) {
 	s.Handle("firewall", "add_rule", m.add(ruleSuffix, ruleKeys))
 	s.Handle("firewall", "set_rule", m.set(ruleKeys))
 	s.Handle("firewall", "remove_rule", m.remove)
+	s.Handle("firewall", "get_dmz", m.getDMZ)
+	s.Handle("firewall", "set_dmz", m.setDMZ)
 }
 
 func (m *Firewall) list(suffix string) Method {
@@ -171,7 +230,7 @@ func (m *Firewall) list(suffix string) Method {
 
 func (m *Firewall) index(id string) int {
 	for i, s := range m.sections {
-		if sectionID(i, s.suffix) == id {
+		if s.suffix != dmzSuffix && sectionID(i, s.suffix) == id {
 			return i
 		}
 	}
@@ -236,8 +295,12 @@ func (m *Firewall) add(suffix string, keys []string) Method {
 		m.mu.Lock()
 		defer m.mu.Unlock()
 		m.sections = append(m.sections, section{suffix: suffix, values: values})
+		id := sectionID(len(m.sections)-1, suffix)
+		if suffix == portForwardSuffix {
+			m.moveDMZToEnd()
+		}
 
-		return map[string]string{"id": sectionID(len(m.sections)-1, suffix)}, nil
+		return map[string]string{"id": id}, nil
 	}
 }
 
@@ -288,6 +351,37 @@ func (m *Firewall) remove(params json.RawMessage) (any, error) {
 		return nil, errInternalServerError
 	}
 	m.sections = slices.Delete(m.sections, i, i+1)
+
+	return writeResult, nil
+}
+
+// getDMZ returns only enabled until the first set_dmz, and priority false after it, like the router.
+func (m *Firewall) getDMZ(json.RawMessage) (any, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	i := m.dmzIndex()
+	if i < 0 {
+		return map[string]any{"enabled": false}, nil
+	}
+	res := maps.Clone(m.sections[i].values)
+	res["priority"] = false
+	return res, nil
+}
+
+// setDMZ writes enabled and dest_ip. No enabled is true and no dest_ip removes the IP, like the router.
+func (m *Firewall) setDMZ(params json.RawMessage) (any, error) {
+	var p map[string]json.RawMessage
+	if err := json.Unmarshal(params, &p); err != nil {
+		return nil, ErrInvalidParams
+	}
+	values := map[string]any{"enabled": true}
+	if err := apply(values, p, []string{"dest_ip"}); err != nil {
+		return nil, err
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.setDMZValues(values)
 
 	return writeResult, nil
 }

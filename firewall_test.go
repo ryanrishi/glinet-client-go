@@ -296,3 +296,59 @@ func TestFirewallRemoveRuleWithPortForwardID(t *testing.T) {
 		t.Errorf("server port forwards = %+v, want empty", got)
 	}
 }
+
+func TestFirewallDMZ(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+
+	got, err := c.Firewall.GetDMZ(ctx)
+	if err != nil {
+		t.Fatalf("GetDMZ: %v", err)
+	}
+	if *got != (glinet.DMZ{}) {
+		t.Errorf("GetDMZ = %+v, want disabled without DestIP", got)
+	}
+
+	for _, want := range []glinet.DMZ{
+		{Enabled: true, DestIP: "192.168.8.50"},
+		{DestIP: "192.168.8.50"},
+		{},
+	} {
+		if err := c.Firewall.SetDMZ(ctx, want); err != nil {
+			t.Fatalf("SetDMZ(%+v): %v", want, err)
+		}
+		got, err := c.Firewall.GetDMZ(ctx)
+		if err != nil {
+			t.Fatalf("GetDMZ: %v", err)
+		}
+		if *got != want {
+			t.Errorf("GetDMZ after SetDMZ(%+v) = %+v", want, got)
+		}
+		if state := srv.Firewall.DMZ(); state != (glinettest.DMZ{Enabled: want.Enabled, DestIP: want.DestIP}) {
+			t.Errorf("server state after SetDMZ(%+v) = %+v", want, state)
+		}
+	}
+}
+
+func TestFirewallAddPortForwardAfterDMZ(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+	srv.Firewall.SetDMZ(glinettest.DMZ{})
+	forward := glinet.PortForward{Name: "forward", Proto: "tcp", Src: "wan", SrcDport: "50002", Dest: "lan", DestIP: "192.168.8.50", DestPort: "50002"}
+
+	id, err := c.Firewall.AddPortForward(ctx, forward)
+	if err != nil {
+		t.Fatalf("AddPortForward: %v", err)
+	}
+	if id != glinettest.PortForwardID(1) {
+		t.Errorf("AddPortForward = %q, want %q (after the DMZ section)", id, glinettest.PortForwardID(1))
+	}
+
+	forwards, err := c.Firewall.ListPortForwards(ctx)
+	if err != nil {
+		t.Fatalf("ListPortForwards: %v", err)
+	}
+	if len(forwards) != 1 || forwards[0].ID != glinettest.PortForwardID(0) {
+		t.Errorf("ListPortForwards = %+v, want ID %q (the DMZ section moved to the end)", forwards, glinettest.PortForwardID(0))
+	}
+}

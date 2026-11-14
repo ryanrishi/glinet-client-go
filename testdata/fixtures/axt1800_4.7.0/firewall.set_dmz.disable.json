@@ -1,0 +1,20 @@
+{
+  "request": {
+    "id": 3074,
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "firewall",
+      "set_dmz",
+      {
+        "enabled": false
+      }
+    ]
+  },
+  "response": {
+    "id": 3074,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}
