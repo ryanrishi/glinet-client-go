@@ -34,10 +34,11 @@ type Client struct {
 	nextID atomic.Int64
 
 	// services
-	AdGuard *AdGuardService
-	Digest  *DigestService
-	LAN     *LANService
-	System  *SystemService
+	AdGuard  *AdGuardService
+	Digest   *DigestService
+	Firewall *FirewallService
+	LAN      *LANService
+	System   *SystemService
 }
 
 type service struct {
@@ -88,6 +89,7 @@ func newClient(host string) (*Client, error) {
 
 	c.AdGuard = (*AdGuardService)(&c.common)
 	c.Digest = (*DigestService)(&c.common)
+	c.Firewall = (*FirewallService)(&c.common)
 	c.LAN = (*LANService)(&c.common)
 	c.System = (*SystemService)(&c.common)
 

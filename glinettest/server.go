@@ -10,6 +10,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -45,6 +46,10 @@ var (
 	ErrInvalidParams  = &Error{Code: -32602, Message: "Invalid params"}
 )
 
+// errInternalServerError makes the server answer with HTTP status 500 and no JSON-RPC response,
+// as the router does when a method fails.
+var errInternalServerError = errors.New("internal server error")
+
 // Method handles one module method. params is the fourth element of the call params.
 // A returned *Error goes to the client as is. Other errors become -32603.
 type Method func(params json.RawMessage) (any, error)
@@ -57,6 +62,7 @@ type Server struct {
 
 	System      *System
 	AdGuardHome *AdGuardHome
+	Firewall    *Firewall
 	LAN         *LAN
 
 	srv *httptest.Server
@@ -88,6 +94,8 @@ func NewServer(t testing.TB) *Server {
 	s.System.register(s)
 	s.AdGuardHome = newAdGuardHome()
 	s.AdGuardHome.register(s)
+	s.Firewall = newFirewall()
+	s.Firewall.register(s)
 	s.LAN = newLAN()
 	s.LAN.register(s)
 
@@ -138,6 +146,10 @@ func (s *Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := s.dispatch(req)
+	if errors.Is(err, errInternalServerError) {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	res := response{ID: req.ID, JSONRPC: "2.0", Result: result}
 	if err != nil {
 		rpcErr, ok := err.(*Error)
