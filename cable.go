@@ -83,15 +83,22 @@ func (s *CableService) GetConfig(ctx context.Context) (*CableConfig, error) {
 
 // SetConfig sets the configuration of the wired WAN port. It sends config with "secondwan": false,
 // as the web UI does for the first WAN port. The web UI sends the full configuration of the
-// protocol, only the optional fields that are set, and waits 4 s after the write. An error -1 is a
-// VLAN ID conflict.
+// protocol, only the optional fields that are set, and waits 4 s after the write. For Protocol
+// "pppoe" it always sends Username and Password, also when they are empty, and for the other
+// protocols it does not send them. An error -1 is a VLAN ID conflict.
 //
 // Not verified on a router: the parameters come from the web UI code. A wrong configuration cuts
 // the wired uplink.
 func (s *CableService) SetConfig(ctx context.Context, config CableConfig) error {
 	params := struct {
 		CableConfig
-		SecondWAN bool `json:"secondwan"`
+		Username  *string `json:"username,omitempty"`
+		Password  *string `json:"password,omitempty"`
+		SecondWAN bool    `json:"secondwan"`
 	}{CableConfig: config}
+	if config.Protocol == "pppoe" {
+		params.Username = &config.Username
+		params.Password = &config.Password
+	}
 	return s.client.Call(ctx, "cable", "set_config", params, nil)
 }

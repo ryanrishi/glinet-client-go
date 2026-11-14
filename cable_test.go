@@ -90,4 +90,20 @@ func TestCableSetConfig(t *testing.T) {
 	if !reflect.DeepEqual(*got, pppoe) {
 		t.Errorf("GetConfig = %+v, want %+v", *got, pppoe)
 	}
+
+	if err := c.Cable.SetConfig(ctx, glinet.CableConfig{Protocol: "pppoe"}); err != nil {
+		t.Fatalf("SetConfig pppoe with no account: %v", err)
+	}
+	want = map[string]any{"protocol": "pppoe", "username": "", "password": "", "secondwan": false}
+	if !reflect.DeepEqual(sent, want) {
+		t.Errorf("params = %v, want %v", sent, want)
+	}
+
+	if err := c.Cable.SetConfig(ctx, glinet.CableConfig{Protocol: "dhcp", Username: "user", Password: "secret"}); err != nil {
+		t.Fatalf("SetConfig dhcp: %v", err)
+	}
+	want = map[string]any{"protocol": "dhcp", "secondwan": false}
+	if !reflect.DeepEqual(sent, want) {
+		t.Errorf("params = %v, want %v", sent, want)
+	}
 }
