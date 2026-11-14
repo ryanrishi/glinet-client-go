@@ -15,12 +15,15 @@ type StaticBind struct {
 	Name string `json:"name,omitempty"`
 }
 
-// LAN serves the static bind methods of the lan module.
+// LAN serves the static bind and get_wan_info methods of the lan module. The result of
+// get_wan_info is that of the test router until a test sets it.
 // Like the router, it identifies a binding by its exact MAC string. A write removes each binding
 // that has the same MAC or IP and appends the new binding at the end of the list.
 type LAN struct {
 	mu    sync.Mutex
 	binds []StaticBind
+
+	wanInfo readResult
 }
 
 var macPattern = regexp.MustCompile(`^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$`)
@@ -28,7 +31,19 @@ var macPattern = regexp.MustCompile(`^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$`)
 var writeResult = json.RawMessage(`[]`)
 
 func newLAN() *LAN {
-	return &LAN{binds: []StaticBind{}}
+	m := &LAN{binds: []StaticBind{}}
+	m.wanInfo.set(json.RawMessage(lanWANInfo))
+	return m
+}
+
+// WANInfo returns the result of get_wan_info.
+func (m *LAN) WANInfo() json.RawMessage {
+	return m.wanInfo.get()
+}
+
+// SetWANInfo sets the result of get_wan_info.
+func (m *LAN) SetWANInfo(result json.RawMessage) {
+	m.wanInfo.set(result)
 }
 
 // StaticBinds returns a copy of the bindings.
@@ -52,6 +67,7 @@ func (m *LAN) register(s *Server) {
 	s.Handle("lan", "add_static_bind", m.addStaticBind)
 	s.Handle("lan", "set_static_bind", m.setStaticBind)
 	s.Handle("lan", "remove_static_bind", m.removeStaticBind)
+	s.Handle("lan", "get_wan_info", m.wanInfo.handle)
 }
 
 func invalidParams(detail string) *Error {

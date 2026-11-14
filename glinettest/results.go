@@ -362,4 +362,34 @@ const (
 			"wgclient"
 		]
 	}`
+
+	cableStatus = `{
+		"mode": 0,
+		"secondwan": {
+			"err_code": -4,
+			"err_msg": "Unsupported features!"
+		},
+		"status": 3
+	}`
+
+	lanWANInfo = `{
+		"wan_info": [
+			{
+				"info": {
+					"broadcast": "192.168.0.255",
+					"ipaddr": "192.168.0.210",
+					"netmask": "255.255.255.0",
+					"network": "192.168.0.0",
+					"prefix": 24
+				},
+				"interface": "wwan"
+			}
+		]
+	}`
+
+	networkWANCable = `{
+		"cable_enabled": false,
+		"cable_inserted": false,
+		"macclone_enabled": true
+	}`
 )

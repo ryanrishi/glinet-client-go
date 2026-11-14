@@ -35,12 +35,14 @@ type Client struct {
 
 	// services
 	AdGuard  *AdGuardService
+	Cable    *CableService
 	Clients  *ClientsService
 	Digest   *DigestService
 	DNS      *DNSService
 	Firewall *FirewallService
 	LAN      *LANService
 	LED      *LEDService
+	Network  *NetworkService
 	System   *SystemService
 	Timer    *TimerService
 }
@@ -92,12 +94,14 @@ func newClient(host string) (*Client, error) {
 	c.common.client = c
 
 	c.AdGuard = (*AdGuardService)(&c.common)
+	c.Cable = (*CableService)(&c.common)
 	c.Clients = (*ClientsService)(&c.common)
 	c.Digest = (*DigestService)(&c.common)
 	c.DNS = (*DNSService)(&c.common)
 	c.Firewall = (*FirewallService)(&c.common)
 	c.LAN = (*LANService)(&c.common)
 	c.LED = (*LEDService)(&c.common)
+	c.Network = (*NetworkService)(&c.common)
 	c.System = (*SystemService)(&c.common)
 	c.Timer = (*TimerService)(&c.common)
 

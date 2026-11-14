@@ -194,3 +194,15 @@ func TestLANStaticBindErrors(t *testing.T) {
 		t.Errorf("server state = %+v, want empty", got)
 	}
 }
+
+func TestLANWANInfoDecodesRouterFixture(t *testing.T) {
+	c, srv := newClient(t)
+	wanInfo := fixtureResult(t, "lan.get_wan_info.json")
+	srv.LAN.SetWANInfo(wanInfo)
+
+	got, err := c.LAN.GetWANInfo(context.Background())
+	if err != nil {
+		t.Fatalf("GetWANInfo: %v", err)
+	}
+	checkLossless(t, map[string]any{"wan_info": got}, wanInfo)
+}
