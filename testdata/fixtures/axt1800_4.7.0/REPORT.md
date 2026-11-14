@@ -410,6 +410,24 @@ Same list or two features: one list. `clients.block_client` writes the `black_ma
 
 Not verified: that the router really blocks a MAC (no real client was blocked), how long the firewall takes to apply a write, mode `white` and `white_mac`, what `set_single_mac` and `set_config` do with `mode: "white"` or no `mode` (never sent, because mode `white` cuts the access of all clients that are not in the list), the maximum list size (the web UI allows 1000).
 
+### ddns (2026-11-14, reads only)
+
+No write was sent: the only field of `set_config` is the enable flag, and enabling DDNS registers the router with an external service of GL.iNet. The config was `{"enable_ddns":false, "device_id":<redacted>}` before and after the work, and `system.get_status` had `ddns_enabled: false`.
+
+| Call | Params | Result |
+|---|---|---|
+| `get_config` | none | `{"enable_ddns":bool, "device_id":string}` |
+| `get_status` | none | `{"ips":[{"interface":string, "ip":[string]}], "status":int}` (`status` 2 on the test router) |
+
+- `device_id` is the device ID for the GL.iNet DDNS name (the same value as `system.get_info.ddns`). It is a secret and is redacted in the fixtures.
+
+From the UI code, not tested (`/views/gl-sdk4-ui-dynamicdns.common.js.gz`, read on 2026-11-14):
+- The view calls `ddns.get_config {}`, `ddns.get_status {}` (the "DDNS test"), `ddns.set_config` and `firewall.get_wan_access {}`.
+- The write is `ddns.set_config {"enable_ddns": bool}`, nothing else. The UI enables it only after the user accepts the terms. It reads `get_config` again 3 s after the write. A result with `err_msg` is shown as an error (`err_code` + `err_msg`).
+- The UI reads `ddns`, `ddnsv6`, `status` and `ips` from `get_status`. The access over the WAN (`enable_ssh_access`, `enable_http_access`, `enable_https_access` of the 2023 reference) is not in the DDNS write; the view shows `firewall.get_wan_access` (`enable_https`, `enable_ssh`) instead.
+
+Not verified: any `set_config` call, its result and errors, and what an enabled DDNS does.
+
 ### wg-server
 - `get_status`: server fields are nested in `server{initialization,log,rx_bytes,status,tunnel_ip,tx_bytes}`. The reference has them at top level. `peers` is a top-level list (empty here).
 - `get_config`, `get_setting`: match.
