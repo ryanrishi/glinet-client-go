@@ -304,6 +304,12 @@ Differences from the 2023 reference: `set_host` returns `[]`, not `null`. The re
 
 Not verified: whether a reboot or another write makes the DNS server use the new file; the maximum size.
 
+What the web UI does when the user saves the hosts file (from the UI code, not tested). Source: `/views/gl-sdk4-ui-dnsview.common.js.gz` of the router web server (`/views/gl-sdk4-ui-dnsview.common.js` redirects with 302), 77187 bytes unpacked, read on 2026-11-14.
+- The API object of the DNS view has only these methods: `dns.get_info {}`, `dns.get_config {}`, `dns.set_config`, `dns.get_host {}` and `setDnsHost(t)`, which is `$rpcRequest("call", ["sid", "dns", "set_host", t], {errTips: {keep: true}})`.
+- `handleApplyHost` checks each line with `validateHost`. If all lines are valid, it calls `setDnsHost({content: this.hostStr})`. On success it closes the dialog and calls `getDnsHost()`, which is `dns.get_host {}` and puts `content` in the text area. On failure it only closes the message.
+- No other call follows `set_host`: no `set_config`, no reload, restart or apply method. `app.js` has no `set_host`. The shared `$rpcRequest` adds no call after a request; it only rejects a result with a top-level `err_code` or `err_msg`.
+- So the UI does nothing more than the client `SetHosts`. It does not explain why the new names did not resolve.
+
 ### dns config (write test, 2026-11-14)
 
 Verified on the router in mode `auto`, with a WireGuard client tunnel that supplies DNS (`wg 192.168.5.1` in `server`). The config was `{"mode":"auto","force_dns":false,"rebind_protection":false,"override_vpn":true,"dot_provider":"0","nextdns_id":"","controld_id":"","free_controld_id":"","server":["wwan 192.168.4.253","wg 192.168.5.1"]}` before and after the test, and `server` did not change during it. Only `rebind_protection` and `force_dns` were changed on purpose, one at a time. The fixtures `dns.*_config*.json` with request IDs 14000-14315 are one sequence (`glinettest/dns_test.go` replays them).
