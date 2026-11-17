@@ -503,9 +503,27 @@ Not verified: a real ZeroTier network (join, status 0, 2 or 3, `zerotier_ip` and
 - `get_netnat_config`: extra `conflict_features`, `qos_enabled`, `wifi_reload`.
 - `get_arp_list`: matches.
 
-## Network configuration (from the UI code, not tested)
+## Network configuration
 
-The write methods in this section were never called on a router. The parameters, the call sequence and the validation rules come from the JavaScript of the web UI of the test router (firmware 4.7.0), which the router serves as static files: `/views/gl-sdk4-ui-<view>.common.js.gz`. The views are `internet` (WAN), `ipv6`, `lanip` and `guestip` (LAN and guest network, one shared component with `netInterface` `lan` or `guest`), and `wireless`. The reads are verified by the fixtures `cable.get_config.json`, `ipv6.get_ipv6.json`, `lan.get_config_list.json` and `wifi.get_config.json` (probe of 2026-11-12). Each write test proposal below needs the owner at the router.
+### Write test of 2026-11-14 (stopped after the first write)
+
+The owner approved a supervised write test of `lan` (guest network only), `cable` (protocol `dhcp` only), `ipv6` (`{"enable":false}` only) and `wifi` (radio1 only), in this order. The test tool had an allow-list in code that refused every other write before it was sent, and it ran a health check before and after each write: `repeater.get_status`, `lan.get_wan_info`, `system.get_status`, `wg-client.get_status`, `dns.get_config`, `wifi.get_status` and the `lan` item of `lan.get_config_list`, every 2 s.
+
+Only one write was sent: `lan.set_config` with `{"interface":"guest","enable":0}`, while the guest DHCP server was already off (fixtures `lan.*.guest_dhcp_disable_noop.json`, IDs 24002-24005):
+
+- It returned `[]` in 54 ms. The result had no `api_extra`.
+- `get_config_list` right after the write and 3 min later was equal to the read before: both items, with `leasetime` `"12h"`, `lpr` `[]` and `transfer_enable` `0`.
+- At 2.3 s the health check was unchanged. At 9.4 s `wifi.get_status` had `radio0` on channel 153 (before: 48, the channel of the AP of the repeater uplink), `wwan` was offline in `system.get_status`, `lan.get_wan_info` was empty and `dns.get_config` `server` had lost its `wwan` entry. From 11.6 s the repeater had no SSID, BSSID and address, and from 13.7 s its `state_s` was `failed` or `connecting`. `wifi.get_status` showed a different value for `radio1` in two samples (15.8 s and 22.3 s). So the router restarted the Wi-Fi about 9 s after the write.
+- `wifi.get_config` after the write (fixture `wifi.get_config.after_guest_dhcp_write.json`) had `radio0` with `channel` 153 and `htmode` `"20"`; before the write it was 48 and `"40"`, the values of the repeater uplink. The interface settings were unchanged.
+- The WireGuard client went from status 1 to status 2 (connecting) between 3 and 5 min after the write, because it had no uplink.
+- The `lan` item, the management connection on Ethernet and the system uptime were not affected.
+- The repeater uplink did not connect again by itself: 16 min after the write the repeater was still `failed` or `connecting`, `radio0` was on channel 153, and the WireGuard client had no uplink. The test sent no repeater or Wi-Fi write to repair it.
+
+The uplink was not back after 3 minutes, so the test stopped by its rule: no other write was sent. The `cable`, `ipv6` and `wifi` writes, the other `lan` writes and the error `-8` (not sent in any case: the UI code does not show that the router checks the overlap before it applies the write) remain not tested.
+
+### Network configuration from the UI code
+
+Except for the one write above, the write methods in this section were never called on a router. The parameters, the call sequence and the validation rules come from the JavaScript of the web UI of the test router (firmware 4.7.0), which the router serves as static files: `/views/gl-sdk4-ui-<view>.common.js.gz`. The views are `internet` (WAN), `ipv6`, `lanip` and `guestip` (LAN and guest network, one shared component with `netInterface` `lan` or `guest`), and `wireless`. The reads are verified by the fixtures `cable.get_config.json`, `ipv6.get_ipv6.json`, `lan.get_config_list.json` and `wifi.get_config.json` (probe of 2026-11-12). Each write test proposal below needs the owner at the router.
 
 ### cable WAN config (from the UI code, not tested)
 
@@ -535,6 +553,8 @@ Unknown: the types and presence of the optional fields in the `get_config` resul
 
 Proposal for a supervised write test: write `{"protocol":"dhcp","secondwan":false}` (the current value) and read back; then `{"protocol":"dhcp","mtu":1500,"secondwan":false}` and read back to learn the type of `mtu`; restore with `{"protocol":"dhcp","secondwan":false}` and check that `mtu` is gone. Do not test `static` or `pppoe` unless no cable is in the WAN port. Risks: a write probably restarts the `wan` interface; the WAN has no cable and is not the uplink, so the uplink (`wwan`) should not drop, but `kmwan` gives `wan` metric 10 before `wwan` 20, so a wrong static gateway could matter when a cable is plugged in later. Watch `lan.get_wan_info` and `system.get_status` `network[]` for `wwan` during the test.
 
+Not tested: the write test of 2026-11-14 stopped before the `cable` writes. Still not verified: every `cable.set_config` call (also the no-change `dhcp` write), the read form of `mtu` and `ttl`, whether a write replaces the configuration, the errors, and the effect on the `wwan` uplink.
+
 ### ipv6 (from the UI code, not tested)
 
 Read (verified): `ipv6.get_ipv6` returns `{"enable":false,"lan_dns_mode":true,"lan_mode":"nat6"}`. The web UI also reads `lan_dns1`, `lan_dns2` and `lan_ip` (with the default `"fd05:0e25:8607::1/64"` when there is none); the router did not return them while IPv6 was disabled.
@@ -555,7 +575,9 @@ Unknown: which fields a disable keeps; the read shape while IPv6 is enabled; the
 
 Proposal for a supervised write test: write `{"enable":false}` (the current value) and read back. Do not enable IPv6 without the owner: the uplink (`wwan`) has no IPv6 (`wwan6` is down), and a WireGuard client runs, which the tip says may not work together with IPv6. If the owner agrees to an enable test, use `{"enable":true,"lan_mode":"nat6","lan_dns_mode":true}` for at most one minute, check that the WireGuard client and the LAN still work, and restore with `{"enable":false}`. Risk: a network or firewall restart drops the management connection for some seconds.
 
-### lan config and guest network (from the UI code, not tested)
+Not tested: the write test of 2026-11-14 stopped before the `ipv6` write. Still not verified: every `ipv6.set_ipv6` call (also `{"enable":false}`), its result, and whether it keeps `lan_mode` and `lan_dns_mode`.
+
+### lan config and guest network (one write tested, the rest from the UI code)
 
 Read (verified): `lan.get_config_list` returns `interfaces[]` with the items `lan` and `guest` (see "lan" above). Flags are 0/1 numbers; `leasetime` is `"12h"`; `transfer_enable` is only in `guest`.
 
@@ -590,6 +612,16 @@ Validation in the UI:
 - The guest DHCP card is shown only while a guest Wi-Fi is up. `transfer_enable` is not in the UI.
 
 Unknown: whether the router keeps the fields that a partial write does not send (the UI depends on it, so it probably does); the effect and meaning of `lpr` and `transfer_enable`; whether `"12h"` is accepted in a write; the duration of the restart.
+
+Verified (write test of 2026-11-14, see above): `{"interface":"guest","enable":0}` with the guest DHCP server off returns `[]` without `api_extra`, changes no field of either item, and about 9 s later restarts the Wi-Fi: `radio0` changes channel and the repeater uplink drops; `radio1` showed a change in two status samples.
+
+Still not verified:
+- a DHCP write with `enable` 1 and the read form of `leasetime` after a write of `"120m"` or `"720m"`;
+- whether a DHCP write keeps the address fields and an address write keeps the DHCP fields;
+- an address write (also a no-change one) and a change of the guest subnet;
+- the handling of `lpr` (`[""]` and no `lpr`) and of `transfer_enable`;
+- the errors `-7`, `-8`, `-9`;
+- whether every `lan.set_config` restarts the Wi-Fi, or only this one.
 
 Proposal for a supervised write test (guest only; the guest network is off and has no clients): send `{interface:"guest", enable:0}` (the current value) and read back; then `{interface:"guest", enable:1, start:"192.168.9.100", end:"192.168.9.200", leasetime:"120m", gateway:"", dns:[]}`, read back, and restore with the same write with `end:"192.168.9.249"`, `leasetime:"720m"`, and then `{interface:"guest", enable:0}`; check whether the restored `leasetime` reads `"12h"` or `"720m"`. Then `{interface:"guest", ip:"192.168.9.1", netmask:"255.255.255.0", ap_isolate:1}` (no change). Do not write the `lan` item: a change of its IP, netmask or DHCP range cuts the management connection of the Mac (`192.168.8.1` on Ethernet), and a DHCP disable stops new leases. Risks also for `guest`: the write probably restarts the network and the DHCP server, so the LAN may drop for some seconds; a guest IP inside `192.168.8.0/24` gives a conflict.
 
@@ -631,6 +663,8 @@ Validation in the UI:
 Unknown: whether a write without `enabled` keeps the state (the UI depends on it); whether a partial write such as `{iface_name, ssid}` keeps the other fields; whether `channel` and `htmode` are kept when they are not sent; whether `device` is required for the radio fields; whether a write restarts only the radio of the interface or all radios; the errors.
 
 Proposal for a supervised write test (only `radio1` interfaces, which are off): send `{iface_name:"guest2g", enabled:false}` (no change) and read back; then `{iface_name:"guest2g", ssid:<current>, encryption:"psk2", hidden:true, key:<current>}`, read back, and restore with `hidden:false`; then `wifi.set_txpower` `{device:"radio1", txpower:"High"}` and restore `"Max"`. Watch `wifi.get_status` for `radio0` and the uplink (`lan.get_wan_info`, `wwan`) during each step to learn whether a `radio1` write restarts `radio0`. Do not write `radio0` interfaces or radio fields: `radio0` carries the repeater uplink and the main Wi-Fi (`default_radio0`), so a restart drops the uplink and the Wi-Fi clients, and a channel or width change can make the repeater lose its AP. Never enable `guest2g` or `default_radio1` with a test key: that opens a new Wi-Fi network. The read returns all Wi-Fi keys: keep the raw results out of logs and commits.
+
+Not tested: the write test of 2026-11-14 stopped before the `wifi` writes. Still not verified: every `wifi.set_config` and `wifi.set_txpower` call, their results, the partial-write behaviour, and whether a write to a `radio1` interface restarts `radio0`. The `lan.set_config` write of that test restarted the Wi-Fi and dropped the repeater uplink on `radio0`; expect the same risk from a `wifi` write.
 
 ## Methods not called
 

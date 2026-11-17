@@ -175,7 +175,9 @@ func (s *LANService) GetConfig(ctx context.Context, iface string) (*LANConfig, e
 // the new IP 15 s after the write. The web UI shows the errors -7 (the IP conflicts with the
 // uplink), -8 (with the LAN) and -9 (with the guest network).
 //
-// Not verified on a router: the parameters come from the web UI code.
+// Not verified on a router: the parameters come from the web UI code. A write of the DHCP server
+// of the guest network restarted the Wi-Fi of the test router (see SetDHCP); whether an address
+// write does too is not known.
 func (s *LANService) SetAddress(ctx context.Context, address LANAddress) error {
 	return s.client.Call(ctx, "lan", "set_config", address, nil)
 }
@@ -185,7 +187,12 @@ func (s *LANService) SetAddress(ctx context.Context, address LANAddress) error {
 // and LPR only when it has items. The web UI waits until the router answers again, for at least
 // 10 s.
 //
-// Not verified on a router: the parameters come from the web UI code.
+// Verified on the test router only for {"interface": "guest", "enable": 0} while the guest DHCP
+// server was already off: the router returned the result [] (no api_extra) within 0.1 s and kept
+// all fields of both networks. About 9 s later the router restarted the Wi-Fi: radio0 left the
+// channel of the repeater uplink for its own channel, and the uplink on radio0 dropped and had
+// not connected again by itself 16 min later. So a write to the guest network, also one that
+// changes nothing, can cut an uplink over Wi-Fi. The other parameters come from the web UI code.
 func (s *LANService) SetDHCP(ctx context.Context, dhcp LANDHCP) error {
 	params := map[string]any{"interface": dhcp.Interface, "enable": dhcp.Enable}
 	if dhcp.Enable != 0 {
