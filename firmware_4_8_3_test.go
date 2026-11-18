@@ -36,6 +36,7 @@ func TestReadsDecodeFirmware483Fixtures(t *testing.T) {
 		{"ddns.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.DDNS.GetConfig(ctx) }, nil},
 		{"ddns.get_status", func(ctx context.Context, c *glinet.Client) (any, error) { return c.DDNS.GetStatus(ctx) }, nil},
 		{"dns.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.DNS.GetConfig(ctx) }, nil},
+		{"dns.get_info", func(ctx context.Context, c *glinet.Client) (any, error) { return c.DNS.GetInfo(ctx) }, nil},
 		{"firewall.get_dmz", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Firewall.GetDMZ(ctx) }, []string{"priority"}},
 		{"firewall.get_zone_list", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Firewall.GetZones(ctx) }, nil},
 		{"firewall.get_port_forward_list", list("res", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Firewall.ListPortForwards(ctx) }), nil},
