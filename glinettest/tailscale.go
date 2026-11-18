@@ -53,7 +53,7 @@ func (m *Tailscale) register(s *Server) {
 }
 
 func (m *Tailscale) status(json.RawMessage) (any, error) {
-	status := map[string]any{"dns": []string{"192.168.4.253"}}
+	status := map[string]any{"dns": []string{"192.168.100.53"}}
 	if m.Config().Enabled {
 		status["status"] = 1
 	}

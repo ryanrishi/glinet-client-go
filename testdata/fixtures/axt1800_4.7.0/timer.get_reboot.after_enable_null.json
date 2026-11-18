@@ -16,11 +16,11 @@
     "result": {
       "enable": false,
       "week": [
-        1,
-        4
+        3,
+        5
       ],
-      "hour": "03",
-      "min": "00"
+      "hour": "02",
+      "min": "15"
     }
   }
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -23,7 +24,12 @@ var (
 		"2606:4700:4700::1111": true, "2606:4700:4700::1001": true,
 		"2001:4860:4860::8888": true, "2001:4860:4860::8844": true,
 	}
-	_, cgnat, _ = net.ParseCIDR("100.64.0.0/10")
+	_, cgnat, _    = net.ParseCIDR("100.64.0.0/10")
+	defaultLAN     = []string{"192.168.8.", "192.168.9."}
+	builtInGroups  = map[string]bool{"AzireVPN": true, "FromApp": true, "Hideme": true, "IPVanish": true, "Mullvad": true, "NordVPN": true, "PIA": true, "Surfshark": true}
+	serviceNames   = map[string]bool{"wgclient": true, "wgserver": true, "ovpnclient": true, "ovpnserver": true}
+	fixedTimezone  = map[string]string{"zonename": "UTC", "timezone": "UTC0", "tzoffset": "+0000"}
+	keptListenPort = map[float64]bool{0: true, 51820: true}
 )
 
 type redactor struct {
@@ -99,6 +105,10 @@ func (r *redactor) collect(v any) {
 	switch t := v.(type) {
 	case map[string]any:
 		_, hasMAC := t["mac"]
+		_, hasPeerID := t["peer_id"]
+		_, hasClientID := t["client_id"]
+		_, hasSrc := t["src"]
+		_, hasDest := t["dest"]
 		for k, val := range t {
 			s, ok := val.(string)
 			lk := strings.ToLower(k)
@@ -107,6 +117,18 @@ func (r *redactor) collect(v any) {
 			}
 			if ok && (hostnameKey.MatchString(lk) || (lk == "name" && hasMAC)) {
 				r.addValue(s, "hostname", fakeName("hostname"))
+			}
+			if ok && lk == "name" && (hasPeerID || hasClientID) && !serviceNames[s] {
+				r.addValue(s, "peer", fakeName("peer"))
+			}
+			if ok && lk == "name" && hasSrc && hasDest {
+				r.addValue(s, "rule", fakeName("rule"))
+			}
+			if ok && lk == "group_name" && !builtInGroups[s] {
+				r.addValue(s, "group", fakeName("group"))
+			}
+			if ok && lk == "username" && s != "root" {
+				r.addValue(s, "user", fakeName("user"))
 			}
 			if ok && publicKey.MatchString(lk) {
 				r.addValue(s, "public-key", fakePublicKey)
@@ -137,6 +159,9 @@ func (r *redactor) walk(key string, v any) any {
 		for k, val := range t {
 			out[k] = r.walk(k, val)
 		}
+		if _, ok := out["localtime"]; ok && out["timestamp"] != nil {
+			out["localtime"] = out["timestamp"]
+		}
 		return out
 	case []any:
 		out := make([]any, len(t))
@@ -144,9 +169,17 @@ func (r *redactor) walk(key string, v any) any {
 			out[i] = r.walk(key, val)
 		}
 		return out
+	case float64:
+		if strings.EqualFold(key, "listen_port") && !keptListenPort[t] {
+			return r.fakePort(t)
+		}
+		return t
 	case string:
 		if t == "" {
 			return t
+		}
+		if fake, ok := fixedTimezone[strings.ToLower(key)]; ok {
+			return fake
 		}
 		if isSensitive(key) {
 			r.addSecret(t, strings.ToLower(key))
@@ -249,13 +282,37 @@ func (r *redactor) fakeMAC(m string) string {
 	return f
 }
 
+func (r *redactor) fakePort(p float64) float64 {
+	f := r.mapped(strconv.FormatFloat(p, 'f', -1, 64), "port", func(n int) string { return strconv.Itoa(40000 + n) })
+	port, _ := strconv.ParseFloat(f, 64)
+	return port
+}
+
+// fakeIPv4 maps a public address to 203.0.113.N. It maps a private or shared address outside the
+// default LAN and guest networks to a made-up 10.x.y.H address: each real /24 network gets its
+// own 10.x.y network, and the host part H stays, so that gateways and broadcast addresses still fit.
 func (r *redactor) fakeIPv4(s string) string {
 	ip := net.ParseIP(s).To4()
-	if ip == nil || publicDNS[s] || ip.IsPrivate() || ip.IsLoopback() || ip.IsLinkLocalUnicast() ||
-		ip.IsMulticast() || ip.IsUnspecified() || ip.Equal(net.IPv4bcast) || cgnat.Contains(ip) || ip[0] == 255 {
+	if ip == nil || publicDNS[s] || ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsMulticast() ||
+		ip.IsUnspecified() || ip.Equal(net.IPv4bcast) || ip[0] == 255 || isDefaultLAN(s) {
 		return s
 	}
+	if ip.IsPrivate() || cgnat.Contains(ip) {
+		network := r.mapped(fmt.Sprintf("%d.%d.%d", ip[0], ip[1], ip[2]), "ipv4net", func(n int) string {
+			return fmt.Sprintf("10.%d.%d", 200+n/256, n%256)
+		})
+		return fmt.Sprintf("%s.%d", network, ip[3])
+	}
 	return r.mapped(s, "ipv4", func(n int) string { return fmt.Sprintf("203.0.113.%d", n) })
+}
+
+func isDefaultLAN(s string) bool {
+	for _, prefix := range defaultLAN {
+		if strings.HasPrefix(s, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 func (r *redactor) fakeIPv6(s string) string {

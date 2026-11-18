@@ -58,7 +58,7 @@ func TestCableSetConfig(t *testing.T) {
 
 	static := glinet.CableConfig{
 		Protocol: "static",
-		IPv4:     &glinet.CableIPv4{IP: "192.168.0.20", Netmask: "255.255.255.0", Gateway: "192.168.0.1", DNS: []string{"192.168.0.1"}},
+		IPv4:     &glinet.CableIPv4{IP: "192.168.100.30", Netmask: "255.255.255.0", Gateway: "192.168.100.1", DNS: []string{"192.168.100.1"}},
 		MTU:      1500,
 	}
 	if err := c.Cable.SetConfig(ctx, static); err != nil {

@@ -55,7 +55,7 @@ func (m *DDNS) status(json.RawMessage) (any, error) {
 	status := map[string]any{
 		"ips": []map[string]any{
 			{"interface": "wan6", "ip": []string{}},
-			{"interface": "wwan", "ip": []string{"192.168.0.210"}},
+			{"interface": "wwan", "ip": []string{"192.168.100.20"}},
 			{"interface": "wwan6", "ip": []string{}},
 		},
 		"status": 2,
