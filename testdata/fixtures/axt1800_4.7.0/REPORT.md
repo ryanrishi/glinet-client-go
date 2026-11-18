@@ -314,7 +314,7 @@ What the web UI does when the user saves the hosts file (from the UI code, not t
 
 ### dns config (write test, 2026-11-14)
 
-Verified on the router in mode `auto`, with a WireGuard client tunnel that supplies DNS (`wg 192.168.5.1` in `server`). The config was `{"mode":"auto","force_dns":false,"rebind_protection":false,"override_vpn":true,"dot_provider":"0","nextdns_id":"","controld_id":"","free_controld_id":"","server":["wwan 192.168.4.253","wg 192.168.5.1"]}` before and after the test, and `server` did not change during it. Only `rebind_protection` and `force_dns` were changed on purpose, one at a time. The fixtures `dns.*_config*.json` with request IDs 14000-14315 are one sequence (`glinettest/dns_test.go` replays them).
+Verified on the router in mode `auto`, with a WireGuard client tunnel that supplies DNS (`wg 10.66.0.1` in `server`). The config was `{"mode":"auto","force_dns":false,"rebind_protection":false,"override_vpn":true,"dot_provider":"0","nextdns_id":"","controld_id":"","free_controld_id":"","server":["wwan 192.168.4.253","wg 10.66.0.1"]}` before and after the test, and `server` did not change during it. Only `rebind_protection` and `force_dns` were changed on purpose, one at a time. The fixtures `dns.*_config*.json` with request IDs 14000-14315 are one sequence (`glinettest/dns_test.go` replays them).
 
 | Call | Params | Result |
 |---|---|---|

@@ -24,7 +24,7 @@
       "rebind_protection": false,
       "server": [
         "wwan 192.168.4.253",
-        "wg 192.168.5.1"
+        "wg 10.66.0.1"
       ]
     }
   }
