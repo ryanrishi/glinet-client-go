@@ -98,12 +98,18 @@ func (s *LANService) GetWANInfo(ctx context.Context) ([]WANInfo, error) {
 //
 //   - IP and Netmask are the address of the router in the network.
 //   - APIsolate 1 stops the Wi-Fi clients of the network from reaching each other.
+//   - WANIsolate is only for the "guest" network. The web UI of firmware 4.8.3 shows it with the
+//     label key lanip.block_wan_label ("block WAN") and, while it is 1, a tip with the networks of
+//     lan get_wan_info that the guest network cannot reach. The router does not give it when it
+//     is not set (firmware 4.8.3); then the web UI shows 0.
 //   - Enable 1 enables the DHCP server. Start and End are the first and the last address that it
 //     gives. LeaseTime is a duration with a unit, for example "12h" on the test router; the web
 //     UI sends minutes, for example "720m".
 //   - Gateway and DNS are the gateway and the DNS servers that the DHCP server gives; empty means
 //     the router. DNS has at most two items in the web UI.
-//   - LPR is a list of strings that the web UI does not check; its meaning is not known.
+//   - LPR is a list of LPR servers: the web UI shows it in the DHCP server settings with the label
+//     key lan_ip.lpr_serve_label, and allows at most 5 IP addresses, each one time. What the
+//     router does with it was not verified.
 //   - TransferEnable is only in the "guest" item (0 on the test router). The web UI does not
 //     show or send it; its meaning is not known.
 type LANConfig struct {
@@ -111,6 +117,7 @@ type LANConfig struct {
 	IP             string   `json:"ip"`
 	Netmask        string   `json:"netmask"`
 	APIsolate      int      `json:"ap_isolate"`
+	WANIsolate     int      `json:"wan_isolate,omitempty"`
 	Enable         int      `json:"enable"`
 	Start          string   `json:"start"`
 	End            string   `json:"end"`
@@ -122,11 +129,13 @@ type LANConfig struct {
 }
 
 // LANAddress is the address part of the params of lan set_config, as the web UI sends it.
+// See LANConfig for the fields. SetAddress sends WANIsolate only for the "guest" network.
 type LANAddress struct {
-	Interface string `json:"interface"`
-	IP        string `json:"ip"`
-	Netmask   string `json:"netmask"`
-	APIsolate int    `json:"ap_isolate"`
+	Interface  string
+	IP         string
+	Netmask    string
+	APIsolate  int
+	WANIsolate int
 }
 
 // LANDHCP is the DHCP part of the params of lan set_config. See LANConfig for the fields.
@@ -175,11 +184,20 @@ func (s *LANService) GetConfig(ctx context.Context, iface string) (*LANConfig, e
 // the new IP 15 s after the write. The web UI shows the errors -7 (the IP conflicts with the
 // uplink), -8 (with the LAN) and -9 (with the guest network).
 //
-// Not verified on a router: the parameters come from the web UI code. A write of the DHCP server
-// of the guest network restarted the Wi-Fi of the test router (see SetDHCP); whether an address
-// write does too is not known.
+// Not verified on a router: the parameters come from the web UI code, and wan_isolate from the
+// web UI code of firmware 4.8.3. A write of the DHCP server of the guest network restarted the
+// Wi-Fi of the test router (see SetDHCP); whether an address write does too is not known.
 func (s *LANService) SetAddress(ctx context.Context, address LANAddress) error {
-	return s.client.Call(ctx, "lan", "set_config", address, nil)
+	params := map[string]any{
+		"interface":  address.Interface,
+		"ip":         address.IP,
+		"netmask":    address.Netmask,
+		"ap_isolate": address.APIsolate,
+	}
+	if address.Interface == "guest" {
+		params["wan_isolate"] = address.WANIsolate
+	}
+	return s.client.Call(ctx, "lan", "set_config", params, nil)
 }
 
 // SetDHCP sets the DHCP server of a network with one lan set_config, as the web UI does: with

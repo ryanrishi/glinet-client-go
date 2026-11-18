@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+
+	"github.com/ryanrishi/glinet-client-go"
 )
 
 func TestNetworkWANCableDecodesRouterFixture(t *testing.T) {
@@ -18,7 +20,7 @@ func TestNetworkWANCableDecodesRouterFixture(t *testing.T) {
 		return handler(p)
 	})
 
-	got, err := c.Network.CheckWANCable(context.Background())
+	got, err := c.Network.CheckWANCable(context.Background(), glinet.FirstWANPort)
 	if err != nil {
 		t.Fatalf("CheckWANCable: %v", err)
 	}
@@ -26,6 +28,13 @@ func TestNetworkWANCableDecodesRouterFixture(t *testing.T) {
 		t.Errorf("params = %s, want the params of the fixture", params)
 	}
 	checkLossless(t, got, wanCable)
+
+	if _, err := c.Network.CheckWANCable(context.Background(), glinet.SecondWANPort); err != nil {
+		t.Fatalf("CheckWANCable second: %v", err)
+	}
+	if params != `{"secondwan":true}` {
+		t.Errorf("params = %s, want secondwan true", params)
+	}
 }
 
 func TestNetworkARPListDecodesRouterFixture(t *testing.T) {

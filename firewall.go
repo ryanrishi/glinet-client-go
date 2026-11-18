@@ -73,6 +73,21 @@ func (s *FirewallService) AddPortForward(ctx context.Context, forward PortForwar
 	return res.ID, nil
 }
 
+// OrderPortForwards sets the order of the port forwards to the order of ids, with one
+// firewall order_port_forward {"id_list": ids}. The web UI of firmware 4.8.3 sends the IDs of all
+// port forwards, in the new order, and then reads the list again.
+//
+// Not tested on a router: the call is from the web UI code of firmware 4.8.3, and firmware 4.7.0
+// does not have it. Not known: if the IDs change, because an ID is the position of the forward in
+// the firewall configuration; what the router does with a list that does not have all IDs or has
+// an unknown ID; how the order applies to the traffic.
+func (s *FirewallService) OrderPortForwards(ctx context.Context, ids []string) error {
+	params := struct {
+		IDList []string `json:"id_list"`
+	}{IDList: append([]string{}, ids...)}
+	return s.client.Call(ctx, "firewall", "order_port_forward", params, nil)
+}
+
 // SetPortForward replaces all values of the port forward with the ID forward.ID. It keeps its position.
 // The router changes nothing and returns no error when no forward has that ID.
 func (s *FirewallService) SetPortForward(ctx context.Context, forward PortForward) error {
@@ -178,9 +193,17 @@ func (s *FirewallService) RemoveRule(ctx context.Context, id string) error {
 
 // DMZ is the DMZ host configuration. When Enabled, the router forwards incoming traffic
 // from the wan zone to the host DestIP. The router does not check DestIP.
+//
+// Priority is the priority of the DMZ: true has the label key firewall.dmz_priority_higher_label
+// and false has firewall.dmz_priority_lower_label in the web UI of firmware 4.8.3. The web UI
+// shows the DMZ on the port forward page and reads the port forwards again after each set_dmz,
+// but its code does not have the label texts, so it does not settle to what the priority is
+// compared. The router gives Priority false after the first set_dmz when no write sent it, and
+// no priority before the first set_dmz. The web UI shows true when get_dmz has no priority.
 type DMZ struct {
-	Enabled bool   `json:"enabled"`
-	DestIP  string `json:"dest_ip,omitempty"`
+	Enabled  bool   `json:"enabled"`
+	DestIP   string `json:"dest_ip,omitempty"`
+	Priority bool   `json:"priority"`
 }
 
 // GetDMZ returns the DMZ configuration. DestIP is empty when the router has no DMZ host.
@@ -196,8 +219,20 @@ func (s *FirewallService) GetDMZ(ctx context.Context) (*DMZ, error) {
 // SetDMZ replaces the DMZ configuration. An empty DestIP removes the DMZ host.
 // The first SetDMZ adds a DMZ section to the firewall configuration, which can change the IDs
 // that AddPortForward returns. The router keeps that section when the DMZ is disabled.
+//
+// SetDMZ sends priority only when Enabled is true, as the web UI of firmware 4.8.3 does. The
+// priority write is from the web UI code and was not tested on a router: what the router does
+// with it, and if a write without priority keeps the value, is not known.
 func (s *FirewallService) SetDMZ(ctx context.Context, dmz DMZ) error {
-	return s.client.Call(ctx, "firewall", "set_dmz", dmz, nil)
+	params := struct {
+		Enabled  bool   `json:"enabled"`
+		DestIP   string `json:"dest_ip,omitempty"`
+		Priority *bool  `json:"priority,omitempty"`
+	}{Enabled: dmz.Enabled, DestIP: dmz.DestIP}
+	if dmz.Enabled {
+		params.Priority = &dmz.Priority
+	}
+	return s.client.Call(ctx, "firewall", "set_dmz", params, nil)
 }
 
 // FirewallZones is the result of firewall get_zone_list: names of the zones of the firewall

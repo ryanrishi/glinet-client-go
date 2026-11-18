@@ -101,6 +101,36 @@ func TestWifiSetConfig(t *testing.T) {
 	}
 }
 
+func TestWifiSetConfig6GOnlyPSC(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+	var sent map[string]any
+	setConfig := srv.Handler("wifi", "set_config")
+	srv.Handle("wifi", "set_config", func(params json.RawMessage) (any, error) {
+		sent = nil
+		_ = json.Unmarshal(params, &sent)
+		return setConfig(params)
+	})
+
+	onlyPSC := true
+	if err := c.Wifi.SetConfig(ctx, glinet.SetWifiConfigRequest{IfaceName: "default_radio0", SSID: "example", Encryption: "none", Device: "radio0", Chan6GOnlyPSC: &onlyPSC}); err != nil {
+		t.Fatalf("SetConfig: %v", err)
+	}
+	if sent["chan_6g_only_psc"] != true {
+		t.Errorf("params = %v, want chan_6g_only_psc true", sent)
+	}
+	got, err := c.Wifi.GetConfig(ctx)
+	if err != nil {
+		t.Fatalf("GetConfig: %v", err)
+	}
+	if radio, _ := got.FindIface("default_radio0"); radio.Chan6GOnlyPSC == nil || !*radio.Chan6GOnlyPSC {
+		t.Errorf("radio0 = %+v, want Chan6GOnlyPSC true", *radio)
+	}
+	if radio, _ := got.FindIface("default_radio1"); radio.Chan6GOnlyPSC != nil {
+		t.Errorf("radio1 = %+v, want no Chan6GOnlyPSC", *radio)
+	}
+}
+
 func TestWifiSetTxPower(t *testing.T) {
 	c, _ := newClient(t)
 	ctx := context.Background()

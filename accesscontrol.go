@@ -3,16 +3,29 @@ package glinet
 import "context"
 
 // AccessControlService calls the black_white_list module: the MAC access control of the client
-// devices. In mode "black" the router blocks the MACs in the block list.
+// devices. In mode "black" the router blocks the MACs in the block list. In mode "white" the
+// allow list applies.
 //
 // The router keeps each MAC as written and compares MACs with their letter case: "02:00:00:00:00:a1"
 // and "02:00:00:00:00:A1" are two entries, and a remove with the other case removes nothing.
 // The web UI compares MACs without letter case and writes them in upper case.
+//
+// Only mode "black" was tested on a router (firmware 4.7.0). Mode "white", the allow list and
+// the mode switch are from the web UI code of firmware 4.8.3 and were not tested on a router.
+// The web UI does not let the user save an allow list without the MAC of the client that shows
+// the web UI (label key clients.whitelist_self_error_tips), or a block list with that MAC.
 type AccessControlService service
 
-// AccessControlConfig is the result of black_white_list get_config. Mode is "black" (block list)
-// or "white" (allow list). BlackMAC is the block list; the router leaves it out when it is empty.
-// WhiteMAC is the allow list; it is from the web UI code and was not seen on a router.
+// The modes of the black_white_list module.
+const (
+	AccessControlBlockList = "black"
+	AccessControlAllowList = "white"
+)
+
+// AccessControlConfig is the result of black_white_list get_config. Mode is
+// AccessControlBlockList or AccessControlAllowList. BlackMAC is the block list and WhiteMAC is
+// the allow list; the router leaves a list out when it is empty. WhiteMAC is from the web UI code
+// and was not seen on a router.
 type AccessControlConfig struct {
 	Mode     string   `json:"mode"`
 	BlackMAC []string `json:"black_mac,omitempty"`
@@ -35,6 +48,22 @@ func (s *AccessControlService) GetConfig(ctx context.Context) (*AccessControlCon
 	return &res, nil
 }
 
+// SetConfig sets the mode to mode and replaces the list of that mode with macs, with one
+// black_white_list set_config {"mode": mode, "mac": macs}, as the access control dialog of the
+// web UI does. An empty macs empties the list.
+//
+// Verified on a router (firmware 4.7.0) only with mode "black": the router replaces the block
+// list with macs as written, also with duplicates, and does not check the MACs. The web UI sends
+// at most 1000 MACs, in upper case, with ":" separators. Not tested on a router: mode "white", a
+// mode switch, and what a write does with the list of the other mode.
+func (s *AccessControlService) SetConfig(ctx context.Context, mode string, macs []string) error {
+	params := struct {
+		Mode string   `json:"mode"`
+		MAC  []string `json:"mac"`
+	}{Mode: mode, MAC: append([]string{}, macs...)}
+	return s.client.Call(ctx, "black_white_list", "set_config", params, nil)
+}
+
 // AddBlockedMAC adds mac to the block list. The next GetConfig has it.
 //
 // The router does not check mac: it keeps any string, also "not-a-mac", but ignores a MAC with "-"
@@ -42,11 +71,33 @@ func (s *AccessControlService) GetConfig(ctx context.Context) (*AccessControlCon
 // letter case.
 // The call sends mode "black"; what it does when the router is in mode "white" was not tested.
 func (s *AccessControlService) AddBlockedMAC(ctx context.Context, mac string) error {
-	return s.client.Call(ctx, "black_white_list", "set_single_mac", singleMACRequest{Mode: "black", Operate: "add", MAC: mac}, nil)
+	return s.setSingleMAC(ctx, AccessControlBlockList, "add", mac)
 }
 
 // RemoveBlockedMAC removes mac from the block list. The router returns no error when the list
 // does not have mac with the same letter case.
 func (s *AccessControlService) RemoveBlockedMAC(ctx context.Context, mac string) error {
-	return s.client.Call(ctx, "black_white_list", "set_single_mac", singleMACRequest{Mode: "black", Operate: "del", MAC: mac}, nil)
+	return s.setSingleMAC(ctx, AccessControlBlockList, "del", mac)
+}
+
+// AddAllowedMAC adds mac to the allow list, with black_white_list set_single_mac and mode
+// "white". The web UI sends this call with the current mode, so it sends mode "white" only when
+// the router is in mode "white".
+//
+// Not tested on a router: the call is from the web UI code of firmware 4.8.3. What it does when
+// the router is in mode "black" is not known.
+func (s *AccessControlService) AddAllowedMAC(ctx context.Context, mac string) error {
+	return s.setSingleMAC(ctx, AccessControlAllowList, "add", mac)
+}
+
+// RemoveAllowedMAC removes mac from the allow list, with black_white_list set_single_mac and mode
+// "white".
+//
+// Not tested on a router: the call is from the web UI code of firmware 4.8.3.
+func (s *AccessControlService) RemoveAllowedMAC(ctx context.Context, mac string) error {
+	return s.setSingleMAC(ctx, AccessControlAllowList, "del", mac)
+}
+
+func (s *AccessControlService) setSingleMAC(ctx context.Context, mode, operate, mac string) error {
+	return s.client.Call(ctx, "black_white_list", "set_single_mac", singleMACRequest{Mode: mode, Operate: operate, MAC: mac}, nil)
 }

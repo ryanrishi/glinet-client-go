@@ -12,8 +12,8 @@ import (
 // The write behaviour is an assumption, because the writes were not verified on a router:
 // set_config finds the interface iface_name in get_config, sets each interface field that it gets
 // (enabled, ssid, encryption, hidden, key) in the interface and each radio field (hwmode, channel,
-// htmode, txpower, random_bssid) in its radio, and keeps the other fields. It ignores device.
-// set_txpower sets the txpower of the radio device. Not known: which fields the router keeps when
+// htmode, txpower, random_bssid, chan_6g_only_psc) in its radio, and keeps the other fields. It
+// ignores device. set_txpower sets the txpower of the radio device. Not known: which fields the router keeps when
 // a write does not send them. It does not check the values. An unknown interface or radio gives
 // ErrInvalidParams.
 type Wifi struct {
@@ -23,7 +23,7 @@ type Wifi struct {
 
 var (
 	wifiIfaceFields = []string{"enabled", "ssid", "encryption", "hidden", "key"}
-	wifiRadioFields = []string{"hwmode", "channel", "htmode", "txpower", "random_bssid"}
+	wifiRadioFields = []string{"hwmode", "channel", "htmode", "txpower", "random_bssid", "chan_6g_only_psc"}
 )
 
 func newWifi() *Wifi {

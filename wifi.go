@@ -43,19 +43,26 @@ type WifiConfig struct {
 // HWModes, for example "11a/n/ac/ax". HTMode is the channel width in MHz as a string, for example
 // "40", or "auto"; HTModes gives the widths that each hardware mode allows. TxPower is "Max",
 // "High", "Medium" or "Low". Encryptions is the encryptions that the interfaces can use.
+//
+// Chan6GOnlyPSC is only for a radio with Band "6G": true limits the channels to the preferred
+// scanning channels (WifiChannel.PSC). It is from the web UI code of firmware 4.8.3 and was not
+// seen on a router. The web UI shows it as a switch with the label key wireless.enable_psc_label
+// for the main interface of a 6G radio, and uses it to filter the channel list: when it is set to
+// true and the channel is not a PSC, the web UI sets Channel to 0 (automatic).
 type WifiRadio struct {
-	Device      string        `json:"device"`
-	Band        string        `json:"band"`
-	Channel     int           `json:"channel"`
-	Channels    []WifiChannel `json:"channels"`
-	HWMode      string        `json:"hwmode"`
-	HWModes     []string      `json:"hwmodes"`
-	HTMode      string        `json:"htmode"`
-	HTModes     WifiHTModes   `json:"htmodes"`
-	TxPower     string        `json:"txpower"`
-	RandomBSSID bool          `json:"random_bssid"`
-	Encryptions []string      `json:"encryptions"`
-	Ifaces      []WifiIface   `json:"ifaces"`
+	Device        string        `json:"device"`
+	Band          string        `json:"band"`
+	Channel       int           `json:"channel"`
+	Channels      []WifiChannel `json:"channels"`
+	HWMode        string        `json:"hwmode"`
+	HWModes       []string      `json:"hwmodes"`
+	HTMode        string        `json:"htmode"`
+	HTModes       WifiHTModes   `json:"htmodes"`
+	TxPower       string        `json:"txpower"`
+	RandomBSSID   bool          `json:"random_bssid"`
+	Chan6GOnlyPSC *bool         `json:"chan_6g_only_psc,omitempty"`
+	Encryptions   []string      `json:"encryptions"`
+	Ifaces        []WifiIface   `json:"ifaces"`
 }
 
 // WifiChannel is a channel that a radio can use. DFS is true for a DFS channel. PSC is true for a
@@ -152,23 +159,25 @@ func (s *WifiService) GetConfig(ctx context.Context) (*WifiConfig, error) {
 //   - for a guest interface: IfaceName, SSID, Encryption, Hidden, and Key unless Encryption is
 //     "none";
 //   - for a main interface: the guest fields and the radio fields Device, HWMode, TxPower and
-//     RandomBSSID, and Channel and HTMode unless the repeater uses the radio.
+//     RandomBSSID, Channel and HTMode unless the repeater uses the radio, and Chan6GOnlyPSC for a
+//     radio with Band "6G" (firmware 4.8.3).
 //
 // Key is the Wi-Fi password, a secret: 8-63 printable ASCII characters or 64 hex digits, at most
 // 63 characters for "sae" and "sae-mixed". SSID has 1-32 bytes. Channel 0 is automatic.
 type SetWifiConfigRequest struct {
-	IfaceName   string `json:"iface_name"`
-	Enabled     *bool  `json:"enabled,omitempty"`
-	SSID        string `json:"ssid,omitempty"`
-	Encryption  string `json:"encryption,omitempty"`
-	Hidden      *bool  `json:"hidden,omitempty"`
-	Key         string `json:"key,omitempty"`
-	Device      string `json:"device,omitempty"`
-	HWMode      string `json:"hwmode,omitempty"`
-	Channel     *int   `json:"channel,omitempty"`
-	HTMode      string `json:"htmode,omitempty"`
-	TxPower     string `json:"txpower,omitempty"`
-	RandomBSSID *bool  `json:"random_bssid,omitempty"`
+	IfaceName     string `json:"iface_name"`
+	Enabled       *bool  `json:"enabled,omitempty"`
+	SSID          string `json:"ssid,omitempty"`
+	Encryption    string `json:"encryption,omitempty"`
+	Hidden        *bool  `json:"hidden,omitempty"`
+	Key           string `json:"key,omitempty"`
+	Device        string `json:"device,omitempty"`
+	HWMode        string `json:"hwmode,omitempty"`
+	Channel       *int   `json:"channel,omitempty"`
+	HTMode        string `json:"htmode,omitempty"`
+	TxPower       string `json:"txpower,omitempty"`
+	RandomBSSID   *bool  `json:"random_bssid,omitempty"`
+	Chan6GOnlyPSC *bool  `json:"chan_6g_only_psc,omitempty"`
 }
 
 // SetConfig sets the configuration of a Wi-Fi interface and, for a main interface, of its radio.
