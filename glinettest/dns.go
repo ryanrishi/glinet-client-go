@@ -41,7 +41,7 @@ func newDNS() *DNS {
 		config: DNSConfig{
 			Mode:        "auto",
 			OverrideVPN: true,
-			Server:      []string{"wwan 192.168.4.253", "wg 192.168.5.1"},
+			Server:      []string{"wwan 192.168.4.253", "wg 10.66.0.1"},
 			DoTProvider: "0",
 		},
 		hosts: defaultHosts,
