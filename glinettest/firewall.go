@@ -40,8 +40,9 @@ type Rule struct {
 
 // DMZ is the DMZ configuration of the firewall module. An empty DestIP means the router has no value.
 type DMZ struct {
-	Enabled bool   `json:"enabled"`
-	DestIP  string `json:"dest_ip,omitempty"`
+	Enabled  bool   `json:"enabled"`
+	DestIP   string `json:"dest_ip,omitempty"`
+	Priority bool   `json:"priority"`
 }
 
 // Firewall serves the port forward, rule, DMZ and zone methods of the firewall module. Like the router,
@@ -53,6 +54,11 @@ type DMZ struct {
 // The first set_dmz adds a DMZ section without an ID at the end of the list. Like the router,
 // add_port_forward moves it to the end again after it gives the ID of the new port forward,
 // so that ID is one more than the ID in the list when the DMZ section was before the new forward.
+//
+// order_port_forward puts the port forwards of id_list in that order, and then the other port
+// forwards in their order, in the positions that the port forwards had. So a port forward that
+// moves gets the ID of its new position. It ignores unknown IDs. This is an assumption: the
+// method is from the web UI code of firmware 4.8.3 and was not tested on a router.
 //
 // The result of get_zone_list is that of the test router until a test sets it.
 type Firewall struct {
@@ -163,7 +169,7 @@ func (m *Firewall) DMZ() DMZ {
 func (m *Firewall) SetDMZ(dmz DMZ) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	values := map[string]any{"enabled": dmz.Enabled}
+	values := map[string]any{"enabled": dmz.Enabled, "priority": dmz.Priority}
 	if dmz.DestIP != "" {
 		values["dest_ip"] = dmz.DestIP
 	}
@@ -219,6 +225,7 @@ func (m *Firewall) register(s *Server) {
 	s.Handle("firewall", "add_port_forward", m.add(portForwardSuffix, portForwardKeys))
 	s.Handle("firewall", "set_port_forward", m.set(portForwardKeys))
 	s.Handle("firewall", "remove_port_forward", m.remove)
+	s.Handle("firewall", "order_port_forward", m.orderPortForwards)
 	s.Handle("firewall", "get_rule_list", m.list(ruleSuffix))
 	s.Handle("firewall", "add_rule", m.add(ruleSuffix, ruleKeys))
 	s.Handle("firewall", "set_rule", m.set(ruleKeys))
@@ -372,7 +379,7 @@ func (m *Firewall) remove(params json.RawMessage) (any, error) {
 	return writeResult, nil
 }
 
-// getDMZ returns only enabled until the first set_dmz, and priority false after it, like the router.
+// getDMZ returns only enabled until the first set_dmz, like the router.
 func (m *Firewall) getDMZ(json.RawMessage) (any, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -380,25 +387,66 @@ func (m *Firewall) getDMZ(json.RawMessage) (any, error) {
 	if i < 0 {
 		return map[string]any{"enabled": false}, nil
 	}
-	res := maps.Clone(m.sections[i].values)
-	res["priority"] = false
-	return res, nil
+	return maps.Clone(m.sections[i].values), nil
 }
 
-// setDMZ writes enabled and dest_ip. No enabled is true and no dest_ip removes the IP, like the router.
+// setDMZ writes enabled, dest_ip and priority. No enabled is true and no dest_ip removes the IP,
+// like the router. No priority is false, as the router gave after writes without priority; a
+// write of priority was not tested on a router.
 func (m *Firewall) setDMZ(params json.RawMessage) (any, error) {
 	var p map[string]json.RawMessage
 	if err := json.Unmarshal(params, &p); err != nil {
 		return nil, ErrInvalidParams
 	}
-	values := map[string]any{"enabled": true}
+	values := map[string]any{"enabled": true, "priority": false}
 	if err := apply(values, p, []string{"dest_ip"}); err != nil {
 		return nil, err
+	}
+	if raw, ok := p["priority"]; ok {
+		var priority bool
+		if err := json.Unmarshal(raw, &priority); err != nil {
+			return nil, ErrInvalidParams
+		}
+		values["priority"] = priority
 	}
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.setDMZValues(values)
+
+	return writeResult, nil
+}
+
+func (m *Firewall) orderPortForwards(params json.RawMessage) (any, error) {
+	var p struct {
+		IDList []string `json:"id_list"`
+	}
+	if err := json.Unmarshal(params, &p); err != nil {
+		return nil, ErrInvalidParams
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	var positions, order []int
+	for i, s := range m.sections {
+		if s.suffix == portForwardSuffix {
+			positions = append(positions, i)
+		}
+	}
+	for _, id := range p.IDList {
+		if i := m.index(id); i >= 0 && m.sections[i].suffix == portForwardSuffix && !slices.Contains(order, i) {
+			order = append(order, i)
+		}
+	}
+	for _, i := range positions {
+		if !slices.Contains(order, i) {
+			order = append(order, i)
+		}
+	}
+	sections := slices.Clone(m.sections)
+	for j, i := range order {
+		m.sections[positions[j]] = sections[i]
+	}
 
 	return writeResult, nil
 }

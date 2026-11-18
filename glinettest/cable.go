@@ -5,18 +5,25 @@ import "encoding/json"
 // Cable serves the get_status, get_config and set_config methods of the cable module. The results
 // are those of the test router until a test or a write sets them.
 //
+// get_config and set_config use the configuration of the first WAN port, or of the second WAN
+// port when the params have "secondwan": true. The configuration of the second WAN port is
+// {"protocol":"dhcp"} until a test or a write sets it. This is an assumption: the test router has
+// no second WAN port, and what a router does with "secondwan": true is not known.
+//
 // The write behaviour is an assumption, because set_config was not verified on a router:
 // set_config replaces the configuration with its params without "secondwan", as the web UI sends
 // the full configuration. It does not check the values.
 type Cable struct {
-	status readResult
-	config readResult
+	status       readResult
+	config       readResult
+	secondConfig readResult
 }
 
 func newCable() *Cable {
 	m := &Cable{}
 	m.status.set(json.RawMessage(cableStatus))
 	m.config.set(json.RawMessage(cableConfig))
+	m.secondConfig.set(json.RawMessage(`{"protocol":"dhcp"}`))
 	return m
 }
 
@@ -30,20 +37,45 @@ func (m *Cable) SetStatus(result json.RawMessage) {
 	m.status.set(result)
 }
 
-// Config returns the result of get_config.
+// Config returns the result of get_config for the first WAN port.
 func (m *Cable) Config() json.RawMessage {
 	return m.config.get()
 }
 
-// SetConfig sets the result of get_config.
+// SetConfig sets the result of get_config for the first WAN port.
 func (m *Cable) SetConfig(result json.RawMessage) {
 	m.config.set(result)
 }
 
+// SecondConfig returns the result of get_config for the second WAN port.
+func (m *Cable) SecondConfig() json.RawMessage {
+	return m.secondConfig.get()
+}
+
+// SetSecondConfig sets the result of get_config for the second WAN port.
+func (m *Cable) SetSecondConfig(result json.RawMessage) {
+	m.secondConfig.set(result)
+}
+
 func (m *Cable) register(s *Server) {
 	s.Handle("cable", "get_status", m.status.handle)
-	s.Handle("cable", "get_config", m.config.handle)
+	s.Handle("cable", "get_config", m.getConfig)
 	s.Handle("cable", "set_config", m.setConfig)
+}
+
+func (m *Cable) port(p map[string]any) *readResult {
+	if p["secondwan"] == true {
+		return &m.secondConfig
+	}
+	return &m.config
+}
+
+func (m *Cable) getConfig(params json.RawMessage) (any, error) {
+	p, err := paramsObject(params)
+	if err != nil {
+		return nil, err
+	}
+	return m.port(p).get(), nil
 }
 
 func (m *Cable) setConfig(params json.RawMessage) (any, error) {
@@ -51,8 +83,9 @@ func (m *Cable) setConfig(params json.RawMessage) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	config := m.port(p)
 	delete(p, "secondwan")
 
-	m.config.set(mustMarshal(p))
+	config.set(mustMarshal(p))
 	return writeResult, nil
 }

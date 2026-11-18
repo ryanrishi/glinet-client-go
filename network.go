@@ -5,7 +5,7 @@ import "context"
 // NetworkService calls the network module.
 type NetworkService service
 
-// WANCableStatus is the result of network check_wan_cable for the first wired WAN port.
+// WANCableStatus is the result of network check_wan_cable for a wired WAN port.
 // CableInserted is a runtime value.
 type WANCableStatus struct {
 	CableEnabled    bool `json:"cable_enabled"`
@@ -13,13 +13,14 @@ type WANCableStatus struct {
 	MACCloneEnabled bool `json:"macclone_enabled"`
 }
 
-// CheckWANCable returns the state of the cable of the first wired WAN port.
-func (s *NetworkService) CheckWANCable(ctx context.Context) (*WANCableStatus, error) {
-	params := struct {
-		SecondWAN bool `json:"secondwan"`
-	}{SecondWAN: false}
+// CheckWANCable returns the state of the cable of the wired WAN port port. It sends
+// {"secondwan": bool}, as the cable methods do. The test router gave the fixture result for
+// {"secondwan": false}. The web UI code of firmware 4.8.3 that was read does not call this method,
+// so "secondwan": true for SecondWANPort is not settled by the web UI code and was not tested on a
+// router.
+func (s *NetworkService) CheckWANCable(ctx context.Context, port WANPort) (*WANCableStatus, error) {
 	var res WANCableStatus
-	if err := s.client.Call(ctx, "network", "check_wan_cable", params, &res); err != nil {
+	if err := s.client.Call(ctx, "network", "check_wan_cable", port.params(), &res); err != nil {
 		return nil, err
 	}
 

@@ -31,13 +31,15 @@ func TestReadsDecodeFirmware483Fixtures(t *testing.T) {
 		{"adguardhome.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.AdGuard.GetAdGuardConfig(ctx) }, nil},
 		{"black_white_list.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.AccessControl.GetConfig(ctx) }, nil},
 		{"cable.get_status", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Cable.GetStatus(ctx) }, nil},
-		{"cable.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Cable.GetConfig(ctx) }, nil},
-		{"clients.get_list", list("clients", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Clients.ListClients(ctx) }), []string{"last_rx", "last_tx", "ipv6"}},
+		{"cable.get_config", func(ctx context.Context, c *glinet.Client) (any, error) {
+			return c.Cable.GetConfig(ctx, glinet.FirstWANPort)
+		}, nil},
+		{"clients.get_list", list("clients", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Clients.ListClients(ctx) }), nil},
 		{"ddns.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.DDNS.GetConfig(ctx) }, nil},
 		{"ddns.get_status", func(ctx context.Context, c *glinet.Client) (any, error) { return c.DDNS.GetStatus(ctx) }, nil},
 		{"dns.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.DNS.GetConfig(ctx) }, nil},
 		{"dns.get_info", func(ctx context.Context, c *glinet.Client) (any, error) { return c.DNS.GetInfo(ctx) }, nil},
-		{"firewall.get_dmz", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Firewall.GetDMZ(ctx) }, []string{"priority"}},
+		{"firewall.get_dmz", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Firewall.GetDMZ(ctx) }, nil},
 		{"firewall.get_zone_list", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Firewall.GetZones(ctx) }, nil},
 		{"firewall.get_port_forward_list", list("res", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Firewall.ListPortForwards(ctx) }), nil},
 		{"firewall.get_rule_list", list("res", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Firewall.ListRules(ctx) }), nil},
@@ -46,7 +48,9 @@ func TestReadsDecodeFirmware483Fixtures(t *testing.T) {
 		{"lan.get_static_bind_list", list("static_bind_list", func(ctx context.Context, c *glinet.Client) (any, error) { return c.LAN.ListStaticBinds(ctx) }), nil},
 		{"lan.get_wan_info", list("wan_info", func(ctx context.Context, c *glinet.Client) (any, error) { return c.LAN.GetWANInfo(ctx) }), nil},
 		{"led.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.LED.GetConfig(ctx) }, nil},
-		{"network.check_wan_cable", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Network.CheckWANCable(ctx) }, nil},
+		{"network.check_wan_cable", func(ctx context.Context, c *glinet.Client) (any, error) {
+			return c.Network.CheckWANCable(ctx, glinet.FirstWANPort)
+		}, nil},
 		{"network.get_arp_list", list("entries", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Network.ListARPEntries(ctx) }), nil},
 		{"tailscale.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Tailscale.GetConfig(ctx) }, nil},
 		{"tailscale.get_status", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Tailscale.GetStatus(ctx) }, nil},

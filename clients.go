@@ -13,7 +13,10 @@ type ClientsService service
 //
 // The other fields are runtime values. Type is 0 for Iface "2.4G", 1 for "5G" and 2 for "cable"
 // on the test router. OnlineTime and LastUpdateRate are Unix times. Rx and Tx are the current
-// rates and TotalRx and TotalTx the byte counts, as the router gives them.
+// rates and TotalRx and TotalTx the byte counts, as the router gives them. IPv6 is the IPv6
+// addresses of the client; the web UI shows each item as an address. LastRx and LastTx are lists
+// of 60 numbers on the test router (firmware 4.7.0 and 4.8.3); the web UI does not use them, and
+// their meaning is not known.
 type ClientDevice struct {
 	MAC     string `json:"mac"`
 	Name    string `json:"name"`
@@ -23,19 +26,22 @@ type ClientDevice struct {
 	LimitRx int64  `json:"limit_rx"`
 	LimitTx int64  `json:"limit_tx"`
 
-	IP             string `json:"ip"`
-	Iface          string `json:"iface"`
-	Type           int    `json:"type"`
-	Online         bool   `json:"online"`
-	OnlineTime     int64  `json:"online_time"`
-	Remote         bool   `json:"remote"`
-	Rx             int64  `json:"rx"`
-	Tx             int64  `json:"tx"`
-	TotalRx        int64  `json:"total_rx"`
-	TotalTx        int64  `json:"total_tx"`
-	TotalRxInit    int64  `json:"total_rx_init"`
-	TotalTxInit    int64  `json:"total_tx_init"`
-	LastUpdateRate int64  `json:"last_update_rate"`
+	IP             string   `json:"ip"`
+	IPv6           []string `json:"ipv6"`
+	Iface          string   `json:"iface"`
+	Type           int      `json:"type"`
+	Online         bool     `json:"online"`
+	OnlineTime     int64    `json:"online_time"`
+	Remote         bool     `json:"remote"`
+	Rx             int64    `json:"rx"`
+	Tx             int64    `json:"tx"`
+	LastRx         []int64  `json:"last_rx"`
+	LastTx         []int64  `json:"last_tx"`
+	TotalRx        int64    `json:"total_rx"`
+	TotalTx        int64    `json:"total_tx"`
+	TotalRxInit    int64    `json:"total_rx_init"`
+	TotalTxInit    int64    `json:"total_tx_init"`
+	LastUpdateRate int64    `json:"last_update_rate"`
 }
 
 // ListClients returns the client devices that the router knows.

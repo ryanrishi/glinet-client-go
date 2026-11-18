@@ -66,13 +66,13 @@ All other ok methods have the same fields and types as on 4.7.0.
 
 These differences come from the router state, not from the firmware:
 
-- `firewall.get_dmz` has `priority` (bool). On 4.7.0 it appeared after the first `set_dmz` of the write test. `DMZ` does not have this field, because `SetDMZ` sends the same struct.
+- `firewall.get_dmz` has `priority` (bool). On 4.7.0 it appeared after the first `set_dmz` of the write test. `DMZ.Priority` (client `v0.12.0`) has it.
 - `zerotier.get_config` has `id`: the made-up network ID of the 4.7.0 write test.
 - `wg-client.get_config_list` has no `ipv6_enable` and no `mtu`, because the probe read the group of type 3 on 4.8.3 and the custom group (type 2) on 4.7.0. The `get_all_config_list` peers of the custom group still have `ipv6_enable` and `mtu`.
 
 ## Effect on the client and glinettest
 
-- `TestReadsDecodeFirmware483Fixtures` (`firmware_4_8_3_test.go`) checks that each typed read that 4.8.3 still has keeps each value of its 4.8.3 fixture. Omitted keys: `firewall.get_dmz` `priority`, `wifi.get_config` `bandmode`, and the keys that the 4.7.0 tests also omit.
+- `TestReadsDecodeFirmware483Fixtures` (`firmware_4_8_3_test.go`) checks that each typed read that 4.8.3 still has keeps each value of its 4.8.3 fixture. Omitted keys: `wifi.get_config` `bandmode`, and `wg-client.get_config_list` `auth_type`.
 - The typed reads that do not work on 4.8.3 are `WireGuardClient.GetStatus`, `GetSetting`, `ListRoutes` and all reads of `VPNPolicy`. A replacement needs typed methods for `vpn-client` (status, and tunnels with their options and policies). The client does not have them.
 - `glinettest` emulates firmware 4.7.0. It has no `vpn-client` handlers.
 
@@ -101,6 +101,37 @@ While AdGuard Home is enabled, the web UI sends only the three flags. The web UI
 The web UI reads `proto` from `get_config` only in mode `secure`, `server` as the address list in `manual`, as `server[0]` in `proxy`, and as the server names in `secure` with `DoH`, `DNSCrypt` or `oDoH`. It reads `dot_provider` `"2"` and `"3"` as Control D and an empty `dot_provider` as Control D.
 
 Not known: what the router returns in `server` in mode `secure` with `DoT`; if the router returns `proto` in modes other than `secure` and `auto`; if a write keeps the IDs of the other DoT providers; how the router answers an invalid write.
+
+## Write formats from the web UI code (client v0.12.0)
+
+These write formats and read fields come from the web UI code of firmware 4.8.3 (the views `firewallview`, `lanip`, `guestip`, `internet`, `clients` and `wireless`). They were NOT tested on a router. No write was called on 4.8.3.
+
+| Client | Call | Params | Web UI |
+|---|---|---|---|
+| `Firewall.SetDMZ` | `firewall.set_dmz` | `{enabled, dest_ip?, priority}`; `priority` only when `enabled` is true | DMZ pane, `setDmz` |
+| `Firewall.OrderPortForwards` | `firewall.order_port_forward` | `{id_list:[string]}`, the IDs of all port forwards in the new order | port forward card, `handleApplyPriority` |
+| `LAN.SetAddress` | `lan.set_config` | `{interface, ip, netmask, ap_isolate, wan_isolate}`; `wan_isolate` (0 or 1) only for `guest` | `handleApplyLan`, `handleChangeWanIsolate` |
+| `Cable.GetConfig`, `Cable.SetConfig` | `cable.get_config`, `cable.set_config` | `secondwan: true` for `SecondWANPort` | `getCableConfig`, `setCableConfig` |
+| `Network.CheckWANCable` | `network.check_wan_cable` | `{secondwan: bool}` | not in the web UI code that was read; `secondwan: true` is not settled |
+| `AccessControl.SetConfig` | `black_white_list.set_config` | `{mode, mac:[string]}` | access control dialog, `handleSetAccessConfig`, `handleChangeMode` |
+| `AccessControl.AddAllowedMAC`, `RemoveAllowedMAC` | `black_white_list.set_single_mac` | `{mode:"white", operate:"add"\|"del", mac}` | client list switch, `blockChange` |
+| `Wifi.SetConfig` | `wifi.set_config` | `chan_6g_only_psc` (bool) for the main interface of a 6G radio | `applyConfig` |
+
+Read fields:
+
+- `firewall.get_dmz` `priority`: the web UI shows `true` with the label key `firewall.dmz_priority_higher_label` and `false` with `firewall.dmz_priority_lower_label`. The label texts are not in the web UI code, so to what the priority is compared is not settled. The web UI shows `true` when the result has no `priority`.
+- `lan.get_config_list` `wan_isolate`: only for `guest`; label key `lanip.block_wan_label`. The fixture does not have it; the web UI shows 0 then.
+- `lan.get_config_list` `lpr`: label key `lan_ip.lpr_serve_label` (LPR server); at most 5 IP addresses, each one time.
+- `cable.get_status` `secondwan`: on a router with a second WAN port, the web UI reads `mode` and `status` as for the first port.
+- `black_white_list.get_config` `white_mac`: the allow list.
+- `wifi.get_config` `chan_6g_only_psc`: only on a 6G radio; true limits the channel list to the PSC channels.
+- `clients.get_list` `ipv6` (list of IPv6 addresses, shown by the web UI), `last_rx` and `last_tx` (60 numbers each in the fixtures; the web UI does not use them, and their meaning is not known).
+
+Not built, because the web UI code does not settle the shapes:
+
+- `wifi.get_mlo_config` and `wifi.set_mlo_config` (MLO, when `software_feature.mlo` is true). The web UI reads `res` with `random_bssid`, `encryptions`, `mlo_bandsupport` and `ifaces[]`; it reads `name`, `guest`, `mlo_enable`, `mlo_band` (a list of `"2g"`, `"5g"`, `"6g"`, at least 2), `ssid`, `encryption`, `key` and `hidden` of an interface. It writes `{name, mlo_enable}` for the switch, and for the form all fields of the interface object as the router gave them, plus `random_bssid` for a main interface. So the full params depend on fields of the result that the web UI code does not name.
+- The provider groups (type 1) of `wg-client`. The web UI uses `wg_client.create_provider_account {group_id, username, password}` (result `expires_at`), `wg_client.get_provider_server_list` or `wg-client.get_third_config` (AzireVPN and Mullvad) with `{group_id, username, password?}`, `wg_client.generate_provider_config` or `wg-client.get_recommend_config` with `{group_id, country_name:[string]}` or `{group_id, server_info:[{country_name, cities:[{city_name, hostname:[string]}]}]}`, `wg_client.update_provider_config {group_id, update_all:true}`, `wg_client.get_provider_user_info {group_id}` (result `allocated`, `available`, `expires_at`), `wg_client.get_max_client`, `wg-client.clear_user_pass {group_id}` and `wg-client.clear_config_list {group_id, delete_key}`. The module, the form fields and the steps change with the provider name (a list in the web UI code), with `auth_type` (1: the form has a password) and with `procedure` (1: the user selects servers). The results are only partly read. These calls send account data to a third-party VPN service through the router.
+- The groups of type 3 (from the GL.iNet app): no new method is needed. The web UI shows them only when they have peers or clients, and has no call that is only for them: it edits and removes their peers with `wg-client.set_config` and `remove_config`, as for a custom group (`WireGuardClient.SetPeer`, `RemovePeer`). It does not show the add button of a custom group for them.
 
 ## Not checked
 

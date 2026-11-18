@@ -2,7 +2,9 @@ package glinet_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"reflect"
 	"slices"
 	"testing"
 
@@ -327,6 +329,84 @@ func TestFirewallDMZ(t *testing.T) {
 		if state := srv.Firewall.DMZ(); state != (glinettest.DMZ{Enabled: want.Enabled, DestIP: want.DestIP}) {
 			t.Errorf("server state after SetDMZ(%+v) = %+v", want, state)
 		}
+	}
+}
+
+func TestFirewallDMZPriority(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+	var sent map[string]any
+	setDMZ := srv.Handler("firewall", "set_dmz")
+	srv.Handle("firewall", "set_dmz", func(params json.RawMessage) (any, error) {
+		sent = nil
+		_ = json.Unmarshal(params, &sent)
+		return setDMZ(params)
+	})
+
+	enabled := glinet.DMZ{Enabled: true, DestIP: "198.51.100.50", Priority: true}
+	if err := c.Firewall.SetDMZ(ctx, enabled); err != nil {
+		t.Fatalf("SetDMZ: %v", err)
+	}
+	if want := map[string]any{"enabled": true, "dest_ip": "198.51.100.50", "priority": true}; !reflect.DeepEqual(sent, want) {
+		t.Errorf("params = %v, want %v", sent, want)
+	}
+	got, err := c.Firewall.GetDMZ(ctx)
+	if err != nil {
+		t.Fatalf("GetDMZ: %v", err)
+	}
+	if *got != enabled {
+		t.Errorf("GetDMZ = %+v, want %+v", *got, enabled)
+	}
+
+	if err := c.Firewall.SetDMZ(ctx, glinet.DMZ{Priority: true}); err != nil {
+		t.Fatalf("SetDMZ disable: %v", err)
+	}
+	if want := map[string]any{"enabled": false}; !reflect.DeepEqual(sent, want) {
+		t.Errorf("params = %v, want %v (no priority when disabled)", sent, want)
+	}
+}
+
+func TestFirewallOrderPortForwards(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+	var sent string
+	order := srv.Handler("firewall", "order_port_forward")
+	srv.Handle("firewall", "order_port_forward", func(params json.RawMessage) (any, error) {
+		sent = string(params)
+		return order(params)
+	})
+	srv.Firewall.SetPortForwards([]glinettest.PortForward{
+		{Name: "first", Proto: "tcp", Src: "wan", SrcDport: "50001", Dest: "lan", DestIP: "198.51.100.51", DestPort: "50001", Enabled: true},
+		{Name: "second", Proto: "tcp", Src: "wan", SrcDport: "50002", Dest: "lan", DestIP: "198.51.100.52", DestPort: "50002", Enabled: true},
+		{Name: "third", Proto: "tcp", Src: "wan", SrcDport: "50003", Dest: "lan", DestIP: "198.51.100.53", DestPort: "50003", Enabled: true},
+	})
+
+	ids := []string{glinettest.PortForwardID(2), glinettest.PortForwardID(0), glinettest.PortForwardID(1)}
+	if err := c.Firewall.OrderPortForwards(ctx, ids); err != nil {
+		t.Fatalf("OrderPortForwards: %v", err)
+	}
+	want := `{"id_list":["` + ids[0] + `","` + ids[1] + `","` + ids[2] + `"]}`
+	if sent != want {
+		t.Errorf("params = %s, want %s", sent, want)
+	}
+
+	forwards, err := c.Firewall.ListPortForwards(ctx)
+	if err != nil {
+		t.Fatalf("ListPortForwards: %v", err)
+	}
+	var names []string
+	for _, f := range forwards {
+		names = append(names, f.Name)
+	}
+	if want := []string{"third", "first", "second"}; !slices.Equal(names, want) {
+		t.Errorf("names = %v, want %v", names, want)
+	}
+
+	if err := c.Firewall.OrderPortForwards(ctx, nil); err != nil {
+		t.Fatalf("OrderPortForwards nil: %v", err)
+	}
+	if want := `{"id_list":[]}`; sent != want {
+		t.Errorf("params = %s, want %s", sent, want)
 	}
 }
 
