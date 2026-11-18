@@ -8,14 +8,14 @@
       "get_config",
       {}
     ],
-    "id": 158
+    "id": 30012
   },
   "response": {
-    "id": 158,
+    "id": 30012,
     "jsonrpc": "2.0",
     "result": {
-      "address_v4": "10.0.0.1/24",
-      "address_v6": "fd00::2/64",
+      "address_v4": "10.66.0.9/24",
+      "address_v6": "fd00:66::1/64",
       "initialization": false,
       "ipv6_enable": false,
       "local_access": false,

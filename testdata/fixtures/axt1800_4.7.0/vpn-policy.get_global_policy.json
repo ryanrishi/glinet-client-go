@@ -8,10 +8,10 @@
       "get_global_policy",
       {}
     ],
-    "id": 147
+    "id": 30018
   },
   "response": {
-    "id": 147,
+    "id": 30018,
     "jsonrpc": "2.0",
     "result": {
       "kill_switch": 0,

@@ -8,10 +8,10 @@
       "get_vlan_policy",
       {}
     ],
-    "id": 150
+    "id": 30021
   },
   "response": {
-    "id": 150,
+    "id": 30021,
     "jsonrpc": "2.0",
     "result": {
       "vlans": [

@@ -60,22 +60,25 @@ type Server struct {
 	Username string
 	Password string
 
-	System        *System
-	AccessControl *AccessControl
-	AdGuardHome   *AdGuardHome
-	Cable         *Cable
-	Clients       *Clients
-	DDNS          *DDNS
-	DNS           *DNS
-	Firewall      *Firewall
-	IPv6          *IPv6
-	LAN           *LAN
-	LED           *LED
-	Network       *Network
-	Tailscale     *Tailscale
-	Timer         *Timer
-	Wifi          *Wifi
-	ZeroTier      *ZeroTier
+	System          *System
+	AccessControl   *AccessControl
+	AdGuardHome     *AdGuardHome
+	Cable           *Cable
+	Clients         *Clients
+	DDNS            *DDNS
+	DNS             *DNS
+	Firewall        *Firewall
+	IPv6            *IPv6
+	LAN             *LAN
+	LED             *LED
+	Network         *Network
+	Tailscale       *Tailscale
+	Timer           *Timer
+	VPNPolicy       *VPNPolicy
+	Wifi            *Wifi
+	WireGuardClient *WireGuardClient
+	WireGuardServer *WireGuardServer
+	ZeroTier        *ZeroTier
 
 	srv *httptest.Server
 
@@ -130,8 +133,14 @@ func NewServer(t testing.TB) *Server {
 	s.Tailscale.register(s)
 	s.Timer = newTimer()
 	s.Timer.register(s)
+	s.VPNPolicy = newVPNPolicy()
+	s.VPNPolicy.register(s)
 	s.Wifi = newWifi()
 	s.Wifi.register(s)
+	s.WireGuardClient = newWireGuardClient()
+	s.WireGuardClient.register(s)
+	s.WireGuardServer = newWireGuardServer()
+	s.WireGuardServer.register(s)
 	s.ZeroTier = newZeroTier()
 	s.ZeroTier.register(s)
 

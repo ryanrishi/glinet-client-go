@@ -666,6 +666,126 @@ Proposal for a supervised write test (only `radio1` interfaces, which are off): 
 
 Not tested: the write test of 2026-11-14 stopped before the `wifi` writes. Still not verified: every `wifi.set_config` and `wifi.set_txpower` call, their results, the partial-write behaviour, and whether a write to a `radio1` interface restarts `radio0`. The `lan.set_config` write of that test restarted the Wi-Fi and dropped the repeater uplink on `radio0`; expect the same risk from a `wifi` write.
 
+## WireGuard and VPN policy
+
+The owner's WireGuard client tunnel runs on the test router (group type 2, status 1). Nobody was at the router, so no write was sent. The reads are verified; all write methods come only from the web UI code.
+
+### Read probe of 2026-11-17
+
+A separate program sent only these read methods. It checked each method name against an allow-list in code before the call: `wg-client.get_status`, `get_group_list`, `get_all_config_list`, `get_config_list` (2 groups with peers), `get_setting` and `get_route_list` (each of the 3 peers); `wg-server.get_config`, `get_status`, `get_peer_list`, `get_setting`, `get_route_list`; `vpn-policy.get_proxy_mode`, `get_global_policy`, `get_domain_policy`, `get_mac_policy`, `get_vlan_policy`. 21 calls, request IDs 30001-30021, all ok. The tunnel had status 1 before and after.
+
+The program redacted the results in memory before it printed or wrote anything, and it stopped without a write if a real string was still in the output. The fixtures replace the `wg-client`, `wg-server` and `vpn-policy` fixtures of 2026-11-12, which had the real VPN names and tunnel addresses (they are still in the git history). Made-up values in these fixtures:
+- keys (`private_key`, `public_key`, `preshared_key`): base64 of SHA-256 of a counter; empty values stay empty;
+- names: `group-N` for groups of type 2 and 3, `peer-N` for peers (the names of the provider groups, type 1, are presets of the firmware and are kept);
+- endpoints: `vpn-N.example.com:51820`, and `port` 51820 in `get_status` and `wg-server.get_config`;
+- addresses in `address_v4`, `address_v6`, `allowed_ips`, `dns`, `ipv4`: `10.66.x.y` and `fd00:66::x` with the real prefix lengths (`0.0.0.0/0` and `::/0` are kept), the same real address always gives the same made-up address.
+
+Real: IDs, flags, numbers (MTU, keepalive, listen ports, byte counts) and the field structure.
+
+Findings of the reads:
+- `group_id` and `peer_id` are numbers that the router gives (for example 4 digits). They were the same as in the probe of 5 days before. They are not positions in a list.
+- Groups: `group_type` 1 provider (7 presets with `username`, `procedure` and mostly `password`), 2 custom (only `auth_type`, `group_id`, `group_name`, `group_type`, `peer_count`), 3 "from app".
+- `get_config_list` and `get_all_config_list` return the same peers with a different set of empty fields: `get_config_list` has `address_v6` `""` and `preshared_key` `""`; `get_all_config_list` leaves them out, but has `listen_port` 0 and `mtu` 0 where `get_config_list` leaves them out. `ipv6_enable` is only in the peers of the custom group.
+- `get_setting` of a peer has `default_metric`, `local_access`, `masq`, and `mtu` for 2 of the 3 peers.
+- `get_status` while connected: `status` 1, `group_id`, `peer_id`, `name`, `domain`, `port`, `ipv4`, `proxy`, `log`, `rx_bytes`, `tx_bytes`. A stopped status was not read.
+- The WireGuard server is not initialized (`initialization` false, empty keys) and has no peers. The route lists, the domain list and the MAC list are empty. So the items of `wg-server.get_peer_list`, `wg-server.get_status.peers`, the route rules, `domain_list` and `url` are not verified.
+
+### Methods from the UI code
+
+Source: the views `wgclient`, `wgserver` and `vpndashboard` (names from `ui.get_menu_list`), `/views/gl-sdk4-ui-<view>.common.js.gz`, and the error table `coreErrTips` of the main bundle.
+
+`wg-client` (client: `WireGuardClientService`):
+
+| Method | Params | UI use |
+|---|---|---|
+| `get_status` | `{}` | status poll (verified) |
+| `get_group_list` | `{}` | group list (verified) |
+| `get_all_config_list` | `{}` | dashboard list (verified) |
+| `get_config_list` | `{group_id}` | peers of a group (verified) |
+| `get_setting` | `{group_id, peer_id}` | options of the peer of the tunnel (verified) |
+| `get_route_list` | `{group_id, peer_id}` | route rules (verified) |
+| `add_group` | `{group_name}` | the UI sends a default name, reads the list, takes the last group and opens the rename field; the result is not used |
+| `set_group` | `{group_id, group_name}` | rename; only type 2 |
+| `remove_group` | `{group_id}` | only type 2, not the group of the tunnel |
+| `add_config` | peer fields + `group_id` | the result is not used; the UI reads the list again |
+| `set_config` | peer fields + `group_id`, `peer_id` | not for the peer of the tunnel (read only in the UI) and not for provider groups |
+| `remove_config` | `{group_id, peer_id}` | not for the peer of the tunnel |
+| `clear_config_list` | `{group_id, delete_key?}` | `delete_key` only for provider groups; not for the group of the tunnel |
+| `start` | `{group_id, peer_id}` | then status 2 (connecting), poll after 5 s |
+| `stop` | `{}` | |
+| `set_setting` | `{group_id, peer_id, default_metric, local_access, masq, mtu}` | only for the peer of the tunnel; the UI sends the read fields back, `mtu` 0 when empty (68-65535) |
+| `add_route`, `set_route` | `{group_id, peer_id, rule_id?, dest, gateway?, metric?, mtu?, scope?, route_flag}` | `route_flag` 4 or 6; only non-empty fields |
+| `remove_route` | `{group_id, peer_id, rule_id, route_flag}` | |
+| `check_config`, `confirm_config` | `{group_id, filename}`, `{group_id}` | import of uploaded files (`/tmp/wg_upload`); not in the client |
+| `clear_user_pass`, `get_third_config`, `get_recommend_config` | `{group_id, ...}` | provider accounts; not in the client |
+
+Peer fields of `add_config` and `set_config`: `name`, `address_v4`, `address_v6`, `ipv6_enable`, `private_key`, `public_key`, `allowed_ips` (one string, `", "` between items), `end_point`, `presharedkey_enable`, `preshared_key` (only when enabled), and `dns`, `listen_port`, `persistent_keepalive`, `mtu` only when set. The edit dialog sends the fields of the read peer back with the changes. Validation in the UI: `name` 1-64 characters, not only spaces, no leading `.`, no `~`; `address_v4` required, IPv4 or IPv4 CIDR; `address_v6` IPv6 or CIDR when `ipv6_enable`; `private_key`, `public_key` required and `preshared_key` 44 characters ending in `=`; `end_point` required, `host:port` with port 0-65535 (the UI checks the host with its `isDomain` test or as IPv6); `allowed_ips` IPv4 or IPv6 CIDRs; `dns` IPv4 or IPv6 addresses, comma separated; `listen_port` and `persistent_keepalive` 1-65535; `mtu` 576-65535. For a custom group the UI calls `wg_client.gen_key` `{private_key}` (module with an underscore) to show the public key of the router; with an empty key this makes a new key pair. The client does not call it.
+
+`wg-server` (client: `WireGuardServerService`):
+
+| Method | Params | UI use |
+|---|---|---|
+| `get_config`, `get_status`, `get_peer_list`, `get_setting`, `get_route_list` | `{}` | verified |
+| `generate_key` | `{}` | "initialize" button, only while `initialization` is false; makes the server keys |
+| `set_config` | `{address_v4, port, private_key?, ipv6_enable?, address_v6?}` | only while the server is stopped; IPv6 fields only while IPv6 of the router is enabled; error 20001024 is an invalid private key |
+| `generate_publickey` | `{private_key}` | shows the public key of a typed private key; not in the client |
+| `add_peer` | `{name, presharedkey_enable, presharedkey, allowed_ips?, dns?, persistent_keepalive, mtu}` | returns `{peer_id}`; then the UI calls `generate_peer`. The UI sends `""` for an empty `persistent_keepalive` or `mtu`; the client leaves them out |
+| `set_peer` | the fields of `add_peer` + `peer_id` (and the other fields of the read peer) | then `generate_peer` |
+| `remove_peer` | `{peer_id}` | |
+| `generate_peer` | `{peer_id}` | the peer configuration file and QR code: `address`, `allowed_ips`, `dns`, `domain_end_point`, `ip_end_point`, `listen_port`, `persistent_keepalive`, `private_key`, `public_key`, `mtu`, `presharedkey` |
+| `start`, `stop` | `{}` | |
+| `set_setting` | `{local_access, masq, mtu, client_to_client}` | |
+| `add_route`, `set_route`, `remove_route` | as `wg-client` without `group_id`, `peer_id` | |
+
+Peer list fields that the UI reads: `peer_id`, `name`, `client_ip`, `deprecated` (1: struck through, can only be removed), `allowed_ips` (at most 5 in the UI), `dns`, `presharedkey_enable`, `presharedkey` (`"Auto Generate"` placeholder), `persistent_keepalive`, `mtu`.
+
+`vpn-policy` (client: `VPNPolicyService`):
+
+| Method | Params | UI use |
+|---|---|---|
+| `get_proxy_mode` / `set_proxy_mode` | `{mode}` | 0 global, 1 auto detect, 2 custom route, 3 domain/IP, 4 MAC, 5 VLAN; timeout 20 s; modes 0 and 3-5 not offered while the WireGuard and OpenVPN clients both run |
+| `get_global_policy` / `set_global_policy` | client dialog `{kill_switch, wan_access, service_policy}`, server dialog `{vpn_server_policy}` | timeout 50 s; `kill_switch` 1 sets `wan_access` 0 |
+| `get_domain_policy` / `set_domain_policy` | `{default_policy, manual, domain_list}` (one string, a line per item) or `{default_policy, manual: false, url}` | timeout 30 s; `default_policy` 0 "use VPN" for the list, 1 "do not use VPN"; with 0 the list must not be empty |
+| `check_domain_online` | `{url}` | checks a list URL; the router fetches it; not in the client |
+| `get_mac_policy` / `set_mac_policy` | `{default_policy, mac_list}` | full list; with 0 the list must not be empty; MACs compared without case |
+| `get_vlan_policy` / `set_vlan_policy` | `{vlans: [{id, vpn}]}` | full list; id 1 "Private", 2 "Guest" |
+
+The read of `domain_list` can be a list or a string in the UI code.
+
+Errors: a result with `err_code` is an error (an `*RPCError` in the client). The UI maps these VPN codes to texts: 20001013 parameter has an injection risk, 20001014/20001015 configuration file or configuration not read, 20001017 target interface already runs, 20001020/20001021 key file missing, 20001025/20001026 local IPv4/IPv6 network not read, 20001027/20001028 conflict with a local IPv4/IPv6 address, 20001029 client interface conflict, 20001033 port in use, 20001100-20001107 provider login and download errors, 20001201 upload not unzipped, 20001203-20001215 provider account errors (20001205: the provider key must be revoked, 20001206 invalid private WireGuard key). `wg-server.set_config` maps 20001024 to an invalid private key.
+
+### Data for a Terraform resource
+
+- WireGuard client group: identity `group_id` (from the group list after `add_group`); managed: `group_name` of a type 2 group.
+- WireGuard client peer: identity `group_id` + `peer_id` (from the peer list after `add_config`); managed: the peer fields above. `private_key` and `preshared_key` are secrets that the router returns in clear text in each read.
+- Tunnel: which peer runs (`get_status`), with `start` / `stop`; peer setting and route rules (`rule_id`) per peer.
+- WireGuard server: a singleton configuration (one-way initialization), peers with identity `peer_id` (returned by `add_peer`), a setting and route rules.
+- VPN policy: singletons (proxy mode, global policy, domain list, MAC list, VLAN list); the lists are written in full.
+
+### Open questions
+
+- The results of `add_group` and `add_config` (does the router return the new ID?) and of all other writes.
+- Whether `set_config` keeps fields that it does not get, and which fields the router fills in (for example `listen_port`, `mtu`, `ipv6_enable`).
+- Whether a write to a peer, its setting or its routes restarts the running tunnel, also for a peer that does not run; how long `start` takes; the status after `stop`.
+- Whether the router refuses a write to the running peer or the removal of its group (the UI only hides the buttons).
+- Whether `set_proxy_mode`, `set_global_policy` or a policy list write reloads the firewall or the tunnel, and for how long the traffic drops. The UI timeouts (20-50 s) suggest long writes.
+- The meanings of `proxy`, `default_metric`, `procedure`, `auth_type`, `wan_access` and `service_policy` (the label texts are loaded at run time).
+- The item shapes that the probe could not read (see above).
+- Firmware 4.8: whether `wg-client` is still there. On 4.9.0 `vpn-client` replaces it.
+
+### Proposal for a supervised write test
+
+Only with the owner at the router. Before and during each step, read every 2 s: `wg-client.get_status` (`status` 1 and growing `rx_bytes`), `system.get_status` and `repeater.get_status`. Stop at the first change of the tunnel or the uplink. Do not write the custom group of the tunnel, its peers, `start` or `stop`.
+
+1. `wg-client.add_group` `{"group_name":"tf-test"}`, then `get_group_list`. Learn the result and the new `group_id`. Risk: low (a new, unused group). Restore: `remove_group`.
+2. `set_group` `{"group_id":<new>,"group_name":"tf-test-2"}`. Risk: low.
+3. `add_config` in the new group with made-up keys, `end_point` `192.0.2.1:51820` (a documentation address), `address_v4` `10.255.0.2/32`, `allowed_ips` `10.255.0.0/24`. Then `get_config_list`. Learn the result, the new `peer_id` and the fields that the router adds. Risk: low while the peer does not run. Restore: `remove_config`.
+4. `set_config` of that peer without `dns` and `mtu`: learn whether the router keeps them. Risk: low; watch the tunnel for a restart.
+5. `get_setting`, then `set_setting` with the same values, and `add_route` / `set_route` / `remove_route` on that peer. Risk: a restart of the running tunnel if the router reloads all WireGuard settings. Restore: write the read values back.
+6. `remove_config`, `clear_config_list` (empty group), `remove_group`; check that the list equals the list before the test.
+7. Optional, with the owner's consent: `vpn-policy.set_vlan_policy` and `set_mac_policy` with the values just read (no change). Risk: a firewall reload can drop the tunnel traffic for some seconds. Do not test `set_proxy_mode`, `set_global_policy` or `set_domain_policy`: `kill_switch` and the policy modes can cut the traffic of all clients.
+8. Optional: `wg-server.generate_key` cannot be undone (the server stays initialized). Then `add_peer`, `generate_peer`, `set_peer`, `remove_peer` with the server stopped. Do not `start` the server: it opens a UDP port on the WAN.
+
 ## Methods not called
 
 Not read-only or not sure: all `set_*`, `add_*`, `remove_*`, etc. Also these `get_*` methods: `upgrade.check_firmware_online`, `tailscale.get_auth_url`, `wg-client.get_third_config`, `ovpn-client.get_third_config` (send credentials to a third-party VPN service), `wg-client.get_recommend_config`, `ovpn-client.get_recommend_config` (query an external service).
@@ -674,7 +794,7 @@ Not read-only or not sure: all `set_*`, `add_*`, `remove_*`, etc. Also these `ge
 
 Replaced with stable fake values (same real value → same fake value, type kept): password, cipher password, sid, salt, nonce, login hash, Wi-Fi keys, private keys, preshared keys, tokens, `sn`, `sn_bak`, `ddns` / `device_id`, MAC addresses (`02:00:00:00:xx:xx`), public IPv4 (`203.0.113.x`), global/ULA/link-local IPv6 (`2001:db8::x`, `fd00::x`, `fe80::x`), WireGuard endpoint hostnames (`host-N.example.com`), SSIDs (`ssid-N`, also the SSIDs of other networks in `repeater.*`), hostnames and client names (`hostname`, `alias`, and `name` in objects that have a `mac`: `hostname-N`), WireGuard public keys (base64 of 32 bytes from SHA-256 of a counter; empty values stay empty). A fake value replaces the real value also inside other strings, such as log lines, when the real value has 4 or more characters. The number N depends on the order of the probe run, so it can change between runs.
 
-Kept: private IPv4, well-known public DNS resolvers, VPN group names, VPN peer names and VPN usernames (`wg-client`, `ovpn-client`), time zone.
+Kept: private IPv4, well-known public DNS resolvers, VPN group names, VPN peer names and VPN usernames (`ovpn-client`), time zone. The `wg-client`, `wg-server` and `vpn-policy` fixtures were replaced on 2026-11-17 with a stricter redaction (see "WireGuard and VPN policy"). `cmd/probe` still keeps VPN names and private addresses: do not run it again for these modules without a change of its redaction.
 
 ## Results
 

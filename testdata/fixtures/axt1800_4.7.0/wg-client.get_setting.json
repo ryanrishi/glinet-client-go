@@ -7,19 +7,20 @@
       "wg-client",
       "get_setting",
       {
-        "group_id": 9859,
-        "peer_id": 8913
+        "group_id": 2082,
+        "peer_id": 2004
       }
     ],
-    "id": 156
+    "id": 30010
   },
   "response": {
-    "id": 156,
+    "id": 30010,
     "jsonrpc": "2.0",
     "result": {
       "default_metric": 0,
       "local_access": false,
-      "masq": true
+      "masq": true,
+      "mtu": 1420
     }
   }
 }

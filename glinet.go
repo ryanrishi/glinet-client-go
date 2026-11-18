@@ -15,7 +15,7 @@ import (
 
 // Version is the version of this client. It is in the default User-Agent.
 const (
-	Version          = "v0.9.0"
+	Version          = "v0.10.0"
 	defaultBaseURL   = "http://192.168.8.1"
 	defaultUserAgent = "glinet-client-go" + "/" + Version
 )
@@ -34,23 +34,26 @@ type Client struct {
 	nextID atomic.Int64
 
 	// services
-	AccessControl *AccessControlService
-	AdGuard       *AdGuardService
-	Cable         *CableService
-	Clients       *ClientsService
-	DDNS          *DDNSService
-	Digest        *DigestService
-	DNS           *DNSService
-	Firewall      *FirewallService
-	IPv6          *IPv6Service
-	LAN           *LANService
-	LED           *LEDService
-	Network       *NetworkService
-	System        *SystemService
-	Tailscale     *TailscaleService
-	Timer         *TimerService
-	Wifi          *WifiService
-	ZeroTier      *ZeroTierService
+	AccessControl   *AccessControlService
+	AdGuard         *AdGuardService
+	Cable           *CableService
+	Clients         *ClientsService
+	DDNS            *DDNSService
+	Digest          *DigestService
+	DNS             *DNSService
+	Firewall        *FirewallService
+	IPv6            *IPv6Service
+	LAN             *LANService
+	LED             *LEDService
+	Network         *NetworkService
+	System          *SystemService
+	Tailscale       *TailscaleService
+	Timer           *TimerService
+	VPNPolicy       *VPNPolicyService
+	Wifi            *WifiService
+	WireGuardClient *WireGuardClientService
+	WireGuardServer *WireGuardServerService
+	ZeroTier        *ZeroTierService
 }
 
 type service struct {
@@ -114,7 +117,10 @@ func newClient(host string) (*Client, error) {
 	c.System = (*SystemService)(&c.common)
 	c.Tailscale = (*TailscaleService)(&c.common)
 	c.Timer = (*TimerService)(&c.common)
+	c.VPNPolicy = (*VPNPolicyService)(&c.common)
 	c.Wifi = (*WifiService)(&c.common)
+	c.WireGuardClient = (*WireGuardClientService)(&c.common)
+	c.WireGuardServer = (*WireGuardServerService)(&c.common)
 	c.ZeroTier = (*ZeroTierService)(&c.common)
 
 	return c, nil

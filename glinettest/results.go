@@ -774,3 +774,251 @@ const (
 		]
 	}`
 )
+
+// The default state of the VPN modules: the results of the test router, with made-up names,
+// addresses and keys.
+const (
+	wgClientStatus = `{
+		"domain": "vpn-1.example.com",
+		"group_id": 2082,
+		"ipv4": "10.66.0.2/32",
+		"log": "",
+		"name": "peer-1",
+		"peer_id": 2004,
+		"port": 51820,
+		"proxy": true,
+		"rx_bytes": 64572,
+		"status": 1,
+		"tx_bytes": 39128
+	}`
+
+	wgClientGroups = `{
+		"groups": [
+			{
+				"auth_type": 1,
+				"group_id": 7573,
+				"group_name": "AzireVPN",
+				"group_type": 1,
+				"password": "",
+				"peer_count": 0,
+				"procedure": 0,
+				"username": ""
+			},
+			{
+				"auth_type": 2,
+				"group_id": 6892,
+				"group_name": "Mullvad",
+				"group_type": 1,
+				"peer_count": 0,
+				"procedure": 1,
+				"username": ""
+			},
+			{
+				"auth_type": 1,
+				"group_id": 9859,
+				"group_name": "group-1",
+				"group_type": 3,
+				"password": "",
+				"peer_count": 1,
+				"procedure": 0,
+				"username": ""
+			},
+			{
+				"auth_type": 0,
+				"group_id": 2082,
+				"group_name": "group-2",
+				"group_type": 2,
+				"peer_count": 2
+			},
+			{
+				"auth_type": 1,
+				"group_id": 4199,
+				"group_name": "PIA",
+				"group_type": 1,
+				"password": "",
+				"peer_count": 0,
+				"procedure": 1,
+				"username": ""
+			},
+			{
+				"auth_type": 1,
+				"group_id": 7166,
+				"group_name": "Surfshark",
+				"group_type": 1,
+				"password": "",
+				"peer_count": 0,
+				"procedure": 1,
+				"username": ""
+			},
+			{
+				"auth_type": 2,
+				"group_id": 132,
+				"group_name": "NordVPN",
+				"group_type": 1,
+				"peer_count": 0,
+				"procedure": 1,
+				"username": ""
+			},
+			{
+				"auth_type": 1,
+				"group_id": 9451,
+				"group_name": "Hideme",
+				"group_type": 1,
+				"password": "",
+				"peer_count": 0,
+				"procedure": 0,
+				"username": ""
+			},
+			{
+				"auth_type": 1,
+				"group_id": 2418,
+				"group_name": "IPVanish",
+				"group_type": 1,
+				"password": "",
+				"peer_count": 0,
+				"procedure": 1,
+				"username": ""
+			}
+		]
+	}`
+
+	// wgClientPeers has the peers of the groups by group_id.
+	wgClientPeers = `{
+		"2082": [
+			{
+				"address_v4": "10.66.0.5/32",
+				"address_v6": "",
+				"allowed_ips": "0.0.0.0/0, ::/0",
+				"dns": "10.66.0.4",
+				"end_point": "vpn-1.example.com:51820",
+				"ipv6_enable": false,
+				"listen_port": 51820,
+				"mtu": 1420,
+				"name": "peer-3",
+				"peer_id": 3578,
+				"persistent_keepalive": 25,
+				"preshared_key": "8oc0HGcTlTA+KGRAwSI1jbLhf70Pmnns3jMhjTPqgOY=",
+				"presharedkey_enable": true,
+				"private_key": "1vNwIUbtnIB7aNVTb0R72qFGGZ6LYiyXH+4KziIx69M=",
+				"public_key": "MT+jBdps4HbiE4tJps6QErMhRacT1tEZ87/WR+VQabk="
+			},
+			{
+				"address_v4": "10.66.0.2/32",
+				"address_v6": "",
+				"allowed_ips": "10.66.0.6/32, 10.66.0.2/32, 10.66.0.7/24, 10.66.0.8/24, 0.0.0.0/0",
+				"dns": "10.66.0.6",
+				"end_point": "vpn-1.example.com:51820",
+				"ipv6_enable": false,
+				"mtu": 1420,
+				"name": "peer-1",
+				"peer_id": 2004,
+				"persistent_keepalive": 25,
+				"preshared_key": "",
+				"presharedkey_enable": false,
+				"private_key": "Ff8s2meT06n2l4exCBsD3GKKWk2kjseMD8sdWwU+JG4=",
+				"public_key": "vo7q+sIAl4oOBIyN7ajy8ixpogEe6iKN/5vb9eOa14Y="
+			}
+		],
+		"9859": [
+			{
+				"address_v4": "10.66.0.3/32",
+				"address_v6": "",
+				"allowed_ips": "0.0.0.0/0",
+				"dns": "10.66.0.4",
+				"end_point": "vpn-2.example.com:51820",
+				"listen_port": 14237,
+				"name": "peer-2",
+				"peer_id": 8913,
+				"persistent_keepalive": 25,
+				"preshared_key": "",
+				"presharedkey_enable": false,
+				"private_key": "u8Mt8Nu5St1Ta7fg11QX+ZN9eapEbkyuAbI7xwBee+Q=",
+				"public_key": "5t922Jp5xf4tF9xLLMOY8dibxcTUPqI37i5zZE+qlZA="
+			}
+		]
+	}`
+
+	// wgClientSettings has the settings of the peers.
+	wgClientSettings = `[
+		{
+			"Group": 2082,
+			"Peer": 2004,
+			"Setting": {
+				"default_metric": 0,
+				"local_access": false,
+				"masq": true,
+				"mtu": 1420
+			}
+		},
+		{
+			"Group": 9859,
+			"Peer": 8913,
+			"Setting": {
+				"default_metric": 0,
+				"local_access": false,
+				"masq": true
+			}
+		},
+		{
+			"Group": 2082,
+			"Peer": 3578,
+			"Setting": {
+				"default_metric": 0,
+				"local_access": false,
+				"masq": true,
+				"mtu": 1420
+			}
+		}
+	]`
+
+	wgServerConfig = `{
+		"address_v4": "10.66.0.9/24",
+		"address_v6": "fd00:66::1/64",
+		"initialization": false,
+		"ipv6_enable": false,
+		"local_access": false,
+		"port": 51820,
+		"private_key": "",
+		"public_key": ""
+	}`
+
+	wgServerSetting = `{
+		"client_to_client": false,
+		"local_access": false,
+		"masq": true
+	}`
+
+	vpnProxyMode = `{
+		"mode": 0
+	}`
+
+	vpnGlobalPolicy = `{
+		"kill_switch": 0,
+		"service_policy": 0,
+		"vpn_server_policy": 1,
+		"wan_access": 0
+	}`
+
+	vpnDomainPolicy = `{
+		"default_policy": 1,
+		"manual": true
+	}`
+
+	vpnMACPolicy = `{
+		"default_policy": 1,
+		"mac_list": []
+	}`
+
+	vpnVLANPolicy = `{
+		"vlans": [
+			{
+				"id": 1,
+				"vpn": 1
+			},
+			{
+				"id": 2,
+				"vpn": 1
+			}
+		]
+	}`
+)

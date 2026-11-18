@@ -8,23 +8,23 @@
       "get_status",
       {}
     ],
-    "id": 151
+    "id": 30001
   },
   "response": {
-    "id": 151,
+    "id": 30001,
     "jsonrpc": "2.0",
     "result": {
-      "domain": "host-1.example.com",
+      "domain": "vpn-1.example.com",
       "group_id": 2082,
-      "ipv4": "192.168.5.4/32",
+      "ipv4": "10.66.0.2/32",
       "log": "",
-      "name": "NYC",
+      "name": "peer-1",
       "peer_id": 2004,
       "port": 51820,
       "proxy": true,
-      "rx_bytes": 178955524,
+      "rx_bytes": 64572,
       "status": 1,
-      "tx_bytes": 10203432
+      "tx_bytes": 39128
     }
   }
 }

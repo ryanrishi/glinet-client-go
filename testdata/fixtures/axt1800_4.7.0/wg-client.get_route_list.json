@@ -7,14 +7,14 @@
       "wg-client",
       "get_route_list",
       {
-        "group_id": 9859,
-        "peer_id": 8913
+        "group_id": 2082,
+        "peer_id": 2004
       }
     ],
-    "id": 155
+    "id": 30011
   },
   "response": {
-    "id": 155,
+    "id": 30011,
     "jsonrpc": "2.0",
     "result": {
       "ipv4_route_rules": [],
