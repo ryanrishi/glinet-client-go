@@ -268,7 +268,7 @@ func replaceEach(s string, maps ...map[string]string) string {
 		}
 		return pairs[i][0] < pairs[j][0]
 	})
-	oldnew := make([]string, 0, 2*len(pairs))
+	var oldnew []string
 	for _, p := range pairs {
 		oldnew = append(oldnew, p[0], p[1])
 	}
