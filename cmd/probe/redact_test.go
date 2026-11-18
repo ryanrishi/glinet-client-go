@@ -66,10 +66,24 @@ func TestRedactVPNNames(t *testing.T) {
 
 func TestRedactFirewallRuleName(t *testing.T) {
 	r := newRedactor()
-	v := map[string]any{"res": []any{map[string]any{"id": "cfg01", "name": "game-server", "src": "wan", "dest": "lan"}}}
+	v := map[string]any{"res": []any{
+		map[string]any{"id": "cfg01", "name": "game-server", "src": "wan", "dest": "lan"},
+		map[string]any{"id": "cfg02", "name": "allow-ssh", "src": "wan", "target": "ACCEPT"},
+	}}
 	r.collect(v)
 	out := mustJSON(r.scrub(r.redact(v)))
-	want := `{"res":[{"dest":"lan","id":"cfg01","name":"rule-1","src":"wan"}]}`
+	want := `{"res":[{"dest":"lan","id":"cfg01","name":"rule-1","src":"wan"},{"id":"cfg02","name":"rule-2","src":"wan","target":"ACCEPT"}]}`
+	if string(out) != want {
+		t.Errorf("got %s, want %s", out, want)
+	}
+}
+
+func TestRedactNameThatIsPartOfAKey(t *testing.T) {
+	r := newRedactor()
+	v := map[string]any{"username": "user", "log": "login of user"}
+	r.collect(v)
+	out := mustJSON(r.scrub(r.redact(v)))
+	want := `{"log":"login of user-1","username":"user-1"}`
 	if string(out) != want {
 		t.Errorf("got %s, want %s", out, want)
 	}

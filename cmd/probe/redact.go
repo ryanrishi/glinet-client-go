@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -34,13 +35,14 @@ var (
 
 type redactor struct {
 	secrets map[string]string
+	names   map[string]string
 	exact   map[string]string
 	fakes   map[string]string
 	counter map[string]int
 }
 
 func newRedactor() *redactor {
-	return &redactor{secrets: map[string]string{}, exact: map[string]string{}, fakes: map[string]string{}, counter: map[string]int{}}
+	return &redactor{secrets: map[string]string{}, names: map[string]string{}, exact: map[string]string{}, fakes: map[string]string{}, counter: map[string]int{}}
 }
 
 func (r *redactor) next(label string) int {
@@ -83,7 +85,7 @@ func (r *redactor) addValue(value, label string, fake func(n int) string) {
 	f := fake(r.next(label))
 	r.exact[value] = f
 	if len(value) >= 4 {
-		r.secrets[value] = f
+		r.names[value] = f
 	}
 }
 
@@ -109,6 +111,7 @@ func (r *redactor) collect(v any) {
 		_, hasClientID := t["client_id"]
 		_, hasSrc := t["src"]
 		_, hasDest := t["dest"]
+		_, hasTarget := t["target"]
 		for k, val := range t {
 			s, ok := val.(string)
 			lk := strings.ToLower(k)
@@ -121,7 +124,7 @@ func (r *redactor) collect(v any) {
 			if ok && lk == "name" && (hasPeerID || hasClientID) && !serviceNames[s] {
 				r.addValue(s, "peer", fakeName("peer"))
 			}
-			if ok && lk == "name" && hasSrc && hasDest {
+			if ok && lk == "name" && hasSrc && (hasDest || hasTarget) {
 				r.addValue(s, "rule", fakeName("rule"))
 			}
 			if ok && lk == "group_name" && !builtInGroups[s] {
@@ -201,7 +204,7 @@ func (r *redactor) redactString(s string) string {
 	if strings.Contains(s, "PRIVATE KEY") {
 		return "redacted-private-key-pem"
 	}
-	s = r.replaceSecrets(s)
+	s = replaceEach(s, r.secrets, r.names)
 	s = macPattern.ReplaceAllStringFunc(s, r.fakeMAC)
 	s = r.redactIPv4(s)
 	s = ipv6Pattern.ReplaceAllStringFunc(s, r.fakeIPv6)
@@ -234,7 +237,7 @@ func (r *redactor) scrub(v any) any {
 	case map[string]any:
 		out := make(map[string]any, len(t))
 		for k, val := range t {
-			out[r.replaceSecrets(k)] = r.scrub(val)
+			out[replaceEach(k, r.secrets)] = r.scrub(val)
 		}
 		return out
 	case []any:
@@ -244,17 +247,32 @@ func (r *redactor) scrub(v any) any {
 		}
 		return out
 	case string:
-		return r.replaceSecrets(t)
+		return replaceEach(t, r.secrets)
 	default:
 		return v
 	}
 }
 
-func (r *redactor) replaceSecrets(s string) string {
-	for _, real := range sortedKeys(r.secrets) {
-		s = strings.ReplaceAll(s, real, r.secrets[real])
+// replaceEach replaces each real value in s with its fake value in one pass, the longest real
+// value first, so that a fake value is not replaced again.
+func replaceEach(s string, maps ...map[string]string) string {
+	var pairs [][2]string
+	for _, m := range maps {
+		for real, fake := range m {
+			pairs = append(pairs, [2]string{real, fake})
+		}
 	}
-	return s
+	sort.Slice(pairs, func(i, j int) bool {
+		if len(pairs[i][0]) != len(pairs[j][0]) {
+			return len(pairs[i][0]) > len(pairs[j][0])
+		}
+		return pairs[i][0] < pairs[j][0]
+	})
+	oldnew := make([]string, 0, 2*len(pairs))
+	for _, p := range pairs {
+		oldnew = append(oldnew, p[0], p[1])
+	}
+	return strings.NewReplacer(oldnew...).Replace(s)
 }
 
 func (r *redactor) mapped(real, label string, fake func(n int) string) string {
