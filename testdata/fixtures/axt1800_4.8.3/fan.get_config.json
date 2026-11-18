@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "fan",
+      "get_config",
+      {}
+    ],
+    "id": 35
+  },
+  "response": {
+    "id": 35,
+    "jsonrpc": "2.0",
+    "result": {
+      "temperature": 75,
+      "warn_temperature": 75
+    }
+  }
+}

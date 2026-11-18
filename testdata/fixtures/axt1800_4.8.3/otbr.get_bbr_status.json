@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "otbr",
+      "get_bbr_status",
+      {}
+    ],
+    "id": 90
+  },
+  "response": {
+    "error": {
+      "code": -32601,
+      "message": "Method not found"
+    },
+    "id": 90,
+    "jsonrpc": "2.0"
+  }
+}

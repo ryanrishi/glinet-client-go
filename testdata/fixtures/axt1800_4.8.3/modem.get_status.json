@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "modem",
+      "get_status",
+      {}
+    ],
+    "id": 61
+  },
+  "response": {
+    "id": 61,
+    "jsonrpc": "2.0",
+    "result": {
+      "modems": [],
+      "new_sms_count": 0
+    }
+  }
+}

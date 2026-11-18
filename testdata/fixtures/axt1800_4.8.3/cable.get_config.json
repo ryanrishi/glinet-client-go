@@ -1,0 +1,20 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "cable",
+      "get_config",
+      {}
+    ],
+    "id": 19
+  },
+  "response": {
+    "id": 19,
+    "jsonrpc": "2.0",
+    "result": {
+      "protocol": "dhcp"
+    }
+  }
+}

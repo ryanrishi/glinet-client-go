@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "ovpn-server",
+      "get_setting",
+      {}
+    ],
+    "id": 101
+  },
+  "response": {
+    "id": 101,
+    "jsonrpc": "2.0",
+    "result": {
+      "local_access": false,
+      "masq": true
+    }
+  }
+}

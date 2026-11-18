@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "mwan3",
+      "get_config",
+      {}
+    ],
+    "id": 69
+  },
+  "response": {
+    "error": {
+      "code": -32601,
+      "message": "Method not found"
+    },
+    "id": 69,
+    "jsonrpc": "2.0"
+  }
+}

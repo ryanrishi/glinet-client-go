@@ -1,0 +1,302 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "repeater",
+      "get_saved_ap_list",
+      {}
+    ],
+    "id": 116
+  },
+  "response": {
+    "id": 116,
+    "jsonrpc": "2.0",
+    "result": {
+      "res": [
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "ssid": "ssid-5"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "ssid": "ssid-6"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "key": "redacted-key-2",
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "ssid": "ssid-7"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "key": "redacted-key-3",
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "ssid": "ssid-8"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "key": "redacted-key-4",
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "ssid": "ssid-9"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "key": "redacted-key-5",
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "ssid": "ssid-10"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "ssid": "ssid-11"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "protocol": "dhcp",
+          "ssid": "ssid-12"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "protocol": "dhcp",
+          "ssid": "ssid-13"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "protocol": "dhcp",
+          "ssid": "ssid-14"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "key": "redacted-key-6",
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "protocol": "dhcp",
+          "ssid": "ssid-15"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "key": "redacted-key-7",
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "protocol": "dhcp",
+          "ssid": "ssid-16"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "protocol": "dhcp",
+          "ssid": "ssid-17"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "protocol": "dhcp",
+          "ssid": "ssid-18"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "protocol": "dhcp",
+          "ssid": "ssid-19"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "protocol": "dhcp",
+          "ssid": "ssid-20"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "key": "redacted-key-8",
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "protocol": "dhcp",
+          "ssid": "ssid-21"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "key": "redacted-key-9",
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "protocol": "dhcp",
+          "ssid": "ssid-22"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "key": "redacted-key-10",
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "protocol": "dhcp",
+          "ssid": "ssid-23"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "key": "redacted-key-11",
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "protocol": "dhcp",
+          "ssid": "ssid-24"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "protocol": "dhcp",
+          "ssid": "ssid-25"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "key": "redacted-key-12",
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "protocol": "dhcp",
+          "ssid": "ssid-26"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "protocol": "dhcp",
+          "ssid": "ssid-27"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "key": "redacted-key-13",
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "protocol": "dhcp",
+          "ssid": "ssid-28"
+        },
+        {
+          "auto_portal": false,
+          "disguise": false,
+          "key": "redacted-key-1",
+          "macaddr": {
+            "mode": "default",
+            "update": "none"
+          },
+          "manual": false,
+          "protocol": "dhcp",
+          "ssid": "ssid-4"
+        }
+      ]
+    }
+  }
+}

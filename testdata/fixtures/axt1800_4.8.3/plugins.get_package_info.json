@@ -1,0 +1,16 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "plugins",
+      "get_package_info",
+      null
+    ],
+    "id": 0
+  },
+  "response": {
+    "skipped": "no ID from a previous list response"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "cloud",
+      "get_batch_config",
+      {}
+    ],
+    "id": 23
+  },
+  "response": {
+    "error": {
+      "code": -32601,
+      "message": "Method not found"
+    },
+    "id": 23,
+    "jsonrpc": "2.0"
+  }
+}

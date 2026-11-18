@@ -1,0 +1,20 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "netmode",
+      "get_mode",
+      {}
+    ],
+    "id": 78
+  },
+  "response": {
+    "id": 78,
+    "jsonrpc": "2.0",
+    "result": {
+      "mode": "router"
+    }
+  }
+}

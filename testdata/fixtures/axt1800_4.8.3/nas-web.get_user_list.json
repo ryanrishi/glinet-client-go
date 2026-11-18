@@ -1,0 +1,18 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "nas-web",
+      "get_user_list",
+      {}
+    ],
+    "id": 72
+  },
+  "response": {
+    "id": 72,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "vpn-client",
+      "get_status",
+      {}
+    ],
+    "id": 143
+  },
+  "response": {
+    "id": 143,
+    "jsonrpc": "2.0",
+    "result": {
+      "mode": 0,
+      "status_list": [
+        {
+          "domain": [
+            "host-2.example.com"
+          ],
+          "enabled": true,
+          "group_id": 2082,
+          "ipv4": "10.200.3.4",
+          "name": "peer-4",
+          "peer_id": 2004,
+          "peer_name": "peer-3",
+          "port": 51820,
+          "rx_bytes": 53568,
+          "status": 1,
+          "tunnel_id": 10,
+          "tx_bytes": 25468,
+          "type": "wireguard",
+          "via": "wgclient1"
+        }
+      ]
+    }
+  }
+}

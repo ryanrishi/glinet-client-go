@@ -1,0 +1,20 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "qos",
+      "get_client_list",
+      {}
+    ],
+    "id": 110
+  },
+  "response": {
+    "id": 110,
+    "jsonrpc": "2.0",
+    "result": {
+      "clients": []
+    }
+  }
+}

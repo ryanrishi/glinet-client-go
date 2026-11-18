@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "invalidsid00000000000000000000000",
+      "system",
+      "get_info",
+      {}
+    ],
+    "id": 166
+  },
+  "response": {
+    "error": {
+      "code": -32000,
+      "message": "Access denied"
+    },
+    "id": 166,
+    "jsonrpc": "2.0"
+  }
+}

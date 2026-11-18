@@ -19,6 +19,8 @@ var (
 	macPattern   = regexp.MustCompile(`\b[0-9A-Fa-f]{2}([:-])[0-9A-Fa-f]{2}(?:[:-][0-9A-Fa-f]{2}){4}\b`)
 	ipv4Pattern  = regexp.MustCompile(`(?:\d{1,3}\.){3}\d{1,3}`)
 	ipv6Pattern  = regexp.MustCompile(`[0-9A-Fa-f]{0,4}(?::[0-9A-Fa-f]{0,4}){2,7}`)
+	timePattern  = regexp.MustCompile(`\d{2}:\d{2}:\d{2}`)
+	datePattern  = regexp.MustCompile(`\b(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) [ \d]\d\b|\b\d{4}/\d{2}/\d{2}\b`)
 	publicDNS    = map[string]bool{
 		"1.1.1.1": true, "1.0.0.1": true, "8.8.8.8": true, "8.8.4.4": true,
 		"9.9.9.9": true, "149.112.112.112": true, "208.67.222.222": true, "208.67.220.220": true,
@@ -29,7 +31,9 @@ var (
 	defaultLAN     = []string{"192.168.8.", "192.168.9."}
 	builtInGroups  = map[string]bool{"AzireVPN": true, "FromApp": true, "Hideme": true, "IPVanish": true, "Mullvad": true, "NordVPN": true, "PIA": true, "Surfshark": true}
 	serviceNames   = map[string]bool{"wgclient": true, "wgserver": true, "ovpnclient": true, "ovpnserver": true}
+	builtInTunnels = map[string]bool{"last sort default policy": true}
 	fixedTimezone  = map[string]string{"zonename": "UTC", "timezone": "UTC0", "tzoffset": "+0000"}
+	fixedSchedule  = map[string]any{"hour": "02", "min": "15", "week": []any{float64(3), float64(5)}}
 	keptListenPort = map[float64]bool{0: true, 51820: true}
 )
 
@@ -93,6 +97,10 @@ func fakeName(label string) func(n int) string {
 	return func(n int) string { return fmt.Sprintf("%s-%d", label, n) }
 }
 
+func fakeUUID(n int) string {
+	return fmt.Sprintf("00000000-0000-4000-8000-%012x", n)
+}
+
 func fakePublicKey(n int) string {
 	sum := sha256.Sum256([]byte(fmt.Sprintf("fake-wireguard-public-key-%d", n)))
 	return base64.StdEncoding.EncodeToString(sum[:])
@@ -112,17 +120,36 @@ func (r *redactor) collect(v any) {
 		_, hasSrc := t["src"]
 		_, hasDest := t["dest"]
 		_, hasTarget := t["target"]
+		_, hasTunnelID := t["tunnel_id"]
 		for k, val := range t {
 			s, ok := val.(string)
 			lk := strings.ToLower(k)
 			if ok && lk == "ssid" {
 				r.addValue(s, "ssid", fakeName("ssid"))
 			}
+			if ok && lk == "uuid" {
+				r.addValue(s, "uuid", fakeUUID)
+			}
 			if ok && (hostnameKey.MatchString(lk) || (lk == "name" && hasMAC)) {
 				r.addValue(s, "hostname", fakeName("hostname"))
 			}
-			if ok && lk == "name" && (hasPeerID || hasClientID) && !serviceNames[s] {
+			if ok && (lk == "peer_name" || (lk == "name" && (hasPeerID || hasClientID) && !serviceNames[s])) {
 				r.addValue(s, "peer", fakeName("peer"))
+			}
+			if ok && lk == "name" && hasTunnelID && !builtInTunnels[s] {
+				r.addValue(s, "tunnel", fakeName("tunnel"))
+			}
+			if ok && lk == "domain_list" {
+				for _, d := range strings.FieldsFunc(s, func(c rune) bool { return c == ',' || c == ' ' || c == '\n' }) {
+					r.addHost(d)
+				}
+			}
+			if list, isList := val.([]any); isList && hostKey.MatchString(lk) {
+				for _, item := range list {
+					if h, isString := item.(string); isString {
+						r.addHost(h)
+					}
+				}
 			}
 			if ok && lk == "name" && hasSrc && (hasDest || hasTarget) {
 				r.addValue(s, "rule", fakeName("rule"))
@@ -165,6 +192,11 @@ func (r *redactor) walk(key string, v any) any {
 		if _, ok := out["localtime"]; ok && out["timestamp"] != nil {
 			out["localtime"] = out["timestamp"]
 		}
+		if hasAllKeys(out, fixedSchedule) {
+			for k, v := range fixedSchedule {
+				out[k] = v
+			}
+		}
 		return out
 	case []any:
 		out := make([]any, len(t))
@@ -194,10 +226,33 @@ func (r *redactor) walk(key string, v any) any {
 		if fake, ok := r.exact[t]; ok {
 			return fake
 		}
+		if strings.EqualFold(key, "log") {
+			return redactLogTimes(r.redactString(t))
+		}
 		return r.redactString(t)
 	default:
 		return v
 	}
+}
+
+// redactLogTimes replaces the local dates and times of day in log lines, because they show the time zone.
+func redactLogTimes(s string) string {
+	s = replaceStandalone(s, timePattern, isTimeChar, func(string) string { return "00:00:00" })
+	return datePattern.ReplaceAllStringFunc(s, func(d string) string {
+		if strings.Contains(d, "/") {
+			return d[:4] + "/01/01"
+		}
+		return "Thu Jan  1"
+	})
+}
+
+func hasAllKeys(m map[string]any, keys map[string]any) bool {
+	for k := range keys {
+		if _, ok := m[k]; !ok {
+			return false
+		}
+	}
+	return true
 }
 
 func (r *redactor) redactString(s string) string {
@@ -206,21 +261,22 @@ func (r *redactor) redactString(s string) string {
 	}
 	s = replaceEach(s, r.secrets, r.names)
 	s = macPattern.ReplaceAllStringFunc(s, r.fakeMAC)
-	s = r.redactIPv4(s)
+	s = replaceStandalone(s, ipv4Pattern, isIPv4Char, r.fakeIPv4)
 	s = ipv6Pattern.ReplaceAllStringFunc(s, r.fakeIPv6)
 	return s
 }
 
-func (r *redactor) redactIPv4(s string) string {
+// replaceStandalone replaces each match of re that has no joined character directly before or after it.
+func replaceStandalone(s string, re *regexp.Regexp, joined func(byte) bool, replace func(string) string) string {
 	var b strings.Builder
 	last := 0
-	for _, loc := range ipv4Pattern.FindAllStringIndex(s, -1) {
+	for _, loc := range re.FindAllStringIndex(s, -1) {
 		start, end := loc[0], loc[1]
-		if (start > 0 && isIPv4Char(s[start-1])) || (end < len(s) && isIPv4Char(s[end])) {
+		if (start > 0 && joined(s[start-1])) || (end < len(s) && joined(s[end])) {
 			continue
 		}
 		b.WriteString(s[last:start])
-		b.WriteString(r.fakeIPv4(s[start:end]))
+		b.WriteString(replace(s[start:end]))
 		last = end
 	}
 	b.WriteString(s[last:])
@@ -229,6 +285,10 @@ func (r *redactor) redactIPv4(s string) string {
 
 func isIPv4Char(c byte) bool {
 	return c == '.' || (c >= '0' && c <= '9')
+}
+
+func isTimeChar(c byte) bool {
+	return c == ':' || (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
 }
 
 // scrub replaces each known secret inside the string values and the keys of v.

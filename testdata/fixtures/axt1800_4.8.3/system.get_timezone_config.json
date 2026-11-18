@@ -1,0 +1,25 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "system",
+      "get_timezone_config",
+      {}
+    ],
+    "id": 6
+  },
+  "response": {
+    "id": 6,
+    "jsonrpc": "2.0",
+    "result": {
+      "autotimezone_enabled": true,
+      "localtime": 1794979265,
+      "timestamp": 1794979265,
+      "timezone": "UTC0",
+      "tzoffset": "+0000",
+      "zonename": "UTC"
+    }
+  }
+}

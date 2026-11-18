@@ -1,0 +1,25 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "ovpn-server",
+      "get_status",
+      {}
+    ],
+    "id": 98
+  },
+  "response": {
+    "id": 98,
+    "jsonrpc": "2.0",
+    "result": {
+      "initialization": false,
+      "log": "",
+      "rx_bytes": 0,
+      "status": 0,
+      "tunnel_ip": "",
+      "tx_bytes": 0
+    }
+  }
+}

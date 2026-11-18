@@ -102,6 +102,54 @@ func TestRedactTimezone(t *testing.T) {
 	}
 }
 
+func TestRedactVPNTunnelAndStatus(t *testing.T) {
+	r := newRedactor()
+	tunnels := []any{
+		map[string]any{"tunnel_id": float64(10), "name": "to-office", "to": map[string]any{"domain_list": "intranet.corp.test\nwiki.corp.test"}},
+		map[string]any{"tunnel_id": float64(100), "name": "last sort default policy"},
+	}
+	status := []any{map[string]any{"peer_id": float64(1), "peer_name": "office-peer", "domain": []any{"vpn.corp.test"}}}
+	r.collect(tunnels)
+	r.collect(status)
+	out := string(mustJSON(r.scrub(r.redact(tunnels)))) + string(mustJSON(r.scrub(r.redact(status))))
+	want := `[{"name":"tunnel-1","to":{"domain_list":"host-1.example.com\nhost-2.example.com"},"tunnel_id":10},{"name":"last sort default policy","tunnel_id":100}]` +
+		`[{"domain":["host-3.example.com"],"peer_id":1,"peer_name":"peer-1"}]`
+	if out != want {
+		t.Errorf("got %s, want %s", out, want)
+	}
+}
+
+func TestRedactConnectionUUID(t *testing.T) {
+	r := newRedactor()
+	v := map[string]any{"wpa_status": map[string]any{"uuid": "6f1c2a7e-3b9d-4e8f-a1c2-9d8e7f6a5b4c", "mode": "station"}}
+	r.collect(v)
+	out := mustJSON(r.scrub(r.redact(v)))
+	want := `{"wpa_status":{"mode":"station","uuid":"00000000-0000-4000-8000-000000000001"}}`
+	if string(out) != want {
+		t.Errorf("got %s, want %s", out, want)
+	}
+}
+
+func TestRedactRebootSchedule(t *testing.T) {
+	r := newRedactor()
+	v := map[string]any{"enable": true, "hour": "04", "min": "30", "week": []any{float64(0), float64(6)}}
+	out := mustJSON(r.scrub(r.redact(v)))
+	want := `{"enable":true,"hour":"02","min":"15","week":[3,5]}`
+	if string(out) != want {
+		t.Errorf("got %s, want %s", out, want)
+	}
+}
+
+func TestRedactLogTimes(t *testing.T) {
+	r := newRedactor()
+	v := map[string]any{"log": "Mon Nov 16 21:07:45 2026 usbmuxd: [21:07:45.250] up\n2026/11/16 21:07:46 [error] mac 02:00:00:00:00:01"}
+	out := mustJSON(r.scrub(r.redact(v)))
+	want := `{"log":"Thu Jan  1 00:00:00 2026 usbmuxd: [00:00:00.250] up\n2026/01/01 00:00:00 [error] mac 02:00:00:00:00:01"}`
+	if string(out) != want {
+		t.Errorf("got %s, want %s", out, want)
+	}
+}
+
 func TestScrubKeepsJSONValid(t *testing.T) {
 	r := newRedactor()
 	r.addSecret("true", "password")

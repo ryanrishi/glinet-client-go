@@ -33,7 +33,7 @@ tz, err := client.System.GetTimezoneConfig(ctx)
 ```
 
 The client has the services `AccessControl`, `AdGuard`, `Cable`, `Clients`, `DDNS`, `Digest`, `DNS`, `Firewall`, `IPv6`, `LAN`, `LED`, `Network`, `System`, `Tailscale`, `Timer`, `VPNPolicy`, `Wifi`, `WireGuardClient`, `WireGuardServer` and `ZeroTier`.
-The write methods of `VPNPolicy`, `WireGuardClient` and `WireGuardServer` were not tested on a router: their parameters come from the web UI code. `WireGuardClient` calls the `wg-client` module of firmware 4.7.0; firmware 4.9.0 replaces it with `vpn-client`.
+The write methods of `VPNPolicy`, `WireGuardClient` and `WireGuardServer` were not tested on a router: their parameters come from the web UI code. `WireGuardClient` calls the `wg-client` module of firmware 4.7.0; firmware 4.9.0 replaces it with `vpn-client`. On firmware 4.8.3, `WireGuardClient.GetStatus`, `GetSetting`, `ListRoutes` and all reads of `VPNPolicy` return error -32601 (method not found); the tunnel status is in `vpn-client.get_status` (fixtures in `testdata/fixtures/axt1800_4.8.3`).
 `NewClientUnauthenticated` returns a client that has no session. Only `Digest` works without a session.
 
 `Call` calls a module method that has no typed method yet. A nil `params` sends `{}`. A nil `result` discards the response.

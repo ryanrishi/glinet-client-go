@@ -8,7 +8,10 @@ import (
 
 // WireGuardClientService calls the wg-client module of firmware 4.7.0: the WireGuard client
 // configurations ("peers") in groups, the tunnel, and the settings and route rules of a peer.
-// Firmware 4.9.0 has the module vpn-client instead, which this service does not call.
+// Firmware 4.9.0 has the module vpn-client instead, which this service does not call. Firmware
+// 4.8.3 has both modules: wg-client still has the group and peer reads, but get_status,
+// get_setting and get_route_list return -32601 (method not found); the tunnel status is in
+// vpn-client get_status. The writes were not tested on 4.8.3.
 //
 // The router allows one WireGuard client tunnel at a time. The web UI does not let the user edit
 // or remove the peer of the running tunnel, or remove its group.
@@ -70,9 +73,11 @@ type WireGuardPeer struct {
 }
 
 // WireGuardGroupPeers is a group with its peers, an item of the result of get_all_config_list.
+// Firmware 4.7.0 does not send Type, so it is 0 there.
 type WireGuardGroupPeers struct {
 	ID       int             `json:"group_id"`
 	Name     string          `json:"group_name"`
+	Type     int             `json:"group_type"`
 	AuthType int             `json:"auth_type"`
 	Username string          `json:"username"`
 	Password string          `json:"password"`

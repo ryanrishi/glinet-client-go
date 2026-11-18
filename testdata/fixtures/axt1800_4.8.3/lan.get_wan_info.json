@@ -1,0 +1,31 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "lan",
+      "get_wan_info",
+      {}
+    ],
+    "id": 49
+  },
+  "response": {
+    "id": 49,
+    "jsonrpc": "2.0",
+    "result": {
+      "wan_info": [
+        {
+          "info": {
+            "broadcast": "10.200.1.255",
+            "ipaddr": "10.200.1.210",
+            "netmask": "255.255.255.0",
+            "network": "10.200.1.0",
+            "prefix": 24
+          },
+          "interface": "wwan"
+        }
+      ]
+    }
+  }
+}

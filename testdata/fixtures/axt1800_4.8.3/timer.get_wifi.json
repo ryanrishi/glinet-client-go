@@ -1,0 +1,141 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "timer",
+      "get_wifi",
+      {}
+    ],
+    "id": 134
+  },
+  "response": {
+    "id": 134,
+    "jsonrpc": "2.0",
+    "result": {
+      "wifi": [
+        {
+          "band": "5G",
+          "enable": false,
+          "func": "turn_onoff",
+          "guest": 0,
+          "turnoff_hour": "22",
+          "turnoff_min": "00",
+          "turnon_hour": "07",
+          "turnon_min": "00",
+          "week": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        },
+        {
+          "band": "2G",
+          "enable": false,
+          "func": "turn_onoff",
+          "guest": 0,
+          "turnoff_hour": "22",
+          "turnoff_min": "00",
+          "turnon_hour": "07",
+          "turnon_min": "00",
+          "week": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        },
+        {
+          "band": "5G",
+          "enable": false,
+          "func": "turn_onoff",
+          "guest": 1,
+          "turnoff_hour": "22",
+          "turnoff_min": "00",
+          "turnon_hour": "07",
+          "turnon_min": "00",
+          "week": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        },
+        {
+          "band": "2G",
+          "enable": false,
+          "func": "turn_onoff",
+          "guest": 1,
+          "turnoff_hour": "22",
+          "turnoff_min": "00",
+          "turnon_hour": "07",
+          "turnon_min": "00",
+          "week": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        },
+        {
+          "band": "5G",
+          "enable": false,
+          "func": "power_switch",
+          "guest": 0,
+          "restore_hour": "07",
+          "restore_min": "00",
+          "restore_power": "Max",
+          "switch_hour": "22",
+          "switch_min": "00",
+          "switch_power": "Low",
+          "week": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        },
+        {
+          "band": "2G",
+          "enable": false,
+          "func": "power_switch",
+          "guest": 0,
+          "restore_hour": "07",
+          "restore_min": "00",
+          "restore_power": "Max",
+          "switch_hour": "22",
+          "switch_min": "00",
+          "switch_power": "Low",
+          "week": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        }
+      ],
+      "wifi_func_2g": "turn_onoff",
+      "wifi_func_5g": "turn_onoff"
+    }
+  }
+}

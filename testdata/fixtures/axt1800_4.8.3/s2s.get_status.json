@@ -1,0 +1,20 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "s2s",
+      "get_status",
+      {}
+    ],
+    "id": 123
+  },
+  "response": {
+    "id": 123,
+    "jsonrpc": "2.0",
+    "result": {
+      "status": ""
+    }
+  }
+}

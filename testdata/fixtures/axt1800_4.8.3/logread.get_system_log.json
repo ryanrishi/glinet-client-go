@@ -1,0 +1,22 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "logread",
+      "get_system_log",
+      {
+        "lines": 20
+      }
+    ],
+    "id": 52
+  },
+  "response": {
+    "id": 52,
+    "jsonrpc": "2.0",
+    "result": {
+      "log": "Thu Jan  1 00:00:00 2026 daemon.info gl-repeater[2745]: (repeater.lua:1738) interface wwan status offline\nThu Jan  1 00:00:00 2026 user.notice firewall: Reloading firewall due to ifup of wwan (sta0)\nThu Jan  1 00:00:00 2026 daemon.info gl-repeater[2745]: (repeater-portal.lua:395) portal detecting...\nThu Jan  1 00:00:00 2026 daemon.notice netifd: wgclient1 (4866): Try again: `host-2.example.com:51820'. Trying again in 1.73 seconds...\nThu Jan  1 00:00:00 2026 user.notice root: modem_traffic : ntp success...\nThu Jan  1 00:00:00 2026 daemon.info gl-repeater[2745]: (repeater-portal.lua:418) not found portal\nThu Jan  1 00:00:00 2026 daemon.info gl-repeater[2745]: (repeater.lua:1738) interface wwan status online\nThu Jan  1 00:00:00 2026 daemon.info dnsmasq[12228]: reading /tmp/resolv.conf.d/resolv.conf.wgclient1\nThu Jan  1 00:00:00 2026 daemon.info dnsmasq[12228]: using nameserver 10.200.3.1#53\nThu Jan  1 00:00:00 2026 daemon.notice netifd: Interface 'wgclient1' is now up\nThu Jan  1 00:00:00 2026 daemon.notice netifd: Network device 'wgclient1' link is up\nThu Jan  1 00:00:00 2026 user.notice firewall: Reloading firewall due to ifup of wgclient1 (wgclient1)\nThu Jan  1 00:00:00 2026 daemon.err usbmuxd[14171]: [00:00:00.250][3] usbmuxd v1.1.1 starting up\nThu Jan  1 00:00:00 2026 daemon.err usbmuxd[14171]: [00:00:00.251][3] Using libusb 1.0.26\nThu Jan  1 00:00:00 2026 daemon.err usbmuxd[14171]: [00:00:00.251][3] Initialization complete\nThu Jan  1 00:00:00 2026 daemon.err usbmuxd[14171]: [00:00:00.251][3] Enabled exit on SIGUSR1 if no devices are attached. Start a new instance with \"--exit\" to trigger.\nThu Jan  1 00:00:00 2026 daemon.err usbmuxd[14171]: [00:00:00.228][3] Caught signal 15, exiting\nThu Jan  1 00:00:00 2026 daemon.err usbmuxd[14171]: [00:00:00.228][3] usbmuxd shutting down\nThu Jan  1 00:00:00 2026 daemon.err usbmuxd[14171]: [00:00:00.328][3] Shutdown complete\nThu Jan  1 00:00:00 2026 daemon.info gl-repeater[2745]: (repeater.lua:1226) ntp been valid"
+    }
+  }
+}

@@ -10,10 +10,16 @@ import (
 	"testing"
 )
 
-// fixtureResult returns the result in the fixture name of the test router.
+// fixtureResult returns the result in the fixture name of the test router with firmware 4.7.0.
 func fixtureResult(t *testing.T, name string) json.RawMessage {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join("testdata/fixtures/axt1800_4.7.0", name))
+	return firmwareFixtureResult(t, "4.7.0", name)
+}
+
+// firmwareFixtureResult returns the result in the fixture name of the test router with firmware.
+func firmwareFixtureResult(t *testing.T, firmware, name string) json.RawMessage {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join("testdata/fixtures/axt1800_"+firmware, name))
 	if err != nil {
 		t.Fatal(err)
 	}

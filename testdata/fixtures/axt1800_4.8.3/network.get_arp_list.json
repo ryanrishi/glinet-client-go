@@ -1,0 +1,31 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "network",
+      "get_arp_list",
+      {}
+    ],
+    "id": 81
+  },
+  "response": {
+    "id": 81,
+    "jsonrpc": "2.0",
+    "result": {
+      "entries": [
+        {
+          "device": "sta0",
+          "ip": "10.200.1.1",
+          "mac": "02:00:00:00:00:37"
+        },
+        {
+          "device": "br-lan",
+          "ip": "192.168.8.193",
+          "mac": "02:00:00:00:00:16"
+        }
+      ]
+    }
+  }
+}
