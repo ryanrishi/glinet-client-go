@@ -166,6 +166,27 @@ func TestDNSSetConfigAutoAfterManual(t *testing.T) {
 	}
 }
 
+func TestDNSSetConfigRemovesNextDNSID(t *testing.T) {
+	c, _ := newClient(t)
+	ctx := context.Background()
+
+	req := glinet.SetDNSConfigRequest{Mode: "secure", Proto: "DoT", DoTProvider: "1", NextDNSID: "abc123"}
+	if err := c.DNS.SetConfig(ctx, req); err != nil {
+		t.Fatalf("SetConfig with an ID: %v", err)
+	}
+	req.NextDNSID = ""
+	if err := c.DNS.SetConfig(ctx, req); err != nil {
+		t.Fatalf("SetConfig with an empty ID: %v", err)
+	}
+	got, err := c.DNS.GetConfig(ctx)
+	if err != nil {
+		t.Fatalf("GetConfig: %v", err)
+	}
+	if got.NextDNSID != "" {
+		t.Errorf("NextDNSID = %q, want an empty ID", got.NextDNSID)
+	}
+}
+
 func TestDNSSetConfigInvalidType(t *testing.T) {
 	c, _ := newClient(t)
 

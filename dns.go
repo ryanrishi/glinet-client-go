@@ -1,6 +1,9 @@
 package glinet
 
-import "context"
+import (
+	"context"
+	"encoding/json"
+)
 
 // DNSService calls the dns module.
 type DNSService service
@@ -78,6 +81,19 @@ type EncryptedServer struct {
 	IPv6     bool   `json:"ipv6"`
 	NoFilter bool   `json:"nofilter"`
 	NoLog    bool   `json:"nolog"`
+}
+
+// MarshalJSON sends an empty nextdns_id with DoTProvider "1", as the web UI does, so that a write
+// can remove the ID.
+func (r SetDNSConfigRequest) MarshalJSON() ([]byte, error) {
+	type plain SetDNSConfigRequest
+	if r.DoTProvider != "1" || r.NextDNSID != "" {
+		return json.Marshal(plain(r))
+	}
+	return json.Marshal(struct {
+		plain
+		NextDNSID string `json:"nextdns_id"`
+	}{plain: plain(r)})
 }
 
 // GetConfig returns the DNS configuration.
