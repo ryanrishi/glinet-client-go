@@ -173,3 +173,30 @@ func TestWireGuardServerRoutes(t *testing.T) {
 		t.Errorf("ListRoutes after RemoveRoute = %+v, %v", routes, err)
 	}
 }
+
+func TestWireGuardServerPeerAddressesAreUnique(t *testing.T) {
+	c, _ := newClient(t)
+	ctx := context.Background()
+
+	a, err := c.WireGuardServer.AddPeer(ctx, glinet.WireGuardServerPeer{Name: "a"})
+	if err != nil {
+		t.Fatalf("AddPeer a: %v", err)
+	}
+	if _, err := c.WireGuardServer.AddPeer(ctx, glinet.WireGuardServerPeer{Name: "b"}); err != nil {
+		t.Fatalf("AddPeer b: %v", err)
+	}
+	if err := c.WireGuardServer.RemovePeer(ctx, a); err != nil {
+		t.Fatalf("RemovePeer a: %v", err)
+	}
+	if _, err := c.WireGuardServer.AddPeer(ctx, glinet.WireGuardServerPeer{Name: "c"}); err != nil {
+		t.Fatalf("AddPeer c: %v", err)
+	}
+
+	peers, err := c.WireGuardServer.ListPeers(ctx)
+	if err != nil {
+		t.Fatalf("ListPeers: %v", err)
+	}
+	if len(peers) != 2 || peers[0].ClientIP == peers[1].ClientIP {
+		t.Errorf("ListPeers = %+v, want 2 peers with different client IPs", peers)
+	}
+}

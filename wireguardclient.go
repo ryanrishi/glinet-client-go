@@ -183,12 +183,17 @@ func (s *WireGuardClientService) FindPeer(ctx context.Context, groupID, peerID i
 
 // AddGroup adds a custom group with the name name and returns its ID. The router gives the ID; the
 // web UI does not read the result of add_group, but takes the last group of the next list. So
-// AddGroup reads the list before and after the write and returns the ID of the new group.
+// AddGroup reads the list before and after the write and returns the ID of the new group. Calls of
+// AddGroup and AddPeer on one Client run one at a time; a write by another client between the two
+// reads gives an error.
 //
 // Not verified on a router: the parameters come from the web UI code. The web UI adds a group
 // with a default name and then renames it with set_group. It accepts names of 1-64 characters
 // that do not start with "." and have no "~".
 func (s *WireGuardClientService) AddGroup(ctx context.Context, name string) (int, error) {
+	s.client.wgAddMu.Lock()
+	defer s.client.wgAddMu.Unlock()
+
 	before, err := s.ListGroups(ctx)
 	if err != nil {
 		return 0, err
@@ -242,6 +247,9 @@ func (s *WireGuardClientService) RemoveGroup(ctx context.Context, groupID int) e
 // Not verified on a router: the parameters come from the web UI code. See SetPeer for the fields
 // that are sent.
 func (s *WireGuardClientService) AddPeer(ctx context.Context, groupID int, peer WireGuardPeer) (int, error) {
+	s.client.wgAddMu.Lock()
+	defer s.client.wgAddMu.Unlock()
+
 	before, err := s.ListPeers(ctx, groupID)
 	if err != nil {
 		return 0, err

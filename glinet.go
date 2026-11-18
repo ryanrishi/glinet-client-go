@@ -33,6 +33,8 @@ type Client struct {
 	sid    string
 	nextID atomic.Int64
 
+	wgAddMu sync.Mutex
+
 	// services
 	AccessControl   *AccessControlService
 	AdGuard         *AdGuardService

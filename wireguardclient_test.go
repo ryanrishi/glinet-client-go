@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
+	"slices"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/ryanrishi/glinet-client-go"
@@ -269,5 +271,64 @@ func TestWireGuardClientRoutes(t *testing.T) {
 	}
 	if len(routes.IPv4) != 1 || routes.IPv4[0] != route || len(routes.IPv6) != 0 {
 		t.Errorf("ListRoutes = %+v, want only %+v", routes, route)
+	}
+}
+
+func TestWireGuardClientStartSetsEndpoint(t *testing.T) {
+	c, _ := newClient(t)
+	ctx := context.Background()
+
+	peerID, err := c.WireGuardClient.AddPeer(ctx, customGroup, glinet.WireGuardPeer{Name: "other", AddressV4: "10.0.0.3/32", Endpoint: "vpn-test.example.com:51821"})
+	if err != nil {
+		t.Fatalf("AddPeer: %v", err)
+	}
+
+	for _, tt := range []struct {
+		peerID int
+		domain string
+		port   int
+	}{
+		{peerID, "vpn-test.example.com", 51821},
+		{3578, "vpn-1.example.com", 51820},
+	} {
+		if err := c.WireGuardClient.Start(ctx, customGroup, tt.peerID); err != nil {
+			t.Fatalf("Start: %v", err)
+		}
+		status, err := c.WireGuardClient.GetStatus(ctx)
+		if err != nil || status.PeerID != tt.peerID || status.Domain != tt.domain || status.Port != tt.port {
+			t.Errorf("GetStatus after Start of %d = %+v, %v, want domain %s port %d", tt.peerID, status, err, tt.domain, tt.port)
+		}
+	}
+}
+
+func TestWireGuardClientConcurrentAdds(t *testing.T) {
+	c, _ := newClient(t)
+	ctx := context.Background()
+
+	const n = 8
+	ids := make([]int, 2*n)
+	errs := make([]error, 2*n)
+	var wg sync.WaitGroup
+	for i := range n {
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			ids[i], errs[i] = c.WireGuardClient.AddGroup(ctx, "group")
+		}()
+		go func() {
+			defer wg.Done()
+			ids[n+i], errs[n+i] = c.WireGuardClient.AddPeer(ctx, customGroup, glinet.WireGuardPeer{Name: "peer"})
+		}()
+	}
+	wg.Wait()
+
+	for i, err := range errs {
+		if err != nil {
+			t.Errorf("call %d: %v", i, err)
+		}
+	}
+	slices.Sort(ids)
+	if len(slices.Compact(slices.Clone(ids))) != len(ids) {
+		t.Errorf("IDs = %v, want all different", ids)
 	}
 }

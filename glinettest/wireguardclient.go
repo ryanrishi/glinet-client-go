@@ -3,7 +3,9 @@ package glinettest
 import (
 	"encoding/json"
 	"maps"
+	"net"
 	"slices"
+	"strconv"
 	"sync"
 )
 
@@ -20,7 +22,8 @@ import (
 //     removes it with its peers.
 //   - add_config adds a peer with a new peer_id and the sent fields; set_config sets the fields
 //     that it gets and keeps the others; remove_config and clear_config_list remove peers.
-//   - start sets status 1 and the peer of the tunnel; stop sets status 0 and keeps the rest.
+//   - start sets status 1, the peer of the tunnel, and domain and port from its end_point; stop
+//     sets status 0 and keeps the rest.
 //   - set_setting sets the fields that it gets. A peer without a setting has
 //     {"default_metric":0,"local_access":false,"masq":true}.
 //   - The writes return []. An unknown group or peer gives ErrInvalidParams.
@@ -258,6 +261,10 @@ func (m *WireGuardClient) start(p map[string]any) (any, error) {
 	m.status["peer_id"] = peer["peer_id"]
 	m.status["name"] = peer["name"]
 	m.status["ipv4"] = peer["address_v4"]
+	endpoint, _ := peer["end_point"].(string)
+	host, port, _ := net.SplitHostPort(endpoint)
+	m.status["domain"] = host
+	m.status["port"], _ = strconv.Atoi(port)
 	return writeResult, nil
 }
 

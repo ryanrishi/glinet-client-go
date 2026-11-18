@@ -16,7 +16,7 @@ import (
 // code:
 //   - generate_key sets initialization to true and sets made-up keys.
 //   - set_config and set_setting set the fields that they get and keep the others.
-//   - add_peer adds a peer with the sent fields, a new peer_id and a client_ip, and returns
+//   - add_peer adds a peer with the sent fields, a new peer_id and the first unused client_ip, and returns
 //     {"peer_id": <id>}; set_peer sets the fields that it gets; remove_peer removes the peer.
 //   - generate_peer returns a configuration built from the server and the peer.
 //   - start and stop set server.status in get_status to 1 and 0.
@@ -108,10 +108,19 @@ func (m *WireGuardServer) addPeer(p map[string]any) (any, error) {
 	m.nextID++
 	peer := maps.Clone(p)
 	peer["peer_id"] = m.nextID
-	peer["client_ip"] = fmt.Sprintf("10.0.0.%d", len(m.peers)+2)
+	peer["client_ip"] = m.unusedClientIP()
 	peer["deprecated"] = 0
 	m.peers = append(m.peers, peer)
 	return map[string]any{"peer_id": m.nextID}, nil
+}
+
+func (m *WireGuardServer) unusedClientIP() string {
+	for n := 2; ; n++ {
+		ip := fmt.Sprintf("10.0.0.%d", n)
+		if !slices.ContainsFunc(m.peers, func(peer map[string]any) bool { return peer["client_ip"] == ip }) {
+			return ip
+		}
+	}
 }
 
 func (m *WireGuardServer) peerIndex(p map[string]any) (int, error) {
