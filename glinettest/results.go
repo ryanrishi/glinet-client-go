@@ -224,7 +224,7 @@ const (
 			"mode": 0,
 			"netnat_enabled": true,
 			"timestamp": 1794517485,
-			"tzoffset": "-0500",
+			"tzoffset": "+0000",
 			"uptime": 835.31
 		},
 		"wifi": [
@@ -398,10 +398,10 @@ const (
 		"wan_info": [
 			{
 				"info": {
-					"broadcast": "192.168.0.255",
-					"ipaddr": "192.168.0.210",
+					"broadcast": "192.168.100.255",
+					"ipaddr": "192.168.100.20",
 					"netmask": "255.255.255.0",
-					"network": "192.168.0.0",
+					"network": "192.168.100.0",
 					"prefix": 24
 				},
 				"interface": "wwan"
@@ -424,7 +424,7 @@ const (
 			},
 			{
 				"device": "sta0",
-				"ip": "192.168.0.1",
+				"ip": "192.168.100.1",
 				"mac": "02:00:00:00:00:37"
 			}
 		]
@@ -926,7 +926,7 @@ const (
 				"allowed_ips": "0.0.0.0/0",
 				"dns": "10.66.0.4",
 				"end_point": "vpn-2.example.com:51820",
-				"listen_port": 14237,
+				"listen_port": 41820,
 				"name": "peer-2",
 				"peer_id": 8913,
 				"persistent_keepalive": 25,

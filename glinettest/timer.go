@@ -45,7 +45,7 @@ var (
 func newTimer() *Timer {
 	return &Timer{
 		led:    LEDSchedule{TurnOnHour: "07", TurnOnMin: "00", TurnOffHour: "22", TurnOffMin: "00", Week: allDays},
-		reboot: RebootSchedule{Hour: "03", Min: "00", Week: []int{1, 4}},
+		reboot: RebootSchedule{Hour: "02", Min: "15", Week: []int{3, 5}},
 	}
 }
 

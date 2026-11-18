@@ -61,7 +61,7 @@ func TestTimerRebootSchedule(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetRebootSchedule: %v", err)
 	}
-	want := glinet.RebootSchedule{Hour: "03", Min: "00", Week: []int{1, 4}}
+	want := glinet.RebootSchedule{Hour: "02", Min: "15", Week: []int{3, 5}}
 	if !reflect.DeepEqual(*res, want) {
 		t.Errorf("GetRebootSchedule = %+v, want %+v", *res, want)
 	}

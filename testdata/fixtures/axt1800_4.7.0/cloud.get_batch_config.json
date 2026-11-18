@@ -44,9 +44,9 @@
         "hostname": "hostname-1",
         "language": "en",
         "local_domain": "console.gl-inet.com",
-        "timezone": "EST5EDT,M3.2.0,M11.1.0",
+        "timezone": "UTC0",
         "upgrade_url": "https://fw.gl-inet.com/firmware/axt1800/release",
-        "zonename": "America/New York"
+        "zonename": "UTC"
       },
       "wifi": [
         {

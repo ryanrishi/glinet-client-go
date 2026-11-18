@@ -24,7 +24,7 @@
           "allowed_ips": "0.0.0.0/0",
           "dns": "10.66.0.4",
           "end_point": "vpn-2.example.com:51820",
-          "listen_port": 14237,
+          "listen_port": 41820,
           "name": "peer-2",
           "peer_id": 8913,
           "persistent_keepalive": 25,

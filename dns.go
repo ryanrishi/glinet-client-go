@@ -9,7 +9,7 @@ type DNSService service
 //
 // Mode is "auto", "secure", "manual" or "proxy" (from the web UI; only "auto" was tested).
 // In mode "auto", Server is the upstream DNS servers that the router learned, each as
-// "<interface> <ip>", for example "wwan 192.168.4.253" or "wg 10.66.0.1". They change with the
+// "<interface> <ip>", for example "wwan 192.168.100.53" or "wg 10.66.0.1". They change with the
 // uplink and the VPN. DoTProvider, NextDNSID, ControlDID and FreeControlDID are for DNS over TLS
 // in mode "secure".
 type DNSConfig struct {

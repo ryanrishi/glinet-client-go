@@ -15,11 +15,11 @@
     "jsonrpc": "2.0",
     "result": {
       "enable": false,
-      "hour": "03",
-      "min": "00",
+      "hour": "02",
+      "min": "15",
       "week": [
-        1,
-        4
+        3,
+        5
       ]
     }
   }

@@ -15,11 +15,11 @@
     "jsonrpc": "2.0",
     "result": {
       "autotimezone_enabled": true,
-      "localtime": 1794499485,
+      "localtime": 1794517485,
       "timestamp": 1794517485,
-      "timezone": "EST5EDT,M3.2.0,M11.1.0",
-      "tzoffset": "-0500",
-      "zonename": "America/New York"
+      "timezone": "UTC0",
+      "tzoffset": "+0000",
+      "zonename": "UTC"
     }
   }
 }

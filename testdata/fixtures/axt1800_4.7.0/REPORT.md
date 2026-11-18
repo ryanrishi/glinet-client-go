@@ -265,21 +265,21 @@ Not verified: whether the LEDs turn off and on at the set times (enabled for les
 
 ### timer reboot schedule (write test, 2026-11-14)
 
-Verified on the router only with `enable: false`, so that no reboot could be scheduled. The schedule was `{"enable":false,"hour":"03","min":"00","week":[1,4]}` before and after the test. The fixtures `timer.*_reboot*.json` with request IDs 12000-12010 are one sequence (`glinettest/timer_test.go` replays them).
+Verified on the router only with `enable: false`, so that no reboot could be scheduled. The schedule was `{"enable":false,"hour":"02","min":"15","week":[3,5]}` before and after the test. The fixtures `timer.*_reboot*.json` with request IDs 12000-12010 are one sequence (`glinettest/timer_test.go` replays them).
 
 | Call | Params | Result |
 |---|---|---|
 | `get_reboot` | none | `{"enable":bool, "hour":string, "min":string, "week":[int]}` |
 | `set_reboot` | `{enable, hour?, min?, week?}` | `[]` |
 
-Formats: as in "timer LED schedule". `hour` and `min` are strings with two digits (`"03"`, `"00"`) in the router's local time. The web UI labels the days 0 Sunday to 6 Saturday, and sends `week` sorted.
+Formats: as in "timer LED schedule". `hour` and `min` are strings with two digits (`"02"`, `"15"`) in the router's local time. The web UI labels the days 0 Sunday to 6 Saturday, and sends `week` sorted.
 
 Behavior:
 - A write with `enable: false`, without `enable`, or `{}` sets `enable` to `false` and ignores `hour`, `min` and `week` (`{"enable":false,"hour":"05","min":"30","week":[2]}` changed nothing else).
 - `enable: null` and `week` as a string (`"1,2"`) return `-32602 Invalid params` (no `err`) and change nothing.
 - Each write returned in about 4 ms.
 
-Not verified (no write with `enable: true` was sent): the enabled write and its errors, how `hour`, `min` and `week` are stored, and the day numbering of the router. A write with `enable: true` can only set the values; after it the router keeps them, so a test of it cannot restore the initial values `03:00` on days `[1,4]` without a schedule that can run in less than 6 days. The web UI sends `{enable: true, hour, min, week}` and only `{enable: false}` to disable, as for the LED schedule, so the enabled write probably works like `timer.set_led` (all fields necessary, else `err_code -1`). `glinettest` emulates it like that.
+Not verified (no write with `enable: true` was sent): the enabled write and its errors, how `hour`, `min` and `week` are stored, and the day numbering of the router. A write with `enable: true` can only set the values; after it the router keeps them, so a test of it cannot restore the initial values without an enabled schedule that can reboot the router before the restore. The web UI sends `{enable: true, hour, min, week}` and only `{enable: false}` to disable, as for the LED schedule, so the enabled write probably works like `timer.set_led` (all fields necessary, else `err_code -1`). `glinettest` emulates it like that.
 
 Differences from the 2023 reference: `hour`, `min` and `week` are not required (and are ignored) when `enable` is `false`. `set_reboot` returns `[]`, not `null`.
 
@@ -314,7 +314,7 @@ What the web UI does when the user saves the hosts file (from the UI code, not t
 
 ### dns config (write test, 2026-11-14)
 
-Verified on the router in mode `auto`, with a WireGuard client tunnel that supplies DNS (`wg 10.66.0.1` in `server`). The config was `{"mode":"auto","force_dns":false,"rebind_protection":false,"override_vpn":true,"dot_provider":"0","nextdns_id":"","controld_id":"","free_controld_id":"","server":["wwan 192.168.4.253","wg 10.66.0.1"]}` before and after the test, and `server` did not change during it. Only `rebind_protection` and `force_dns` were changed on purpose, one at a time. The fixtures `dns.*_config*.json` with request IDs 14000-14315 are one sequence (`glinettest/dns_test.go` replays them).
+Verified on the router in mode `auto`, with a WireGuard client tunnel that supplies DNS (`wg 10.66.0.1` in `server`). The config was `{"mode":"auto","force_dns":false,"rebind_protection":false,"override_vpn":true,"dot_provider":"0","nextdns_id":"","controld_id":"","free_controld_id":"","server":["wwan 192.168.100.53","wg 10.66.0.1"]}` before and after the test, and `server` did not change during it. Only `rebind_protection` and `force_dns` were changed on purpose, one at a time. The fixtures `dns.*_config*.json` with request IDs 14000-14315 are one sequence (`glinettest/dns_test.go` replays them).
 
 | Call | Params | Result |
 |---|---|---|
@@ -340,7 +340,7 @@ Differences from the 2023 reference:
 Not verified: modes other than `auto` (the active tunnel supplies DNS, so no mode change was tested); `server`, `proto`, `dot_provider` and the IDs on write; an invalid `mode`; the errors `-1` (DNS is occupied) and `-2`/`-3` of the reference and the web UI; a write of `override_vpn` on purpose and what it does with the tunnel DNS.
 
 ### dns
-- `get_config`: no `proto`. Extra: `controld_id`, `dot_provider` (string, `"0"`), `free_controld_id`, `override_vpn`. `server` items are strings like `"wwan 192.168.4.253"`.
+- `get_config`: no `proto`. Extra: `controld_id`, `dot_provider` (string, `"0"`), `free_controld_id`, `override_vpn`. `server` items are strings like `"wwan 192.168.100.53"`.
 - `get_host`, `get_info`: match.
 
 ### adguardhome
@@ -678,9 +678,10 @@ The program redacted the results in memory before it printed or wrote anything, 
 - keys (`private_key`, `public_key`, `preshared_key`): base64 of SHA-256 of a counter; empty values stay empty;
 - names: `group-N` for groups of type 2 and 3, `peer-N` for peers (the names of the provider groups, type 1, are presets of the firmware and are kept);
 - endpoints: `vpn-N.example.com:51820`, and `port` 51820 in `get_status` and `wg-server.get_config`;
-- addresses in `address_v4`, `address_v6`, `allowed_ips`, `dns`, `ipv4`: `10.66.x.y` and `fd00:66::x` with the real prefix lengths (`0.0.0.0/0` and `::/0` are kept), the same real address always gives the same made-up address.
+- addresses in `address_v4`, `address_v6`, `allowed_ips`, `dns`, `ipv4`: `10.66.x.y` and `fd00:66::x` with the real prefix lengths (`0.0.0.0/0` and `::/0` are kept), the same real address always gives the same made-up address;
+- `listen_port`: 0 and the default 51820 are kept, other ports are made up.
 
-Real: IDs, flags, numbers (MTU, keepalive, listen ports, byte counts) and the field structure.
+Real: IDs, flags, numbers (MTU, keepalive, byte counts) and the field structure.
 
 Findings of the reads:
 - `group_id` and `peer_id` are numbers that the router gives (for example 4 digits). They were the same as in the probe of 5 days before. They are not positions in a list.
@@ -792,9 +793,20 @@ Not read-only or not sure: all `set_*`, `add_*`, `remove_*`, etc. Also these `ge
 
 ## Redaction
 
-Replaced with stable fake values (same real value → same fake value, type kept): password, cipher password, sid, salt, nonce, login hash, Wi-Fi keys, private keys, preshared keys, tokens, `sn`, `sn_bak`, `ddns` / `device_id`, MAC addresses (`02:00:00:00:xx:xx`), public IPv4 (`203.0.113.x`), global/ULA/link-local IPv6 (`2001:db8::x`, `fd00::x`, `fe80::x`), WireGuard endpoint hostnames (`host-N.example.com`), SSIDs (`ssid-N`, also the SSIDs of other networks in `repeater.*`), hostnames and client names (`hostname`, `alias`, and `name` in objects that have a `mac`: `hostname-N`), WireGuard public keys (base64 of 32 bytes from SHA-256 of a counter; empty values stay empty). A fake value replaces the real value also inside other strings, such as log lines, when the real value has 4 or more characters. The number N depends on the order of the probe run, so it can change between runs.
+Replaced with stable fake values (same real value → same fake value, type kept): password, cipher password, sid, salt, nonce, login hash, Wi-Fi keys, private keys, preshared keys, tokens, `sn`, `sn_bak`, `ddns` / `device_id`, MAC addresses (`02:00:00:00:xx:xx`), public IPv4 (`203.0.113.x`), global/ULA/link-local IPv6 (`2001:db8::x`, `fd00::x`, `fe80::x`), WireGuard endpoint hostnames (`host-N.example.com`), SSIDs (`ssid-N`, also the SSIDs of other networks in `repeater.*`), hostnames and client names (`hostname`, `alias`, and `name` in objects that have a `mac`: `hostname-N`), WireGuard public keys (base64 of 32 bytes from SHA-256 of a counter; empty values stay empty), and:
+- private and shared (`100.64.0.0/10`) IPv4 addresses outside the default LAN (`192.168.8.0/24`) and guest (`192.168.9.0/24`) networks: each real /24 network gets one made-up network `10.x.y`, and the host part and the prefix length stay;
+- names of VPN groups (`group_name`: `group-N`), except the built-in provider groups `AzireVPN`, `FromApp`, `Hideme`, `IPVanish`, `Mullvad`, `NordVPN`, `PIA` and `Surfshark`;
+- names of VPN peers and configurations (`name` in objects that have a `peer_id` or a `client_id`: `peer-N`), except the service names `wgclient`, `wgserver`, `ovpnclient` and `ovpnserver`;
+- names of firewall rules and port forwards (`name` in objects that have a `src` and a `dest`: `rule-N`);
+- VPN usernames (`username` other than `root`: `user-N`);
+- `listen_port` other than 0 and the default 51820: 40000 + N;
+- the time zone: `zonename` `UTC`, `timezone` `UTC0`, `tzoffset` `+0000`, and `localtime` gets the value of `timestamp`.
 
-Kept: private IPv4, well-known public DNS resolvers, VPN group names, VPN peer names and VPN usernames (`ovpn-client`), time zone. The `wg-client`, `wg-server` and `vpn-policy` fixtures were replaced on 2026-11-17 with a stricter redaction (see "WireGuard and VPN policy"). `cmd/probe` still keeps VPN names and private addresses: do not run it again for these modules without a change of its redaction.
+A fake value replaces the real value also inside other strings, such as log lines, when the real value has 4 or more characters. The number N depends on the order of the probe run, so it can change between runs.
+
+Kept: loopback, link-local, multicast and broadcast IPv4 addresses, the addresses of the default LAN and guest networks, well-known public DNS resolvers, the built-in VPN provider group names, all other `name` fields (firmware lists, for example DNS servers, apps, Wi-Fi interfaces and services), settings, flags, IDs, counters, and the times in log lines.
+
+The fixtures in this directory come from an earlier version of `cmd/probe`. After the probe, the values from the owner's network and settings were replaced by hand with made-up values: the uplink network and its DNS server (`192.168.100.x`), the connection UUID of the uplink, a link-local client address, a WireGuard `listen_port`, the time zone (`UTC`) and the reboot schedule. The `wg-client`, `wg-server` and `vpn-policy` fixtures have the made-up values of "WireGuard and VPN policy".
 
 ## Results
 

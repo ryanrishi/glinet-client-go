@@ -17,10 +17,10 @@
       "wan_info": [
         {
           "info": {
-            "broadcast": "192.168.0.255",
-            "ipaddr": "192.168.0.210",
+            "broadcast": "192.168.100.255",
+            "ipaddr": "192.168.100.20",
             "netmask": "255.255.255.0",
-            "network": "192.168.0.0",
+            "network": "192.168.100.0",
             "prefix": 24
           },
           "interface": "wwan"
