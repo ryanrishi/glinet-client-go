@@ -85,6 +85,23 @@ These differences come from the router state, not from the firmware:
 
 It does not use the methods that are gone. The reads that it uses decode on 4.8.3. On 4.8.3, `glinet_system_status` shows no `wgclient` service and no `ovpnclient` service.
 
+## DNS modes
+
+`DNSService.SetConfig` (client `v0.11.0`) sends the fields of each DNS mode. The formats of the `manual`, `proxy` and `secure` writes come from the web UI code of firmware 4.8.3 (the DNS view, `handleApplyDnsConfig`) and were NOT tested on a router. Only `auto` writes were tested, on firmware 4.7.0 (see the 4.7.0 report).
+
+| `mode` | Fields that the web UI sends in addition to `force_dns`, `rebind_protection`, `override_vpn` |
+|---|---|
+| `auto` | none |
+| `manual` | `server`: 1 to 4 IPv4 or IPv6 addresses; the web UI refuses a list without an IPv4 address |
+| `proxy` | `server`: one item `"<ip>#<port>"`, port 1 to 65535; the web UI adds `#53` when the user gives no port |
+| `secure` | `proto`: one of `dns.get_info` `protos`. For `DoT`: `dot_provider` `"0"` (Cloudflare, no ID), `"1"` (NextDNS, `nextdns_id`, can be empty), `"2"` (Control D paid plan, `controld_id`), `"3"` (Control D free, `free_controld_id`, a value such as `"p0"`). For `DoH`, `DNSCrypt`, `oDoH`: `server`, one or more names from `dns.get_info` `serverlist`. |
+
+While AdGuard Home is enabled, the web UI sends only the three flags. The web UI shows the error `-3` of `set_config` as an invalid resolver ID.
+
+The web UI reads `proto` from `get_config` only in mode `secure`, `server` as the address list in `manual`, as `server[0]` in `proxy`, and as the server names in `secure` with `DoH`, `DNSCrypt` or `oDoH`. It reads `dot_provider` `"2"` and `"3"` as Control D and an empty `dot_provider` as Control D.
+
+Not known: what the router returns in `server` in mode `secure` with `DoT`; if the router returns `proto` in modes other than `secure` and `auto`; if a write keeps the IDs of the other DoT providers; how the router answers an invalid write.
+
 ## Not checked
 
 - Every write method. No write was called on 4.8.3. It is not known if the `wg-client` writes still exist or work, or what the `vpn-client` writes are.
