@@ -110,6 +110,19 @@ func TestLogin(t *testing.T) {
 	}
 }
 
+func TestLoginSHA256(t *testing.T) {
+	srv := glinettest.NewServer(t)
+	srv.HashMethod = "sha256"
+
+	c, err := glinet.NewClientWithHost(srv.URL, srv.Username, []byte(srv.Password))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.GetSid() == "" {
+		t.Error("session ID is empty")
+	}
+}
+
 func TestLoginWrongPassword(t *testing.T) {
 	srv := glinettest.NewServer(t)
 
@@ -125,7 +138,7 @@ func TestLoginWrongPassword(t *testing.T) {
 func TestLoginUnsupportedAlgorithm(t *testing.T) {
 	tests := map[string]string{
 		"alg 5":       `{"alg":5,"salt":"abcdefgh","nonce":"n"}`,
-		"hash_method": `{"alg":1,"salt":"abcdefgh","nonce":"n","hash_method":"sha256"}`,
+		"hash-method": `{"alg":1,"salt":"abcdefgh","nonce":"n","hash-method":"sha512"}`,
 	}
 
 	for name, challenge := range tests {

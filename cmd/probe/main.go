@@ -155,7 +155,7 @@ func (p *probe) login(username, password string, r *redactor) error {
 			Alg        int    `json:"alg"`
 			Salt       string `json:"salt"`
 			Nonce      string `json:"nonce"`
-			HashMethod string `json:"hash_method"`
+			HashMethod string `json:"hash-method"`
 		} `json:"result"`
 	}
 	if err := json.Unmarshal(raw, &ch); err != nil {

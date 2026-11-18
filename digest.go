@@ -3,13 +3,23 @@ package glinet
 import (
 	"context"
 	"crypto/md5"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"hash"
 
 	"github.com/GehirnInc/crypt/md5_crypt"
 )
 
 const algMD5Crypt = 1
+
+// loginHashes has the hash of the login for each hash-method of a challenge. A challenge
+// without hash-method uses MD5.
+var loginHashes = map[string]func() hash.Hash{
+	"":       md5.New,
+	"md5":    md5.New,
+	"sha256": sha256.New,
+}
 
 // DigestService calls the challenge and login methods.
 type DigestService service
@@ -23,7 +33,7 @@ type ChallengeResponse struct {
 	Salt       string `json:"salt"`
 	Algorithm  int    `json:"alg"`
 	Nonce      string `json:"nonce"`
-	HashMethod string `json:"hash_method,omitempty"`
+	HashMethod string `json:"hash-method,omitempty"`
 }
 
 type loginRequest struct {
@@ -54,8 +64,9 @@ func (s *DigestService) Login(ctx context.Context, username string, password []b
 		return nil, err
 	}
 
-	if challenge.Algorithm != algMD5Crypt || challenge.HashMethod != "" {
-		return nil, fmt.Errorf("glinet: unsupported login algorithm (alg %d, hash_method %q): only alg %d (MD5-crypt) is supported",
+	loginHash, ok := loginHashes[challenge.HashMethod]
+	if challenge.Algorithm != algMD5Crypt || !ok {
+		return nil, fmt.Errorf("glinet: unsupported login algorithm (alg %d, hash-method %q): only alg %d (MD5-crypt) with hash-method md5 or sha256 is supported",
 			challenge.Algorithm, challenge.HashMethod, algMD5Crypt)
 	}
 
@@ -64,10 +75,11 @@ func (s *DigestService) Login(ctx context.Context, username string, password []b
 		return nil, err
 	}
 
-	loginHash := md5.Sum([]byte(username + ":" + passwordHash + ":" + challenge.Nonce))
+	h := loginHash()
+	h.Write([]byte(username + ":" + passwordHash + ":" + challenge.Nonce))
 
 	var res LoginResponse
-	err = s.client.rpc(ctx, "login", loginRequest{Username: username, Hash: hex.EncodeToString(loginHash[:])}, &res)
+	err = s.client.rpc(ctx, "login", loginRequest{Username: username, Hash: hex.EncodeToString(h.Sum(nil))}, &res)
 	if err != nil {
 		return nil, err
 	}

@@ -8,6 +8,7 @@ package glinettest
 import (
 	"crypto/md5"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -59,6 +60,8 @@ type Server struct {
 	URL      string
 	Username string
 	Password string
+	// HashMethod is the hash-method of the challenge: "" (MD5, firmware 4.7.0) or "sha256".
+	HashMethod string
 
 	System          *System
 	AccessControl   *AccessControl
@@ -242,7 +245,11 @@ func (s *Server) handleChallenge(params json.RawMessage) (any, error) {
 	defer s.mu.Unlock()
 	s.challenge = challenge{nonce: rand.Text(), issued: time.Now()}
 
-	return map[string]any{"alg": 1, "salt": s.salt, "nonce": s.challenge.nonce}, nil
+	result := map[string]any{"alg": 1, "salt": s.salt, "nonce": s.challenge.nonce}
+	if s.HashMethod != "" {
+		result["hash-method"] = s.HashMethod
+	}
+	return result, nil
 }
 
 func (s *Server) handleLogin(params json.RawMessage) (any, error) {
@@ -267,8 +274,12 @@ func (s *Server) handleLogin(params json.RawMessage) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	want := md5.Sum([]byte(s.Username + ":" + passwordHash + ":" + c.nonce))
-	if p.Hash != hex.EncodeToString(want[:]) {
+	want := md5.New()
+	if s.HashMethod == "sha256" {
+		want = sha256.New()
+	}
+	want.Write([]byte(s.Username + ":" + passwordHash + ":" + c.nonce))
+	if p.Hash != hex.EncodeToString(want.Sum(nil)) {
 		return nil, ErrAccessDenied
 	}
 
