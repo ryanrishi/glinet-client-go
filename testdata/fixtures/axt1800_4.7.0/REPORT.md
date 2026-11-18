@@ -7,7 +7,7 @@
 
 ## Login
 
-`challenge` returns `{"alg":1,"salt":...,"nonce":...}`. There is no `hash_method`, so the hash is MD5. `alg` 1 = MD5-crypt. `login` returns `{"sid":...,"username":"root"}`. See `challenge.json` and `login.json`.
+`challenge` returns `{"alg":1,"salt":...,"nonce":...}`. There is no `hash-method`, so the hash of the login is MD5. `alg` 1 = MD5-crypt. `login` returns `{"sid":...,"username":"root"}`. See `challenge.json` and `login.json`.
 
 ## Error format
 
