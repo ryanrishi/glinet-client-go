@@ -8,10 +8,10 @@
       "get_mac_policy",
       {}
     ],
-    "id": 149
+    "id": 30020
   },
   "response": {
-    "id": 149,
+    "id": 30020,
     "jsonrpc": "2.0",
     "result": {
       "default_policy": 1,

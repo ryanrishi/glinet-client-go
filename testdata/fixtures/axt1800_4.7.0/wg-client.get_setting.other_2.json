@@ -1,0 +1,26 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "wg-client",
+      "get_setting",
+      {
+        "group_id": 2082,
+        "peer_id": 3578
+      }
+    ],
+    "id": 30008
+  },
+  "response": {
+    "id": 30008,
+    "jsonrpc": "2.0",
+    "result": {
+      "default_metric": 0,
+      "local_access": false,
+      "masq": true,
+      "mtu": 1420
+    }
+  }
+}

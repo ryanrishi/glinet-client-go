@@ -8,10 +8,10 @@
       "get_proxy_mode",
       {}
     ],
-    "id": 146
+    "id": 30017
   },
   "response": {
-    "id": 146,
+    "id": 30017,
     "jsonrpc": "2.0",
     "result": {
       "mode": 0

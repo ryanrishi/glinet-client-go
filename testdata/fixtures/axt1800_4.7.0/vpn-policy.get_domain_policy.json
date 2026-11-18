@@ -8,10 +8,10 @@
       "get_domain_policy",
       {}
     ],
-    "id": 148
+    "id": 30019
   },
   "response": {
-    "id": 148,
+    "id": 30019,
     "jsonrpc": "2.0",
     "result": {
       "default_policy": 1,
