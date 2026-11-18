@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "igmp",
+      "get_config",
+      {}
+    ],
+    "id": 43
+  },
+  "response": {
+    "id": 43,
+    "jsonrpc": "2.0",
+    "result": {
+      "enable": false,
+      "version": 3
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "qos",
+      "get_device_group",
+      {}
+    ],
+    "id": 108
+  },
+  "response": {
+    "id": 108,
+    "jsonrpc": "2.0",
+    "result": {
+      "group": []
+    }
+  }
+}

@@ -1,0 +1,178 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "system",
+      "get_status",
+      {}
+    ],
+    "id": 4
+  },
+  "response": {
+    "id": 4,
+    "jsonrpc": "2.0",
+    "result": {
+      "client": [
+        {
+          "cable_total": 1,
+          "wireless_total": 0
+        }
+      ],
+      "network": [
+        {
+          "interface": "modem_1_1_2_6",
+          "online": false,
+          "up": false
+        },
+        {
+          "interface": "modem_1_1_2",
+          "online": false,
+          "up": false
+        },
+        {
+          "interface": "tethering",
+          "online": false,
+          "up": false
+        },
+        {
+          "interface": "wan6",
+          "online": false,
+          "up": false
+        },
+        {
+          "interface": "wwan6",
+          "online": false,
+          "up": false
+        },
+        {
+          "interface": "tethering6",
+          "online": false,
+          "up": false
+        },
+        {
+          "interface": "wwan",
+          "online": true,
+          "up": true
+        },
+        {
+          "interface": "wan",
+          "online": false,
+          "up": false
+        }
+      ],
+      "service": [
+        {
+          "name": "wgserver",
+          "status": 0
+        },
+        {
+          "name": "ovpnserver",
+          "status": 0
+        },
+        {
+          "name": "adguard",
+          "status": 0
+        },
+        {
+          "name": "tor",
+          "status": 0
+        },
+        {
+          "name": "parental_control",
+          "status": 0
+        },
+        {
+          "name": "tailscale",
+          "status": 0
+        },
+        {
+          "name": "zerotier",
+          "status": 0
+        },
+        {
+          "name": "mptun",
+          "status": 0
+        }
+      ],
+      "system": {
+        "cpu": {
+          "temperature": 70
+        },
+        "ddns_enabled": false,
+        "flash_app": 1486848,
+        "flash_free": 38817792,
+        "flash_total": 134217728,
+        "guest_ip": "192.168.9.1",
+        "guest_netmask": "255.255.255.0",
+        "ipv6_enabled": false,
+        "lan_ip": "192.168.8.1",
+        "lan_netmask": "255.255.255.0",
+        "load_average": [
+          0.1,
+          0.05,
+          0.06
+        ],
+        "memory_buff_cache": 160333824,
+        "memory_free": 64065536,
+        "memory_total": 424144896,
+        "mode": 0,
+        "netnat_enabled": true,
+        "timestamp": 1794979265,
+        "tzoffset": "+0000",
+        "uptime": 1628.24
+      },
+      "wifi": [
+        {
+          "band": "5G",
+          "channel": 153,
+          "encryption": "psk2",
+          "guest": false,
+          "hidden": false,
+          "mld": false,
+          "name": "default_radio0",
+          "passwd": "redacted-passwd-1",
+          "ssid": "ssid-1",
+          "up": true
+        },
+        {
+          "band": "2G",
+          "channel": 6,
+          "encryption": "psk2",
+          "guest": false,
+          "hidden": false,
+          "mld": false,
+          "name": "default_radio1",
+          "passwd": "redacted-passwd-2",
+          "ssid": "ssid-1",
+          "up": false
+        },
+        {
+          "band": "5G",
+          "channel": 153,
+          "encryption": "psk2",
+          "guest": true,
+          "hidden": false,
+          "mld": false,
+          "name": "guest5g",
+          "passwd": "redacted-passwd-2",
+          "ssid": "ssid-2",
+          "up": false
+        },
+        {
+          "band": "2G",
+          "channel": 6,
+          "encryption": "psk2",
+          "guest": true,
+          "hidden": false,
+          "mld": false,
+          "name": "guest2g",
+          "passwd": "redacted-passwd-2",
+          "ssid": "ssid-3",
+          "up": false
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "otbr",
+      "get_srp_server_config",
+      {}
+    ],
+    "id": 92
+  },
+  "response": {
+    "error": {
+      "code": -32601,
+      "message": "Method not found"
+    },
+    "id": 92,
+    "jsonrpc": "2.0"
+  }
+}

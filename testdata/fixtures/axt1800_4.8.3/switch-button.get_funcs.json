@@ -1,0 +1,52 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "switch-button",
+      "get_funcs",
+      {}
+    ],
+    "id": 126
+  },
+  "response": {
+    "id": 126,
+    "jsonrpc": "2.0",
+    "result": {
+      "funcs": [
+        {
+          "func": "adguardhome"
+        },
+        {
+          "func": "led"
+        },
+        {
+          "func": "repeater"
+        },
+        {
+          "func": "tor"
+        },
+        {
+          "func": "wifi",
+          "sub_func": [
+            {
+              "func": "main_wifi"
+            },
+            {
+              "func": "guest_wifi"
+            }
+          ]
+        },
+        {
+          "func": "vpn",
+          "sub_func": [
+            {
+              "func": "10"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "vpn-client",
+      "get_connection_methods",
+      {}
+    ],
+    "id": 145
+  },
+  "response": {
+    "id": 145,
+    "jsonrpc": "2.0",
+    "result": {
+      "connection_methods": [
+        "lan",
+        "wan",
+        "guest"
+      ]
+    }
+  }
+}

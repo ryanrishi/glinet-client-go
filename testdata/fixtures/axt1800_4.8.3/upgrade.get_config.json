@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "upgrade",
+      "get_config",
+      {}
+    ],
+    "id": 140
+  },
+  "response": {
+    "id": 140,
+    "jsonrpc": "2.0",
+    "result": {
+      "prompt": true,
+      "rc_upgrade": false
+    }
+  }
+}

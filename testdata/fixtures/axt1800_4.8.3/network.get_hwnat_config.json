@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "network",
+      "get_hwnat_config",
+      {}
+    ],
+    "id": 83
+  },
+  "response": {
+    "error": {
+      "code": -32601,
+      "message": "Method not found"
+    },
+    "id": 83,
+    "jsonrpc": "2.0"
+  }
+}

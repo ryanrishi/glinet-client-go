@@ -1,0 +1,20 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "nas-web",
+      "get_status",
+      {}
+    ],
+    "id": 77
+  },
+  "response": {
+    "id": 77,
+    "jsonrpc": "2.0",
+    "result": {
+      "enable": 0
+    }
+  }
+}

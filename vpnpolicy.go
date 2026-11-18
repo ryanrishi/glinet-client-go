@@ -7,7 +7,8 @@ import (
 )
 
 // VPNPolicyService calls the vpn-policy module: which traffic goes through the VPN client tunnel
-// (WireGuard or OpenVPN), and the global VPN policy.
+// (WireGuard or OpenVPN), and the global VPN policy. Firmware 4.8.3 does not have this module:
+// each read returns -32601 (method not found).
 type VPNPolicyService service
 
 const vpnPolicyModule = "vpn-policy"

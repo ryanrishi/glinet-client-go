@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "rs485",
+      "get_forward_config",
+      {}
+    ],
+    "id": 119
+  },
+  "response": {
+    "error": {
+      "code": -32601,
+      "message": "Method not found"
+    },
+    "id": 119,
+    "jsonrpc": "2.0"
+  }
+}

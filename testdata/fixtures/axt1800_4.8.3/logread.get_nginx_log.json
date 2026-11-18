@@ -1,0 +1,22 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "logread",
+      "get_nginx_log",
+      {
+        "type": "error"
+      }
+    ],
+    "id": 56
+  },
+  "response": {
+    "id": 56,
+    "jsonrpc": "2.0",
+    "result": {
+      "log": "2026/01/01 00:00:00 [error] 7673#0: *105 [lua] oui-rpc.lua:40: ?(): login failed, client: 192.168.8.193, server: , request: \"POST /rpc HTTP/1.1\", host: \"192.168.8.1\"\n2026/01/01 00:00:00 [notice] 7673#0: *111 [lua] oui-rpc.lua:46: ?(): login successful, client: 192.168.8.193, server: , request: \"POST /rpc HTTP/1.1\", host: \"192.168.8.1\"\n2026/01/01 00:00:00 [notice] 7675#0: *141 [lua] oui-rpc.lua:46: ?(): login successful, client: 192.168.8.193, server: , request: \"POST /rpc HTTP/1.1\", host: \"192.168.8.1\"\n2026/01/01 00:00:00 [notice] 7675#0: *176 [lua] oui-rpc.lua:46: ?(): login successful, client: 192.168.8.193, server: , request: \"POST /rpc HTTP/1.1\", host: \"192.168.8.1\"\n2026/01/01 00:00:00 [notice] 7675#0: *176 [lua] rpc.lua:263: call(): call: 'system.disk_info', client: 192.168.8.193, server: , request: \"POST /rpc HTTP/1.1\", host: \"192.168.8.1\"\n2026/01/01 00:00:00 [notice] 7675#0: *176 [lua] rpc.lua:263: call(): call: 'network.routes', client: 192.168.8.193, server: , request: \"POST /rpc HTTP/1.1\", host: \"192.168.8.1\"\n2026/01/01 00:00:00 [notice] 7675#0: *176 [lua] rpc.lua:263: call(): call: 'network.routes6', client: 192.168.8.193, server: , request: \"POST /rpc HTTP/1.1\", host: \"192.168.8.1\"\n2026/01/01 00:00:00 [error] 7675#0: *176 [lua] rpc.lua:150: dlsym: Symbol not found: get_status while sending to client, client: 192.168.8.193, server: , request: \"POST /rpc HTTP/1.1\", host: \"192.168.8.1\"\n2026/01/01 00:00:00 [error] 7675#0: *176 [lua] rpc.lua:150: dlsym: Symbol not found: get_status while sending to client, client: 192.168.8.193, server: , request: \"POST /rpc HTTP/1.1\", host: \"192.168.8.1\"\n2026/01/01 00:00:00 [error] 7675#0: *176 [lua] rpc.lua:150: dlsym: Symbol not found: get_route_list while sending to client, client: 192.168.8.193, server: , request: \"POST /rpc HTTP/1.1\", host: \"192.168.8.1\"\n2026/01/01 00:00:00 [error] 7675#0: *176 [lua] rpc.lua:150: dlsym: Symbol not found: get_setting while sending to client, client: 192.168.8.193, server: , request: \"POST /rpc HTTP/1.1\", host: \"192.168.8.1\"\nzerotier-cli: missing port and zerotier-one.port not found in /var/lib/zerotier-one\n2026/01/01 00:00:00 [notice] 7675#0: *435 [lua] oui-rpc.lua:46: ?(): login successful, client: 192.168.8.193, server: , request: \"POST /rpc HTTP/1.1\", host: \"192.168.8.1\"\n2026/01/01 00:00:00 [notice] 7675#0: *435 [lua] rpc.lua:263: call(): call: 'system.disk_info', client: 192.168.8.193, server: , request: \"POST /rpc HTTP/1.1\", host: \"192.168.8.1\"\n2026/01/01 00:00:00 [notice] 7675#0: *435 [lua] rpc.lua:263: call(): call: 'network.routes', client: 192.168.8.193, server: , request: \"POST /rpc HTTP/1.1\", host: \"192.168.8.1\"\n2026/01/01 00:00:00 [notice] 7675#0: *435 [lua] rpc.lua:263: call(): call: 'network.routes6', client: 192.168.8.193, server: , request: \"POST /rpc HTTP/1.1\", host: \"192.168.8.1\"\n2026/01/01 00:00:00 [error] 7675#0: *435 [lua] rpc.lua:150: dlsym: Symbol not found: get_status while sending to client, client: 192.168.8.193, server: , request: \"POST /rpc HTTP/1.1\", host: \"192.168.8.1\"\n2026/01/01 00:00:00 [error] 7675#0: *435 [lua] rpc.lua:150: dlsym: Symbol not found: get_status while sending to client, client: 192.168.8.193, server: , request: \"POST /rpc HTTP/1.1\", host: \"192.168.8.1\"\n2026/01/01 00:00:00 [error] 7675#0: *435 [lua] rpc.lua:150: dlsym: Symbol not found: get_route_list while sending to client, client: 192.168.8.193, server: , request: \"POST /rpc HTTP/1.1\", host: \"192.168.8.1\"\n2026/01/01 00:00:00 [error] 7675#0: *435 [lua] rpc.lua:150: dlsym: Symbol not found: get_setting while sending to client, client: 192.168.8.193, server: , request: \"POST /rpc HTTP/1.1\", host: \"192.168.8.1\"\nzerotier-cli: missing port and zerotier-one.port not found in /var/lib/zerotier-one\n2026/01/01 00:00:00 [notice] 7675#0: *694 [lua] oui-rpc.lua:46: ?(): login successful, client: 192.168.8.193, server: , request: \"POST /rpc HTTP/1.1\", host: \"192.168.8.1\"\n2026/01/01 00:00:00 [notice] 7675#0: *694 [lua] rpc.lua:263: call(): call: 'system.disk_info', client: 192.168.8.193, server: , request: \"POST /rpc HTTP/1.1\", host: \"192.168.8.1\"\n"
+    }
+  }
+}

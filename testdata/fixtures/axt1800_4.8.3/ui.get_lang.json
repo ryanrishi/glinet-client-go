@@ -1,0 +1,57 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "ui",
+      "get_lang",
+      {}
+    ],
+    "id": 138
+  },
+  "response": {
+    "id": 138,
+    "jsonrpc": "2.0",
+    "result": {
+      "lang": "en",
+      "list": [
+        {
+          "id": 16,
+          "label": "Deutsch",
+          "value": "de"
+        },
+        {
+          "id": 1,
+          "label": "English",
+          "value": "en"
+        },
+        {
+          "id": 20,
+          "label": "Español",
+          "value": "es"
+        },
+        {
+          "id": 34,
+          "label": "Italiano",
+          "value": "it"
+        },
+        {
+          "id": 82,
+          "label": "日本語",
+          "value": "ja"
+        },
+        {
+          "id": 2,
+          "label": "简体中文",
+          "value": "zh-cn"
+        },
+        {
+          "id": 3,
+          "label": "繁體中文",
+          "value": "zh-tw"
+        }
+      ]
+    }
+  }
+}

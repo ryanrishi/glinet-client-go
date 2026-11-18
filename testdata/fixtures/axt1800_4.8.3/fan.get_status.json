@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "fan",
+      "get_status",
+      {}
+    ],
+    "id": 34
+  },
+  "response": {
+    "id": 34,
+    "jsonrpc": "2.0",
+    "result": {
+      "speed": 0,
+      "status": false
+    }
+  }
+}

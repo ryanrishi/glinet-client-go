@@ -1,0 +1,22 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "qos",
+      "get_channel_bandwidth_ratio",
+      {}
+    ],
+    "id": 111
+  },
+  "response": {
+    "id": 111,
+    "jsonrpc": "2.0",
+    "result": {
+      "download": [],
+      "sync_ratio": false,
+      "upload": []
+    }
+  }
+}

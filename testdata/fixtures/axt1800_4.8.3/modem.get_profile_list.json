@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "modem",
+      "get_profile_list",
+      {}
+    ],
+    "id": 64
+  },
+  "response": {
+    "id": 64,
+    "jsonrpc": "2.0",
+    "result": {
+      "err_code": 20002001,
+      "err_msg": "Parameter not found"
+    }
+  }
+}

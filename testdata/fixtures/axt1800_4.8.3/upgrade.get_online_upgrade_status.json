@@ -1,0 +1,18 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "upgrade",
+      "get_online_upgrade_status",
+      {}
+    ],
+    "id": 141
+  },
+  "response": {
+    "id": 141,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}

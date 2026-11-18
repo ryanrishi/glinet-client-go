@@ -1,0 +1,29 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "network",
+      "get_netnat_config",
+      {}
+    ],
+    "id": 84
+  },
+  "response": {
+    "id": 84,
+    "jsonrpc": "2.0",
+    "result": {
+      "actype": 1,
+      "conflict_features": [
+        "mptun"
+      ],
+      "enable": true,
+      "list": [
+        1
+      ],
+      "qos_enabled": false,
+      "wifi_reload": false
+    }
+  }
+}

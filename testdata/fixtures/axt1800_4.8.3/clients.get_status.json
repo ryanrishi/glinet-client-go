@@ -1,0 +1,21 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "clients",
+      "get_status",
+      {}
+    ],
+    "id": 21
+  },
+  "response": {
+    "id": 21,
+    "jsonrpc": "2.0",
+    "result": {
+      "cable_total": 1,
+      "wireless_total": 0
+    }
+  }
+}

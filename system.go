@@ -112,11 +112,14 @@ type HardwareFeature struct {
 	Radio        string `json:"radio"`
 	ResetButton  string `json:"reset_button"`
 	RS485        bool   `json:"rs485"`
+	Screen       bool   `json:"screen"`
+	SIMO         bool   `json:"simo"`
 	Slot         string `json:"slot"`
 	Submodel     string `json:"submodel"`
 	SwitchButton string `json:"switch_button"`
 	USB          string `json:"usb"`
 	USB3         string `json:"usb3"`
+	USBPower     string `json:"usb_power"`
 	USBReset     string `json:"usb_reset"`
 	WAN          string `json:"wan"`
 }

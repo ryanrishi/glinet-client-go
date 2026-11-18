@@ -1,0 +1,18 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": [
+      "\u003csid\u003e",
+      "zerotier",
+      "get_status",
+      {}
+    ],
+    "id": 165
+  },
+  "response": {
+    "id": 165,
+    "jsonrpc": "2.0",
+    "result": []
+  }
+}
