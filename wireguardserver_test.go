@@ -2,6 +2,7 @@ package glinet_test
 
 import (
 	"context"
+	"encoding/json"
 	"reflect"
 	"testing"
 
@@ -71,7 +72,7 @@ func TestWireGuardServerConfig(t *testing.T) {
 	if err := c.WireGuardServer.SetConfig(ctx, glinet.WireGuardServerConfig{AddressV4: "10.0.1.1/24", Port: 51821, PrivateKey: key, AddressV6: "fd00:1::1/64"}); err != nil {
 		t.Fatalf("SetConfig: %v", err)
 	}
-	want = map[string]any{"address_v4": "10.0.1.1/24", "port": float64(51821), "private_key": key, "ipv6_enable": false, "address_v6": "fd00:1::1/64"}
+	want = map[string]any{"address_v4": "10.0.1.1/24", "port": float64(51821), "private_key": key, "address_v6": "fd00:1::1/64"}
 	if got := (*sent)[1]; !reflect.DeepEqual(got, want) {
 		t.Errorf("set_config params = %v, want %v", got, want)
 	}
@@ -95,6 +96,71 @@ func TestWireGuardServerConfig(t *testing.T) {
 	}
 	if got, err := c.WireGuardServer.GetSetting(ctx); err != nil || *got != setting {
 		t.Errorf("GetSetting = %+v, %v, want %+v", got, err, setting)
+	}
+}
+
+func TestWireGuardServerIPv6Enable(t *testing.T) {
+	enabled, disabled := true, false
+	for _, tc := range []struct {
+		name       string
+		result     string
+		ipv6Enable *bool
+	}{
+		{"present true", `{"address_v4": "10.0.1.1/24", "address_v6": "fd00:1::1/64", "ipv6_enable": true, "port": 51820}`, &enabled},
+		{"present false", `{"address_v4": "10.0.1.1/24", "address_v6": "fd00:1::1/64", "ipv6_enable": false, "port": 51820}`, &disabled},
+		{"absent", `{"address_v4": "10.0.1.1/24", "address_v6": "fd00:1::1/64", "port": 51820}`, nil},
+		{"present without IPv6 address", `{"address_v4": "10.0.1.1/24", "address_v6": "", "ipv6_enable": true, "port": 51820}`, &enabled},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c, srv := newClient(t)
+			ctx := context.Background()
+			srv.WireGuardServer.SetConfig(json.RawMessage(tc.result))
+			if tc.ipv6Enable == nil {
+				srv.WireGuardServer.RemoveConfigKey("ipv6_enable")
+			}
+			sent := sentParams(srv, "wg-server", "set_config")
+
+			config, err := c.WireGuardServer.GetConfig(ctx)
+			if err != nil {
+				t.Fatalf("GetConfig: %v", err)
+			}
+			if !reflect.DeepEqual(config.IPv6Enable, tc.ipv6Enable) {
+				t.Errorf("GetConfig IPv6Enable = %v, want %v", config.IPv6Enable, tc.ipv6Enable)
+			}
+
+			if err := c.WireGuardServer.SetConfig(ctx, *config); err != nil {
+				t.Fatalf("SetConfig: %v", err)
+			}
+			want := map[string]any{"address_v4": "10.0.1.1/24", "address_v6": config.AddressV6, "port": float64(51820)}
+			if tc.ipv6Enable != nil && config.AddressV6 != "" {
+				want["ipv6_enable"] = *tc.ipv6Enable
+			}
+			if got := (*sent)[0]; !reflect.DeepEqual(got, want) {
+				t.Errorf("set_config params = %v, want %v", got, want)
+			}
+
+			var state map[string]any
+			if err := json.Unmarshal(srv.WireGuardServer.Config(), &state); err != nil {
+				t.Fatal(err)
+			}
+			if got, ok := state["ipv6_enable"]; ok != (tc.ipv6Enable != nil) || (ok && got != *tc.ipv6Enable) {
+				t.Errorf("server ipv6_enable = %v (present %t), want %v", got, ok, tc.ipv6Enable)
+			}
+		})
+	}
+}
+
+func TestWireGuardServerDecodeFirmware483Config(t *testing.T) {
+	c, srv := newClient(t)
+	result := firmwareFixtureResult(t, "4.8.3", "wg-server.get_config.json")
+	srv.Handle("wg-server", "get_config", func(json.RawMessage) (any, error) { return result, nil })
+
+	config, err := c.WireGuardServer.GetConfig(context.Background())
+	if err != nil {
+		t.Fatalf("GetConfig: %v", err)
+	}
+	if config.IPv6Enable != nil {
+		t.Errorf("IPv6Enable = %v, want nil for firmware 4.8.3", *config.IPv6Enable)
 	}
 }
 

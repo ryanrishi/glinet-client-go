@@ -9,8 +9,8 @@ import (
 )
 
 // WireGuardServer serves the wg-server module. The configuration and setting are those of the
-// test router (not initialized, no peers), with made-up addresses, until a test or a write changes
-// them. The reads of that state match the router.
+// test router with firmware 4.7.0 (not initialized, no peers, with ipv6_enable), with made-up
+// addresses, until a test or a write changes them. The reads of that state match the router.
 //
 // The writes are assumptions, because they were not verified on a router; they follow the web UI
 // code:
@@ -49,11 +49,19 @@ func (m *WireGuardServer) Config() json.RawMessage {
 	return mustMarshal(m.config)
 }
 
-// SetConfig sets the result of get_config.
+// SetConfig sets the keys of result in the result of get_config and keeps the other keys.
 func (m *WireGuardServer) SetConfig(result json.RawMessage) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	mustUnmarshal(string(result), &m.config)
+}
+
+// RemoveConfigKey removes key from the result of get_config. Remove "ipv6_enable" to get the
+// result of firmware 4.8.3.
+func (m *WireGuardServer) RemoveConfigKey(key string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	delete(m.config, key)
 }
 
 func (m *WireGuardServer) register(s *Server) {
