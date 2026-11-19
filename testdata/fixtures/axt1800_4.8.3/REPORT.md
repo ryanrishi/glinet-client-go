@@ -560,3 +560,32 @@ Open points:
 - The fields of `get_status` groups (`id`, `rule`, `brief`, `schedule_id`) and of `get_brief` were not seen on a router.
 - `get_mode` and `set_mode` are only called by the web UI on a router with Bark (`software_feature.bark`, firmware category `2c`, country `us`).
 - Not built: `check_blacklist_online {"url"}` (the "detect" button of a URL ruleset; the type of `invalid_lines` is not known) and `update` (reference only; the web UI does not call it).
+
+## Read shapes confirmed on the router (2026-11-18)
+
+These reads were not in the probe. Each one was called one time on the GL-AXT1800 with firmware 4.8.3, and only the keys and the value types were recorded, not the values. There are no fixtures for them.
+
+| Method | Result shape |
+|---|---|
+| `kmwan.get_sensitivity` | `{"sensitivity":{"level":string,"val":number}}` |
+| `system.get_usb3_disable` | `{"usb3_disable":bool}` |
+| `timer.get_screen` | `{"enable":bool,"turnon_hour":string,"turnon_min":string,"turnoff_hour":string,"turnoff_min":string,"week":[number]}` (7 items; the router has no screen) |
+| `network.get_advance_config` | `{"nat_enable":number,"sip_enable":number}` |
+| `cable.get_ports_config` | `{"ports":[{"name":string,"mode":string,"default_mode":string,"silk":string,"macaddr":{"mode":string,"macaddr":string,"defmacaddr":string}}]}` (3 ports; no `update` and no `period` in MAC mode `default`) |
+| `cable.get_ports_status` | `{"ports":[{"name":string}]}` (3 ports) |
+| `netmode.get_mode` | `{"mode":string}` |
+| `wifi.get_mlo_config` | `{"res":{"random_bssid":bool,"encryptions":[string],"ifaces":[{"name":string,"mlo_enable":bool}]}}` (2 interfaces; the router has no Wi-Fi 7 radio, so the interfaces have no `mlo_band` and no SSID fields) |
+
+## Cellular modem (not built)
+
+The client has no typed methods for the modules `modem` and `mvas`. The GL-AXT1800 has no modem: `modem.get_info` gives `{"modems":[],"offline_doc":false}`, `modem.get_status` gives `{"modems":[],"new_sms_count":0}`, and the other reads give empty results or `err_code` 20002001. No read shape of a modem is known.
+
+What the web UI code of firmware 4.8.3 shows:
+
+- Each call takes `bus` (and the SIM calls also `iccid`) from `modem.get_info` and `modem.get_status`. Their format is not known.
+- `modem.get_sim_config {bus, iccid}` and `modem.set_sim_config {bus, iccid, config}` are the connection profile (`apn`, `auth`, `username`, `password`, `protocol`, `ip_type`, `roaming`, `ttl`, `ttl_ipv6`, `mtu`, the band selection). The write sends back each key of the read that the web UI does not use. These keys are not known, so a typed write could remove router settings.
+- `modem.set_connect {bus}` and `modem.disconnect {bus}` start and stop the connection.
+- Dual SIM (`get_slot_config`, `set_slot_config`), the traffic limit (`get_traffic_config`, `set_traffic_config`), APN polling, and the operator and cell tower locks have their own calls.
+
+Before a typed API is possible, a router with a modem must show the results of `modem.get_info`, `modem.get_status` and `modem.get_sim_config`, and one `set_sim_config` call of its web UI.
+
