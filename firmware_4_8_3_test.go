@@ -46,6 +46,7 @@ func TestReadsDecodeFirmware483Fixtures(t *testing.T) {
 		{"firewall.get_zone_list", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Firewall.GetZones(ctx) }, nil},
 		{"firewall.get_port_forward_list", list("res", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Firewall.ListPortForwards(ctx) }), nil},
 		{"firewall.get_rule_list", list("res", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Firewall.ListRules(ctx) }), nil},
+		{"igmp.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.IGMP.GetConfig(ctx) }, nil},
 		{"ipv6.get_ipv6", func(ctx context.Context, c *glinet.Client) (any, error) { return c.IPv6.GetConfig(ctx) }, nil},
 		{"lan.get_config_list", list("interfaces", func(ctx context.Context, c *glinet.Client) (any, error) { return c.LAN.ListConfigs(ctx) }), nil},
 		{"lan.get_static_bind_list", list("static_bind_list", func(ctx context.Context, c *glinet.Client) (any, error) { return c.LAN.ListStaticBinds(ctx) }), nil},
@@ -55,6 +56,7 @@ func TestReadsDecodeFirmware483Fixtures(t *testing.T) {
 		{"network.check_wan_cable", func(ctx context.Context, c *glinet.Client) (any, error) {
 			return c.Network.CheckWANCable(ctx, glinet.FirstWANPort)
 		}, nil},
+		{"netmode.get_mode", func(ctx context.Context, c *glinet.Client) (any, error) { return c.NetworkMode.GetMode(ctx) }, nil},
 		{"network.get_arp_list", list("entries", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Network.ListARPEntries(ctx) }), nil},
 		{"switch-button.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.SwitchButton.GetConfig(ctx) }, nil},
 		{"switch-button.get_funcs", list("funcs", func(ctx context.Context, c *glinet.Client) (any, error) { return c.SwitchButton.GetFuncs(ctx) }), nil},

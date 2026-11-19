@@ -148,7 +148,7 @@ Read fields:
 
 Not built, because the web UI code does not settle the shapes:
 
-- `cable.get_ports_config` (view `internet`, `getPortsConfig`, params `{}`). The web UI reads only `ports[]`, keeps the items whose `name` is `"wan"` or `"secondwan"`, and shows `silk` (the port label on the case). Other fields, other `name` values and the types are not in that code, and no fixture has the result.
+- `cable.get_ports_config`: built later from the view `netport` as `Cable.ListPorts`; see "Network mode, ports and advanced network settings (web UI code)".
 
 - `wifi.get_mlo_config` and `wifi.set_mlo_config` (MLO, when `software_feature.mlo` is true). The web UI reads `res` with `random_bssid`, `encryptions`, `mlo_bandsupport` and `ifaces[]`; it reads `name`, `guest`, `mlo_enable`, `mlo_band` (a list of `"2g"`, `"5g"`, `"6g"`, at least 2), `ssid`, `encryption`, `key` and `hidden` of an interface. It writes `{name, mlo_enable}` for the switch, and for the form all fields of the interface object as the router gave them, plus `random_bssid` for a main interface. So the full params depend on fields of the result that the web UI code does not name.
 - The provider groups (type 1) of `wg-client`. The web UI uses `wg_client.create_provider_account {group_id, username, password}` (result `expires_at`), `wg_client.get_provider_server_list` or `wg-client.get_third_config` (AzireVPN and Mullvad) with `{group_id, username, password?}`, `wg_client.generate_provider_config` or `wg-client.get_recommend_config` with `{group_id, country_name:[string]}` or `{group_id, server_info:[{country_name, cities:[{city_name, hostname:[string]}]}]}`, `wg_client.update_provider_config {group_id, update_all:true}`, `wg_client.get_provider_user_info {group_id}` (result `allocated`, `available`, `expires_at`), `wg_client.get_max_client`, `wg-client.clear_user_pass {group_id}` and `wg-client.clear_config_list {group_id, delete_key}`. The module, the form fields and the steps change with the provider name (a list in the web UI code), with `auth_type` (1: the form has a password) and with `procedure` (1: the user selects servers). The results are only partly read. These calls send account data to a third-party VPN service through the router.
@@ -445,3 +445,36 @@ Not known:
 - If `timer.set_screen` with `enable` true needs all values, as `set_led` does.
 - What `sync: true` does, and the meaning of the `sync_status` values other than 0. `check_sync_status` is not in the client.
 - What `switch-button.get_config` returns when the function is `"none"`, and how the router answers a `func` that is not in `get_funcs`.
+## Network mode, ports and advanced network settings (web UI code)
+
+From the web UI views `netadvanced`, `igmp`, `bridge` (network mode) and `netport` (Ethernet ports) of firmware 4.8.3. No write was tested on a router.
+
+| Client | Method | Params or result | Source |
+|---|---|---|---|
+| `Network.GetAdvancedConfig` | `network.get_advance_config` | `{nat_enable, sip_enable}`, 0 or 1 | view `netadvanced`; no fixture |
+| `Network.SetAdvancedConfig` | `network.set_advance_config` | `{nat_enable, sip_enable}`, both always | view `netadvanced`; the web UI waits 2 s |
+| `IGMP.GetConfig` | `igmp.get_config` | `{enable: bool, version: int}` | fixture |
+| `IGMP.SetConfig` | `igmp.set_config` | `{enable, version}`, both always; version 1, 2 or 3 | view `igmp`; the web UI waits 15 s |
+| `NetworkMode.GetMode` | `netmode.get_mode` | `{mode}`; `mask` and `mac` for `passthrough` | fixture (`{"mode":"router"}`); `mask`, `mac` from view `bridge` |
+| `NetworkMode.SetMode` | `netmode.set_mode` | `{mode}` for `router` and `ap`; `{mode, ssid, key?, identity?}` for `relay` and `wds`; `{mode, mask, mac}` for `passthrough` | view `bridge`; result `lanip` after a change to `router` |
+| `Cable.ListPorts` | `cable.get_ports_config` | `ports[]` of `{name, mode, default_mode, silk, macaddr: {mode, macaddr, defmacaddr, update, period}}` | view `netport`; no fixture |
+| `Cable.SetPort` | `cable.set_port_config` | `{name, mode}`; for mode `wan` also `macaddr: {mode, macaddr, update?, period?}` | view `netport`; the web UI waits 3 s, or 15 s after a mode change |
+
+Network mode:
+
+- The web UI offers `router`, `ap`, `relay` (extender), `wds` and `passthrough`, each one only when the router supports it (`hidden_features`, `hardware_feature.radio` and `nowds`, `software_feature.passthrough`). In a mode other than `router` it offers only the change back to `router`. The menu list also has the mode `mesh`, which this view cannot set.
+- `system.get_status` `system.mode` is a number. From the conditions of the view: 0 router, 1 WDS, 2 extender, 4 access point, 6 passthrough. Not checked on a router.
+- `relay` and `wds` connect to an upstream Wi-Fi network: `key` and `identity` (802.1X) are sent only when not empty. Error codes of the result: 1 connection failed, 2 no IP address from upstream, 3 conflict with the LAN, 4 wrong password.
+- A change reconfigures the whole router. In `ap`, `relay` and `wds` the router takes its address from the upstream network: the web UI tells the user to find it there. After a change to `router`, the web UI opens the address in `lanip`. The web UI waits up to 60 s for the answer and then 2 s to 40 s.
+- Before a change, the web UI reads `network.check_wan_cable` (and `cable.get_status` for `passthrough`) and stops when the cable state does not fit the mode, or when `macclone_enabled` is true.
+
+MAC clone:
+
+- The module `macclone` gives -32601 on 4.7.0 and 4.8.3, and the web UI of 4.8.3 does not call it; the router has no view `macclone`.
+- The MAC address of a wired WAN port is in `cable.get_ports_config` and `cable.set_port_config` (`macaddr`, modes `default`, `clone`, `random`). `network.check_wan_cable` `macclone_enabled` shows it. The extender mode has its own MAC setting in the `repeater` module, which this client does not have.
+
+Open points:
+
+- No router result for `network.get_advance_config`, `cable.get_ports_config` and `cable.get_ports_status`. The probe allowlist now has them. The types (for example of `period`), the other fields, and the names of the LAN ports are not known.
+- `cable.get_ports_status` (`ports[]` of `{name, speed, duplex}`, runtime values) is not in the client.
+- What the router restarts for `network.set_advance_config` and `igmp.set_config`, what `netmode.set_mode` returns for modes other than `router`, and what the router does with a mode change that the web UI does not offer.

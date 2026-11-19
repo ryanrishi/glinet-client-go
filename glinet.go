@@ -45,6 +45,7 @@ type Client struct {
 	DNS             *DNSService
 	Fan             *FanService
 	Firewall        *FirewallService
+	IGMP            *IGMPService
 	IPv6            *IPv6Service
 	LAN             *LANService
 	LED             *LEDService
@@ -52,6 +53,7 @@ type Client struct {
 	Network         *NetworkService
 	QoS             *QoSService
 	SwitchButton    *SwitchButtonService
+	NetworkMode     *NetworkModeService
 	System          *SystemService
 	Tailscale       *TailscaleService
 	Timer           *TimerService
@@ -117,6 +119,7 @@ func newClient(host string) (*Client, error) {
 	c.DNS = (*DNSService)(&c.common)
 	c.Fan = (*FanService)(&c.common)
 	c.Firewall = (*FirewallService)(&c.common)
+	c.IGMP = (*IGMPService)(&c.common)
 	c.IPv6 = (*IPv6Service)(&c.common)
 	c.LAN = (*LANService)(&c.common)
 	c.LED = (*LEDService)(&c.common)
@@ -124,6 +127,7 @@ func newClient(host string) (*Client, error) {
 	c.Network = (*NetworkService)(&c.common)
 	c.QoS = (*QoSService)(&c.common)
 	c.SwitchButton = (*SwitchButtonService)(&c.common)
+	c.NetworkMode = (*NetworkModeService)(&c.common)
 	c.System = (*SystemService)(&c.common)
 	c.Tailscale = (*TailscaleService)(&c.common)
 	c.Timer = (*TimerService)(&c.common)
