@@ -32,7 +32,7 @@ if err != nil {
 tz, err := client.System.GetTimezoneConfig(ctx)
 ```
 
-Each HTTP request, also the login, has a time limit of 60 s: the longest time that the web UI waits for the answer of a method of this client (`NetworkMode.SetMode`). To use a different limit or HTTP client, give `glinet.WithHTTPClient` to the constructor. Its `Timeout` then applies, and a zero `Timeout` gives no time limit. The deadline of the context of a call also applies.
+Each HTTP request, also the login, has a time limit of 60 s: the longest time that the web UI waits for the answer of a method of this client (`NetworkMode.SetMode`). To use a different limit or HTTP client, give `glinet.WithHTTPClient` to the constructor. Its `Timeout` then applies, and a zero `Timeout` gives no time limit. The deadline of the context of a call also applies. The login in the constructor has no call context: give `glinet.WithLoginContext` to the constructor to cancel it or to set its deadline.
 
 ```go
 client, err := glinet.NewClientWithHost("192.168.8.1", "root", []byte(password),
