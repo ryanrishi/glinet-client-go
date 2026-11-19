@@ -3,6 +3,7 @@ package glinet
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 )
 
 // NetworkModeService calls the netmode module: the network mode of the router (web UI view bridge,
@@ -125,7 +126,12 @@ func (s *NetworkModeService) SetMode(ctx context.Context, settings NetworkModeSe
 	}
 
 	var res NetworkModeResult
-	// The result of a change to a mode other than the router mode is not known, and can be [].
-	_ = json.Unmarshal(raw, &res)
+	// The result of a change to a mode other than the router mode can be [].
+	if string(raw) == "[]" {
+		return &res, nil
+	}
+	if err := json.Unmarshal(raw, &res); err != nil {
+		return nil, fmt.Errorf("glinet: netmode set_mode: decode result: %w", err)
+	}
 	return &res, nil
 }

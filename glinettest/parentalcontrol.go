@@ -39,7 +39,7 @@ const parentalControlApps = `{
 // code of firmware 4.8.3 and the archived API reference:
 //   - set_config sets enable, drop_anonymous and auto_update when it gets them.
 //   - add_group and add_rule add the item with the sent fields and a new ID (a made-up string
-//     "cfg" with 6 hex digits), and return {"id": <id>}. add_rule also sets preset to false.
+//     "cfg" with 6 hex digits that no group, ruleset or schedule has), and return {"id": <id>}. add_rule also sets preset to false.
 //     add_group without name, default_rule or macs, and add_rule without name, return
 //     {"err_code": -1, ...}.
 //   - set_group and set_rule set the fields that they get and keep the others. A schedule
@@ -155,9 +155,26 @@ func (m *ParentalControl) index(key string, id any) (int, error) {
 	return i, nil
 }
 
+// newID returns an ID that no group, ruleset or schedule has.
 func (m *ParentalControl) newID() string {
-	m.nextID++
-	return fmt.Sprintf("cfg%06x", m.nextID)
+	used := map[any]bool{}
+	for _, key := range []string{"groups", "rules"} {
+		for _, item := range m.list(key) {
+			v, _ := item.(map[string]any)
+			used[v["id"]] = true
+			schedules, _ := v["schedules"].([]any)
+			for _, s := range schedules {
+				sch, _ := s.(map[string]any)
+				used[sch["id"]] = true
+			}
+		}
+	}
+	for {
+		m.nextID++
+		if id := fmt.Sprintf("cfg%06x", m.nextID); !used[id] {
+			return id
+		}
+	}
 }
 
 func parentalControlError(code int, msg string) map[string]any {

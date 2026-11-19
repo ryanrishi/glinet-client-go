@@ -68,11 +68,13 @@ func (m *LocalAccess) setConfig(params json.RawMessage) (any, error) {
 	if _, err := objectParams(params); err != nil {
 		return nil, err
 	}
-	c := m.Config()
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	c := m.config
 	if err := json.Unmarshal(params, &c); err != nil {
 		return nil, ErrInvalidParams
 	}
-
-	m.SetConfig(c)
+	m.config = c
 	return writeResult, nil
 }

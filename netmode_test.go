@@ -86,3 +86,36 @@ func TestNetworkModeSetModeError(t *testing.T) {
 		t.Errorf("code = %d, want 4", code)
 	}
 }
+
+func TestNetworkModeSetModeResult(t *testing.T) {
+	tests := []struct {
+		result  string
+		lanIP   string
+		wantErr bool
+	}{
+		{`[]`, "", false},
+		{`{}`, "", false},
+		{`{"lanip":"192.0.2.1"}`, "192.0.2.1", false},
+		{`{"lanip":123}`, "", true},
+		{`[1]`, "", true},
+	}
+	for _, tt := range tests {
+		c, srv := newClient(t)
+		srv.Handle("netmode", "set_mode", func(json.RawMessage) (any, error) { return json.RawMessage(tt.result), nil })
+
+		res, err := c.NetworkMode.SetMode(context.Background(), glinet.NetworkModeSettings{Mode: glinet.NetworkModeRouter})
+		if tt.wantErr {
+			if err == nil {
+				t.Errorf("SetMode with result %s = %+v, want an error", tt.result, *res)
+			}
+			continue
+		}
+		if err != nil {
+			t.Errorf("SetMode with result %s: %v", tt.result, err)
+			continue
+		}
+		if res.LANIP != tt.lanIP {
+			t.Errorf("SetMode with result %s: LANIP = %q, want %q", tt.result, res.LANIP, tt.lanIP)
+		}
+	}
+}

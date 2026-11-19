@@ -42,11 +42,14 @@ func (m *Firewall) setWANAccess(params json.RawMessage) (any, error) {
 	if _, err := objectParams(params); err != nil {
 		return nil, err
 	}
-	a := m.WANAccess()
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	a := m.wanAccess
+	a.Whitelist = slices.Clone(a.Whitelist)
 	if err := json.Unmarshal(params, &a); err != nil {
 		return nil, ErrInvalidParams
 	}
-
-	m.SetWANAccess(a)
+	m.wanAccess = a
 	return writeResult, nil
 }

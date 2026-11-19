@@ -242,3 +242,39 @@ func TestParentalControlListApps(t *testing.T) {
 		t.Errorf("ListApps = %+v", apps)
 	}
 }
+
+func TestParentalControlNewIDsSkipLoadedIDs(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+	srv.ParentalControl.SetConfig(json.RawMessage(`{
+		"enable": false,
+		"groups": [{"id": "cfg000001", "name": "loaded", "default_rule": "cfg000003", "macs": [],
+			"schedules": [{"id": "cfg000002", "week": 1, "begin": "08:00", "end": "12:00", "rule": "drop"}]}],
+		"rules": [{"id": "cfg000003", "name": "loaded", "preset": false}]
+	}`))
+
+	group, err := c.ParentalControl.AddGroup(ctx, glinet.ParentalControlGroupSettings{Name: "new", DefaultRule: glinet.ParentalControlRuleDrop})
+	if err != nil {
+		t.Fatalf("AddGroup: %v", err)
+	}
+	rule, err := c.ParentalControl.AddRule(ctx, glinet.ParentalControlRuleSettings{Name: "new"})
+	if err != nil {
+		t.Fatalf("AddRule: %v", err)
+	}
+	for _, id := range []string{group, rule} {
+		if slices.Contains([]string{"cfg000001", "cfg000002", "cfg000003"}, id) {
+			t.Errorf("new ID %q is the ID of a loaded item", id)
+		}
+	}
+
+	if err := c.ParentalControl.RemoveGroup(ctx, group); err != nil {
+		t.Fatalf("RemoveGroup: %v", err)
+	}
+	cfg, err := c.ParentalControl.GetConfig(ctx)
+	if err != nil {
+		t.Fatalf("GetConfig: %v", err)
+	}
+	if len(cfg.Groups) != 1 || cfg.Groups[0].ID != "cfg000001" {
+		t.Errorf("groups after RemoveGroup of the new group = %+v, want the loaded group", cfg.Groups)
+	}
+}
