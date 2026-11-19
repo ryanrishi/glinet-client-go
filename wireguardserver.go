@@ -52,7 +52,7 @@ type WireGuardServerState struct {
 // user remove. PresharedKey is a secret; the web UI generates it when it is empty and
 // PresharedKeyEnable is true. AllowedIPs has at most 5 items in the web UI.
 type WireGuardServerPeer struct {
-	ID                  int    `json:"peer_id"`
+	ID                  int64  `json:"peer_id"`
 	Name                string `json:"name"`
 	ClientIP            string `json:"client_ip"`
 	Deprecated          int    `json:"deprecated"`
@@ -167,9 +167,9 @@ func (s *WireGuardServerService) ListPeers(ctx context.Context) ([]WireGuardServ
 // PersistentKeepalive or MTU of 0, as the web UI does; and allowed_ips and dns only when they are
 // not empty, as the web UI does. What the router does with "" is not known. The web UI requires
 // Name (1-64 characters) and accepts PersistentKeepalive 1-65535 and MTU 576-65535.
-func (s *WireGuardServerService) AddPeer(ctx context.Context, peer WireGuardServerPeer) (int, error) {
+func (s *WireGuardServerService) AddPeer(ctx context.Context, peer WireGuardServerPeer) (int64, error) {
 	var res struct {
-		PeerID int `json:"peer_id"`
+		PeerID int64 `json:"peer_id"`
 	}
 	if err := s.client.Call(ctx, wgServerModule, "add_peer", wgServerPeerParams(peer), &res); err != nil {
 		return 0, err
@@ -190,9 +190,9 @@ func (s *WireGuardServerService) SetPeer(ctx context.Context, peer WireGuardServ
 // RemovePeer removes the peer peerID.
 //
 // Not verified on a router: the parameters come from the web UI code.
-func (s *WireGuardServerService) RemovePeer(ctx context.Context, peerID int) error {
+func (s *WireGuardServerService) RemovePeer(ctx context.Context, peerID int64) error {
 	params := struct {
-		PeerID int `json:"peer_id"`
+		PeerID int64 `json:"peer_id"`
 	}{peerID}
 	return s.client.Call(ctx, wgServerModule, "remove_peer", params, nil)
 }
@@ -210,9 +210,9 @@ func (s *WireGuardServerService) RemoveAllPeers(ctx context.Context) error {
 //
 // Not verified on a router: the parameters come from the web UI code. Whether generate_peer
 // makes new keys is not known.
-func (s *WireGuardServerService) GetPeerConfig(ctx context.Context, peerID int) (*WireGuardServerPeerConfig, error) {
+func (s *WireGuardServerService) GetPeerConfig(ctx context.Context, peerID int64) (*WireGuardServerPeerConfig, error) {
 	params := struct {
-		PeerID int `json:"peer_id"`
+		PeerID int64 `json:"peer_id"`
 	}{peerID}
 	var res WireGuardServerPeerConfig
 	if err := s.client.Call(ctx, wgServerModule, "generate_peer", params, &res); err != nil {

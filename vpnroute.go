@@ -7,13 +7,14 @@ import "strings"
 //
 // Not verified on a router: the test router had no route rules, so the fields come from the web
 // UI code. The web UI accepts as Scope "host", "link", "global" or a number 1-65535, and as MTU a
-// number 1-65535. The web UI of firmware 4.7.0 sends only the fields that are not empty; for the
-// web UI of firmware 4.8.3, see WireGuardServerService.AddRoute.
+// number 1-65535. Metric can be up to 4294967295, because a route metric is a 32-bit unsigned
+// number in Linux. The range of ID is not known. The web UI of firmware 4.7.0 sends only the
+// fields that are not empty; for the web UI of firmware 4.8.3, see WireGuardServerService.AddRoute.
 type VPNRoute struct {
-	ID      int    `json:"rule_id,omitempty"`
+	ID      int64  `json:"rule_id,omitempty"`
 	Dest    string `json:"dest"`
 	Gateway string `json:"gateway,omitempty"`
-	Metric  int    `json:"metric,omitempty"`
+	Metric  int64  `json:"metric,omitempty"`
 	MTU     int    `json:"mtu,omitempty"`
 	Scope   string `json:"scope,omitempty"`
 }

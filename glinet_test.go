@@ -479,6 +479,20 @@ func TestCallResultError(t *testing.T) {
 	}
 }
 
+func TestSystemStatusDecodesLargeVPNIDs(t *testing.T) {
+	c, srv := newClient(t)
+	const big = 4294967296
+	srv.System.SetStatus(json.RawMessage(`{"service": [{"name": "wgclient", "status": 1, "group_id": 4294967296, "peer_id": 4294967296}]}`))
+
+	status, err := c.System.GetStatus(context.Background())
+	if err != nil {
+		t.Fatalf("GetStatus: %v", err)
+	}
+	if len(status.Service) != 1 || status.Service[0].GroupID != big || status.Service[0].PeerID != big {
+		t.Errorf("Service = %+v, want group_id and peer_id %d", status.Service, int64(big))
+	}
+}
+
 func TestSystemStatusDecodesLargeByteCounts(t *testing.T) {
 	c, srv := newClient(t)
 	ctx := context.Background()

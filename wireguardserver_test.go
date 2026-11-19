@@ -234,3 +234,34 @@ func TestWireGuardServerPeerAddressesAreUnique(t *testing.T) {
 		t.Errorf("ListPeers = %+v, want 2 peers with different client IPs", peers)
 	}
 }
+
+func TestWireGuardServerLargeIDsAndMetrics(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+	const peer, metric = 4294967297, 4294967295
+	replyParams(srv, "wg-server", "add_peer", `{"peer_id": 4294967297}`)
+	removePeer := replyParams(srv, "wg-server", "remove_peer", `[]`)
+	addRoute := sentParams(srv, "wg-server", "add_route")
+
+	id, err := c.WireGuardServer.AddPeer(ctx, glinet.WireGuardServerPeer{Name: "example"})
+	if err != nil || id != peer {
+		t.Fatalf("AddPeer = %d, %v, want %d", id, err, int64(peer))
+	}
+	if err := c.WireGuardServer.RemovePeer(ctx, id); err != nil {
+		t.Fatalf("RemovePeer: %v", err)
+	}
+	if got, want := (*removePeer)[0], map[string]any{"peer_id": float64(peer)}; !reflect.DeepEqual(got, want) {
+		t.Errorf("remove_peer params = %v, want %v", got, want)
+	}
+
+	if err := c.WireGuardServer.AddRoute(ctx, glinet.VPNRoute{Dest: "192.168.60.0/24", Metric: metric}); err != nil {
+		t.Fatalf("AddRoute: %v", err)
+	}
+	if got := (*addRoute)[0]["metric"]; got != float64(metric) {
+		t.Errorf("add_route metric = %v, want %d", got, int64(metric))
+	}
+	routes, err := c.WireGuardServer.ListRoutes(ctx)
+	if err != nil || len(routes.IPv4) != 1 || routes.IPv4[0].Metric != metric {
+		t.Errorf("ListRoutes = %+v, %v, want metric %d", routes, err, int64(metric))
+	}
+}

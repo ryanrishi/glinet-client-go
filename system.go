@@ -27,9 +27,9 @@ type GetSystemStatusResponse struct {
 	} `json:"wifi"`
 	Service []struct {
 		Status  int    `json:"status"`
-		PeerID  int    `json:"peer_id,omitempty"`
+		PeerID  int64  `json:"peer_id,omitempty"`
 		Name    string `json:"name"`
-		GroupID int    `json:"group_id,omitempty"`
+		GroupID int64  `json:"group_id,omitempty"`
 	} `json:"service"`
 	Client []struct {
 		CableTotal    int `json:"cable_total"`
