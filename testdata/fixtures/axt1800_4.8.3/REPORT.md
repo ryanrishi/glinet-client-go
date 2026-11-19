@@ -391,3 +391,25 @@ Open points:
 - What a `set_wan_access` or `set_config` without some fields does.
 - What firmware 4.7.0 does with `ssh_enabled` in `local-access.set_config`.
 - Whether `local-access.set_config` restarts the web server before it answers, and so whether the answer arrives when a port changes.
+## Client name, icon and speed limit (web UI code)
+
+From the web UI code of firmware 4.8.3 (view `clients`). No write was tested on a router.
+
+| Call | Params | Client method | Notes |
+|---|---|---|---|
+| `clients.get_list` | `{}` | `Clients.ListClients` | read; fixture. `alias` and `class` only when set. `limit_rx` (download) and `limit_tx` (upload) in KiB/s, 0 is no limit |
+| `clients.set_info` | `{mac, alias, class}` | `Clients.SetInfo` | always all three fields; `""` removes the name or the icon |
+| `qos.set_speed_limit_rule` | `{mac, download, upload}` | `QoS.SetSpeedLimit` | KiB/s, 1 to 1073741824, a fraction in steps of 0.125 in the Kbps mode, 0 is no limit; the UI waits up to 30 s |
+| `qos.remove_speed_limit_rule` | `{mac}` | `QoS.RemoveSpeedLimit` | the UI waits up to 30 s |
+
+- The alias has at most 32 characters and no `,` or `"`. The web UI offers the classes `computer`, `phone`, `pad`, `camera`, `watch`, `laptop`, `printer`, `sound`, `television`, `smartappliances`, `games`, `gateway`, `nas`, `server`, `switch`.
+- The web UI shows the speed limit options only in system mode 0 (router) and 6 (passthrough). It shows "set limit" only while `netnat_enabled` (network acceleration) is false, and "remove limit" also while it is true. The test router has `netnat_enabled: true`.
+- The web UI has the unit modes KB/s and Kbps. Each input accepts only digits. In the KB/s mode the web UI sends the input (1 to 1073741824). In the Kbps mode it accepts 8 to 8589934592 and sends the input divided by 8, for example `1.125` for 9 Kbps. So `SpeedLimit.Download` and `Upload`, and `ClientDevice.LimitRx` and `LimitTx`, are `float64`.
+
+Open points:
+
+- Whether `set_info` removes `alias` and `class` for `""` or keeps an empty value in `get_list`.
+- What `set_speed_limit_rule` does with `download: 0, upload: 0` (the web UI permits it), and whether the router keeps a fraction in `limit_rx` and `limit_tx` or rounds it.
+- Whether `set_info` and the `qos` writes accept a MAC that is not in `get_list`, and whether they compare MACs with their letter case.
+- What network acceleration does to a limit.
+- `qos.get_config` (`{"enable": false, "mode": "0"}`), `get_client_list`, `get_device_group`, `get_bandwidth_config` and `get_channel_bandwidth_ratio` give empty or default results on the test router, and no view of the web UI of firmware 4.8.3 calls them or `qos.set_config`. The client has no typed method for them.
