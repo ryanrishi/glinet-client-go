@@ -52,6 +52,9 @@ func TestReadsDecodeFirmware483Fixtures(t *testing.T) {
 			return c.Network.CheckWANCable(ctx, glinet.FirstWANPort)
 		}, nil},
 		{"network.get_arp_list", list("entries", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Network.ListARPEntries(ctx) }), nil},
+		{"parental-control.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.ParentalControl.GetConfig(ctx) }, nil},
+		{"parental-control.get_status", func(ctx context.Context, c *glinet.Client) (any, error) { return c.ParentalControl.GetStatus(ctx) }, nil},
+		{"parental-control.get_app_list", list("apps", func(ctx context.Context, c *glinet.Client) (any, error) { return c.ParentalControl.ListApps(ctx) }), nil},
 		{"tailscale.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Tailscale.GetConfig(ctx) }, nil},
 		{"tailscale.get_status", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Tailscale.GetStatus(ctx) }, nil},
 		{"timer.get_led", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Timer.GetLEDSchedule(ctx) }, nil},

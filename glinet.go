@@ -38,6 +38,7 @@ type Client struct {
 	// services
 	AccessControl   *AccessControlService
 	AdGuard         *AdGuardService
+	Bark            *BarkService
 	Cable           *CableService
 	Clients         *ClientsService
 	DDNS            *DDNSService
@@ -48,6 +49,7 @@ type Client struct {
 	LAN             *LANService
 	LED             *LEDService
 	Network         *NetworkService
+	ParentalControl *ParentalControlService
 	System          *SystemService
 	Tailscale       *TailscaleService
 	Timer           *TimerService
@@ -106,6 +108,7 @@ func newClient(host string) (*Client, error) {
 
 	c.AccessControl = (*AccessControlService)(&c.common)
 	c.AdGuard = (*AdGuardService)(&c.common)
+	c.Bark = (*BarkService)(&c.common)
 	c.Cable = (*CableService)(&c.common)
 	c.Clients = (*ClientsService)(&c.common)
 	c.Digest = (*DigestService)(&c.common)
@@ -116,6 +119,7 @@ func newClient(host string) (*Client, error) {
 	c.LAN = (*LANService)(&c.common)
 	c.LED = (*LEDService)(&c.common)
 	c.Network = (*NetworkService)(&c.common)
+	c.ParentalControl = (*ParentalControlService)(&c.common)
 	c.System = (*SystemService)(&c.common)
 	c.Tailscale = (*TailscaleService)(&c.common)
 	c.Timer = (*TimerService)(&c.common)
