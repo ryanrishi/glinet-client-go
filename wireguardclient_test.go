@@ -50,7 +50,7 @@ func TestWireGuardClientReadsDecodeRouterFixtures(t *testing.T) {
 	}
 	checkLossless(t, map[string]any{"groups": groups}, fixtureResult(t, "wg-client.get_group_list.json"))
 
-	for groupID, f := range map[int]string{customGroup: "wg-client.get_config_list.json", 9859: "wg-client.get_config_list.group_type_3.json"} {
+	for groupID, f := range map[int64]string{customGroup: "wg-client.get_config_list.json", 9859: "wg-client.get_config_list.group_type_3.json"} {
 		peers, err := c.WireGuardClient.ListPeers(ctx, groupID)
 		if err != nil {
 			t.Fatalf("ListPeers: %v", err)
@@ -297,7 +297,7 @@ func TestWireGuardClientStartSetsEndpoint(t *testing.T) {
 	}
 
 	for _, tt := range []struct {
-		peerID int
+		peerID int64
 		domain string
 		port   int
 	}{
@@ -319,7 +319,7 @@ func TestWireGuardClientConcurrentAdds(t *testing.T) {
 	ctx := context.Background()
 
 	const n = 8
-	ids := make([]int, 2*n)
+	ids := make([]int64, 2*n)
 	errs := make([]error, 2*n)
 	var wg sync.WaitGroup
 	for i := range n {
@@ -343,5 +343,72 @@ func TestWireGuardClientConcurrentAdds(t *testing.T) {
 	slices.Sort(ids)
 	if len(slices.Compact(slices.Clone(ids))) != len(ids) {
 		t.Errorf("IDs = %v, want all different", ids)
+	}
+}
+
+// replyParams replaces module.method on srv with a method that records its params and returns
+// result.
+func replyParams(srv *glinettest.Server, module, method, result string) *[]map[string]any {
+	var sent []map[string]any
+	srv.Handle(module, method, func(params json.RawMessage) (any, error) {
+		var p map[string]any
+		_ = json.Unmarshal(params, &p)
+		sent = append(sent, p)
+		return json.RawMessage(result), nil
+	})
+	return &sent
+}
+
+func TestWireGuardClientLargeIDsAndMetrics(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+	const group, peer, rule, metric = 4294967296, 4294967297, 4294967298, 4294967295
+	replyParams(srv, "wg-client", "get_group_list", `{"groups": [{"group_id": 4294967296, "group_name": "example", "group_type": 2}]}`)
+	replyParams(srv, "wg-client", "get_config_list", `{"peers": [{"peer_id": 4294967297, "name": "example"}]}`)
+	replyParams(srv, "wg-client", "get_status", `{"status": 1, "group_id": 4294967296, "peer_id": 4294967297}`)
+	replyParams(srv, "wg-client", "get_setting", `{"default_metric": 4294967295}`)
+	replyParams(srv, "wg-client", "get_route_list", `{"ipv4_route_rules": [{"rule_id": 4294967298, "dest": "192.168.50.0/24", "metric": 4294967295}], "ipv6_route_rules": []}`)
+	setSetting := replyParams(srv, "wg-client", "set_setting", `[]`)
+	setRoute := replyParams(srv, "wg-client", "set_route", `[]`)
+	removeConfig := replyParams(srv, "wg-client", "remove_config", `[]`)
+
+	groups, err := c.WireGuardClient.ListGroups(ctx)
+	if err != nil || len(groups) != 1 || groups[0].ID != group {
+		t.Errorf("ListGroups = %+v, %v, want group_id %d", groups, err, int64(group))
+	}
+	if p, err := c.WireGuardClient.FindPeer(ctx, group, peer); err != nil || p == nil {
+		t.Errorf("FindPeer = %+v, %v, want peer_id %d", p, err, int64(peer))
+	}
+	if s, err := c.WireGuardClient.GetStatus(ctx); err != nil || s.GroupID != group || s.PeerID != peer {
+		t.Errorf("GetStatus = %+v, %v", s, err)
+	}
+	setting, err := c.WireGuardClient.GetSetting(ctx, group, peer)
+	if err != nil || setting.DefaultMetric != metric {
+		t.Fatalf("GetSetting = %+v, %v, want default_metric %d", setting, err, int64(metric))
+	}
+	routes, err := c.WireGuardClient.ListRoutes(ctx, group, peer)
+	if err != nil || len(routes.IPv4) != 1 || routes.IPv4[0].ID != rule || routes.IPv4[0].Metric != metric {
+		t.Fatalf("ListRoutes = %+v, %v", routes, err)
+	}
+
+	if err := c.WireGuardClient.SetSetting(ctx, group, peer, *setting); err != nil {
+		t.Fatalf("SetSetting: %v", err)
+	}
+	if err := c.WireGuardClient.SetRoute(ctx, group, peer, routes.IPv4[0]); err != nil {
+		t.Fatalf("SetRoute: %v", err)
+	}
+	if err := c.WireGuardClient.RemovePeer(ctx, group, peer); err != nil {
+		t.Fatalf("RemovePeer: %v", err)
+	}
+	for name, tt := range map[string]struct {
+		got, want map[string]any
+	}{
+		"set_setting":   {(*setSetting)[0], map[string]any{"group_id": float64(group), "peer_id": float64(peer), "default_metric": float64(metric), "local_access": false, "masq": false, "mtu": float64(0)}},
+		"set_route":     {(*setRoute)[0], map[string]any{"group_id": float64(group), "peer_id": float64(peer), "rule_id": float64(rule), "dest": "192.168.50.0/24", "metric": float64(metric), "route_flag": float64(4)}},
+		"remove_config": {(*removeConfig)[0], map[string]any{"group_id": float64(group), "peer_id": float64(peer)}},
+	} {
+		if !reflect.DeepEqual(tt.got, tt.want) {
+			t.Errorf("%s params = %v, want %v", name, tt.got, tt.want)
+		}
 	}
 }

@@ -107,7 +107,7 @@ Not known: what the router returns in `server` in mode `secure` with `DoT`; if t
 
 ## Write formats from the web UI code (client v0.12.0 and v0.12.1)
 
-These write formats and read fields come from the web UI code of firmware 4.8.3 (the views `firewallview`, `lanip`, `guestip`, `internet`, `clients` and `wireless`). They were NOT tested on a router. No write was called on 4.8.3.
+These write formats and read fields come from the web UI code of firmware 4.8.3 (the views `firewallview`, `lanip`, `guestip`, `internet`, `clients` and `wireless`). They were NOT tested on a router, except the writes in "Writes tested on the router (2026-11-18)".
 
 | Client | Call | Params | Web UI |
 |---|---|---|---|
@@ -115,7 +115,7 @@ These write formats and read fields come from the web UI code of firmware 4.8.3 
 | `Firewall.OrderPortForwards` | `firewall.order_port_forward` | `{id_list:[string]}`, the IDs of all port forwards in the new order | port forward card, `handleApplyPriority` |
 | `LAN.SetAddress` | `lan.set_config` | `{interface, ip, netmask, ap_isolate, wan_isolate}`; `wan_isolate` (0 or 1) only for `guest` | `handleApplyLan`, `handleChangeWanIsolate` |
 | `Cable.GetConfig`, `Cable.SetConfig` | `cable.get_config`, `cable.set_config` | `secondwan: true` for `SecondWANPort` | `getCableConfig`, `setCableConfig` |
-| `Network.CheckWANCable` | `network.check_wan_cable` | `{secondwan: bool}` | not in the web UI code that was read; `secondwan: true` is not settled |
+| `Network.CheckWANCable` | `network.check_wan_cable` | `{secondwan: bool}` | the web UI script `netport.js` calls it; `secondwan: true` is not settled |
 | `AccessControl.SetConfig` | `black_white_list.set_config` | `{mode, mac:[string]}` | access control dialog, `handleSetAccessConfig`, `handleChangeMode` |
 | `AccessControl.AddAllowedMAC`, `RemoveAllowedMAC` | `black_white_list.set_single_mac` | `{mode:"white", operate:"add"\|"del", mac}` | client list switch, `blockChange` |
 | `Wifi.SetConfig` | `wifi.set_config` | `chan_6g_only_psc` (bool) for the main interface of a 6G radio | `applyConfig` |
@@ -156,7 +156,7 @@ Not built, because the web UI code does not settle the shapes:
 
 ## Not checked
 
-- Every write method. No write was called on 4.8.3. It is not known if the `wg-client` writes still exist or work, or what the `vpn-client` writes are.
+- Each write method that is not in "Writes tested on the router (2026-11-18)". It is not known if the `wg-client` writes still exist or work, or what the `vpn-client` writes are.
 - `wg-client.get_config_list` of the custom group (type 2). The probe reads only the first group that has peers.
 - Why `ipv6_enable` is not in `wg-server.get_config` and `ovpn-server.get_config`: the firmware removed it, or the router sends it only in some states.
 - The item type of `wifi.get_config` `bandmode`.
@@ -424,7 +424,7 @@ These calls come from the web UI code of firmware 4.8.3 (the views `overview`, `
 |---|---|---|---|
 | `Fan.GetConfig` | `fan.get_config` | `{temperature, warn_temperature}` (integers, °C) | fixture |
 | `Fan.GetStatus` | `fan.get_status` | `{speed, status}`: speed in RPM, status true while the fan turns | fixture |
-| `Fan.SetTemperature` | `fan.set_config` | `{temperature}`; the web UI sends no other key and lets the user select 70 to 90 | tested on a router on 2026-11-18 (GL-AXT1800, firmware 4.8.3): `{"temperature": 60}` returned `[]`, the next `get_config` had `temperature: 60`, and the fan started (status true, speed more than 0) with the CPU at 69 °C |
+| `Fan.SetTemperature` | `fan.set_config` | `{temperature}`; the web UI sends no other key and lets the user select 70 to 90 | tested on a router on 2026-11-18 (GL-AXT1800, firmware 4.8.3): `{"temperature": 60}` returned `[]`, the next `get_config` had `temperature: 60`, and the fan started (status true, speed more than 0) with the CPU at 69 °C; 62 and 60 were also written and read back |
 | `System.GetUSB3Disabled` | `system.get_usb3_disable` | `{usb3_disable: bool}`; the web UI shows true when the key is missing | web UI code, `getUsb3` |
 | `System.SetUSB3Disabled` | `system.set_usb3_disable` | `{usb3_disable: bool}`; true is USB 2.0, false is USB 3.0 | web UI code, `handleSetUsb3` |
 | `Timer.GetScreenSchedule` | `timer.get_screen` | the fields of `timer.get_led` | web UI code, `getScreenTimer` |
@@ -439,7 +439,7 @@ The web UI sends `sync: true` only when the user accepts the dialog with label k
 
 Not known:
 
-- If the router accepts a fan temperature out of 70 to 90 other than 60, and if `fan.set_config` changes `warn_temperature`. The web UI only shows a warning when `temperature` is `warn_temperature` or less.
+- The lowest fan temperature that the firmware accepts. The router accepted 60 and 62, which the web UI does not offer. `warn_temperature` stayed 75 in each read after these writes. The web UI only shows a warning when `temperature` is `warn_temperature` or less.
 - The result of `system.get_usb3_disable` and `timer.get_screen` on a router (no fixture; the probe does not call them). The test router has no screen.
 - The effect of the USB switch on the connected devices: the texts of the label keys `overview.switching_to_usb2_tips`, `overview.switching_warning_tips` and `overview.switching_to_usb3_tips` are not in the web UI code.
 - If `timer.set_screen` with `enable` true needs all values, as `set_led` does.
@@ -578,8 +578,11 @@ These reads were not in the probe. Each one was called one time on the GL-AXT180
 
 ## Writes tested on the router (2026-11-18)
 
-- `fan.set_config {"temperature":60}` returned `[]`. The next `fan.get_config` had `temperature: 60`, and the fan started.
+- `fan.set_config {"temperature":60}` returned `[]`. The next `fan.get_config` had `temperature: 60`, and the fan started. Later writes of 62 and 60 were also accepted and read back. `warn_temperature` stayed 75 in each read. The web UI offers only 70 to 90 in steps of 5, so the API accepts values that the web UI does not offer. The lowest value that the firmware accepts is not known.
 - `black_white_list.set_single_mac {"mode":"white","operate":"add","mac":<a made-up MAC>}` while the mode was `black`: the router accepted the write, `white_mac` then had the MAC, and the mode stayed `black`. The same call with `"operate":"del"` removed it. So the allow list can be filled before a change to allow-list mode. The opposite case (a `black` write in mode `white`) was not tested.
+- `firewall.add_rule` accepted rules with an IPv6 source or destination address, an IPv4 CIDR block, an IPv6 CIDR block, the protocols `esp` and `icmpv6`, and a source MAC in upper case. After each write, the nftables rule set (fw4) of the router had a correct rule for it.
+- Rule IDs have the form `cfg` and hex digits, such as `cfg0123ab`. An ID is the position of the rule in the firewall configuration: the ID of a rule can change when another rule is added or removed. Look up the ID before each call.
+- Firmware fault: a rule that has no destination port (`dest_port` empty) cannot be changed or removed through the API. `firewall.set_rule` and `firewall.remove_rule` for such a rule return HTTP status 500 with a Lua error page, not a JSON-RPC error. The page names `firewall.lua:23` and `bad argument #3 to 'format'`. To remove such a rule, use SSH: `uci delete firewall.<section>`, then `uci commit firewall`, then reload the firewall. For firmware 4.7.0, see the 4.7.0 report.
 
 ## Cellular modem (not built)
 

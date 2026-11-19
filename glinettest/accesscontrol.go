@@ -29,8 +29,9 @@ type AccessControlConfig struct {
 //   - A null value gives ErrInvalidParams.
 //
 // set_config also sets the mode when the params mode is "black" or "white", as the web UI of
-// firmware 4.8.3 uses it to change the mode, and keeps the list of the other mode. The router
-// was only tested with mode "black", so the behaviour of mode "white" and of the mode switch is an
+// firmware 4.8.3 uses it to change the mode, and keeps the list of the other mode. On the router
+// (firmware 4.8.3), set_single_mac with mode "white" in mode "black" changed the allow list and
+// not the mode, as here. The other behaviour of mode "white" and of the mode switch is an
 // assumption.
 type AccessControl struct {
 	mu     sync.Mutex

@@ -29,10 +29,11 @@ const (
 // WireGuardGroup is a group of WireGuard client peers.
 //
 // ID is a number that the router gives the group. It did not change in 5 days on the test router.
+// How the router makes the ID, and its range, are not known.
 // AuthType, Procedure, Username and Password are for the account of a provider group; Password is
 // a secret. Their values are not documented.
 type WireGuardGroup struct {
-	ID        int    `json:"group_id"`
+	ID        int64  `json:"group_id"`
 	Name      string `json:"group_name"`
 	Type      int    `json:"group_type"`
 	PeerCount int    `json:"peer_count"`
@@ -45,6 +46,7 @@ type WireGuardGroup struct {
 // WireGuardPeer is a WireGuard client configuration in a group.
 //
 // ID is a number that the router gives the peer. It did not change in 5 days on the test router.
+// How the router makes the ID, and its range, are not known.
 // PrivateKey and PresharedKey are secrets.
 //
 //   - AddressV4 and AddressV6 are the tunnel addresses of the router, with a prefix length, for
@@ -55,7 +57,7 @@ type WireGuardGroup struct {
 //   - ListenPort, PersistentKeepalive and MTU are 0 when not set. The router leaves some empty
 //     fields out of a read, for example ListenPort or AddressV6.
 type WireGuardPeer struct {
-	ID                  int    `json:"peer_id"`
+	ID                  int64  `json:"peer_id"`
 	Name                string `json:"name"`
 	AddressV4           string `json:"address_v4"`
 	AddressV6           string `json:"address_v6"`
@@ -75,7 +77,7 @@ type WireGuardPeer struct {
 // WireGuardGroupPeers is a group with its peers, an item of the result of get_all_config_list.
 // Firmware 4.7.0 does not send Type, so it is 0 there.
 type WireGuardGroupPeers struct {
-	ID       int             `json:"group_id"`
+	ID       int64           `json:"group_id"`
 	Name     string          `json:"group_name"`
 	Type     int             `json:"group_type"`
 	AuthType int             `json:"auth_type"`
@@ -92,8 +94,8 @@ type WireGuardGroupPeers struct {
 // on the test router while connected).
 type WireGuardClientStatus struct {
 	Status  int    `json:"status"`
-	GroupID int    `json:"group_id"`
-	PeerID  int    `json:"peer_id"`
+	GroupID int64  `json:"group_id"`
+	PeerID  int64  `json:"peer_id"`
 	Name    string `json:"name"`
 	Domain  string `json:"domain"`
 	Port    int    `json:"port"`
@@ -106,18 +108,18 @@ type WireGuardClientStatus struct {
 
 // WireGuardClientSetting is the setting of a peer. LocalAccess lets the VPN server side reach the
 // LAN of the router; Masq enables masquerading (NAT) in the tunnel. MTU 0 means not set; the
-// router leaves it out of the read of some peers. The meaning of DefaultMetric is not known (0 on
-// the test router).
+// router leaves it out of the read of some peers. The meaning and the range of DefaultMetric are
+// not known (0 on the test router).
 type WireGuardClientSetting struct {
-	DefaultMetric int  `json:"default_metric"`
-	LocalAccess   bool `json:"local_access"`
-	Masq          bool `json:"masq"`
-	MTU           int  `json:"mtu"`
+	DefaultMetric int64 `json:"default_metric"`
+	LocalAccess   bool  `json:"local_access"`
+	Masq          bool  `json:"masq"`
+	MTU           int   `json:"mtu"`
 }
 
 type wgPeerRef struct {
-	GroupID int `json:"group_id"`
-	PeerID  int `json:"peer_id"`
+	GroupID int64 `json:"group_id"`
+	PeerID  int64 `json:"peer_id"`
 }
 
 // GetStatus returns the status of the WireGuard client tunnel.
@@ -155,12 +157,12 @@ func (s *WireGuardClientService) ListAllPeers(ctx context.Context) ([]WireGuardG
 }
 
 // ListPeers returns the peers of the group groupID.
-func (s *WireGuardClientService) ListPeers(ctx context.Context, groupID int) ([]WireGuardPeer, error) {
+func (s *WireGuardClientService) ListPeers(ctx context.Context, groupID int64) ([]WireGuardPeer, error) {
 	var res struct {
 		Peers []WireGuardPeer `json:"peers"`
 	}
 	params := struct {
-		GroupID int `json:"group_id"`
+		GroupID int64 `json:"group_id"`
 	}{groupID}
 	if err := s.client.Call(ctx, wgClientModule, "get_config_list", params, &res); err != nil {
 		return nil, err
@@ -171,7 +173,7 @@ func (s *WireGuardClientService) ListPeers(ctx context.Context, groupID int) ([]
 
 // FindPeer returns the peer peerID of the group groupID. It returns nil and no error when there is
 // no such peer.
-func (s *WireGuardClientService) FindPeer(ctx context.Context, groupID, peerID int) (*WireGuardPeer, error) {
+func (s *WireGuardClientService) FindPeer(ctx context.Context, groupID, peerID int64) (*WireGuardPeer, error) {
 	peers, err := s.ListPeers(ctx, groupID)
 	if err != nil {
 		return nil, err
@@ -195,7 +197,7 @@ func (s *WireGuardClientService) FindPeer(ctx context.Context, groupID, peerID i
 // Not verified on a router: the parameters come from the web UI code. The web UI adds a group
 // with a default name and then renames it with set_group. It accepts names of 1-64 characters
 // that do not start with "." and have no "~".
-func (s *WireGuardClientService) AddGroup(ctx context.Context, name string) (int, error) {
+func (s *WireGuardClientService) AddGroup(ctx context.Context, name string) (int64, error) {
 	s.client.wgAddMu.Lock()
 	defer s.client.wgAddMu.Unlock()
 
@@ -226,9 +228,9 @@ func (s *WireGuardClientService) AddGroup(ctx context.Context, name string) (int
 // RenameGroup sets the name of the custom group groupID.
 //
 // Not verified on a router: the parameters come from the web UI code.
-func (s *WireGuardClientService) RenameGroup(ctx context.Context, groupID int, name string) error {
+func (s *WireGuardClientService) RenameGroup(ctx context.Context, groupID int64, name string) error {
 	params := struct {
-		GroupID int    `json:"group_id"`
+		GroupID int64  `json:"group_id"`
 		Name    string `json:"group_name"`
 	}{groupID, name}
 	return s.client.Call(ctx, wgClientModule, "set_group", params, nil)
@@ -238,9 +240,9 @@ func (s *WireGuardClientService) RenameGroup(ctx context.Context, groupID int, n
 // the group of the running tunnel.
 //
 // Not verified on a router: the parameters come from the web UI code.
-func (s *WireGuardClientService) RemoveGroup(ctx context.Context, groupID int) error {
+func (s *WireGuardClientService) RemoveGroup(ctx context.Context, groupID int64) error {
 	params := struct {
-		GroupID int `json:"group_id"`
+		GroupID int64 `json:"group_id"`
 	}{groupID}
 	return s.client.Call(ctx, wgClientModule, "remove_group", params, nil)
 }
@@ -252,7 +254,7 @@ func (s *WireGuardClientService) RemoveGroup(ctx context.Context, groupID int) e
 // Not verified on a router: the parameters come from the web UI code. It sends the fields of
 // SetPeer without peer_id, and listen_port, persistent_keepalive and mtu only when they are not 0,
 // as the web UI does for a new peer.
-func (s *WireGuardClientService) AddPeer(ctx context.Context, groupID int, peer WireGuardPeer) (int, error) {
+func (s *WireGuardClientService) AddPeer(ctx context.Context, groupID int64, peer WireGuardPeer) (int64, error) {
 	s.client.wgAddMu.Lock()
 	defer s.client.wgAddMu.Unlock()
 
@@ -288,7 +290,7 @@ func (s *WireGuardClientService) AddPeer(ctx context.Context, groupID int, peer 
 // fill, so SetPeer can remove a value. What the router does with "", and whether it keeps a field
 // that is not sent, is not known. The web UI requires Name (1-64 characters), AddressV4, Endpoint,
 // PrivateKey and PublicKey (44 characters of base64), PersistentKeepalive 1-65535 and MTU 576-65535.
-func (s *WireGuardClientService) SetPeer(ctx context.Context, groupID int, peer WireGuardPeer) error {
+func (s *WireGuardClientService) SetPeer(ctx context.Context, groupID int64, peer WireGuardPeer) error {
 	params := wgPeerParams(groupID, peer)
 	params["peer_id"] = peer.ID
 	params["listen_port"] = numberOrEmpty(peer.ListenPort)
@@ -301,7 +303,7 @@ func (s *WireGuardClientService) SetPeer(ctx context.Context, groupID int, peer 
 // peer of the running tunnel.
 //
 // Not verified on a router: the parameters come from the web UI code.
-func (s *WireGuardClientService) RemovePeer(ctx context.Context, groupID, peerID int) error {
+func (s *WireGuardClientService) RemovePeer(ctx context.Context, groupID, peerID int64) error {
 	return s.client.Call(ctx, wgClientModule, "remove_config", wgPeerRef{groupID, peerID}, nil)
 }
 
@@ -310,9 +312,9 @@ func (s *WireGuardClientService) RemovePeer(ctx context.Context, groupID, peerID
 //
 // Not verified on a router: the parameters come from the web UI code. For a provider group the
 // web UI also sends delete_key, which this method does not send.
-func (s *WireGuardClientService) RemoveAllPeers(ctx context.Context, groupID int) error {
+func (s *WireGuardClientService) RemoveAllPeers(ctx context.Context, groupID int64) error {
 	params := struct {
-		GroupID int `json:"group_id"`
+		GroupID int64 `json:"group_id"`
 	}{groupID}
 	return s.client.Call(ctx, wgClientModule, "clear_config_list", params, nil)
 }
@@ -323,7 +325,7 @@ func (s *WireGuardClientService) RemoveAllPeers(ctx context.Context, groupID int
 // VPNProxyVLAN.
 //
 // Not verified on a router: the parameters come from the web UI code.
-func (s *WireGuardClientService) Start(ctx context.Context, groupID, peerID int) error {
+func (s *WireGuardClientService) Start(ctx context.Context, groupID, peerID int64) error {
 	return s.client.Call(ctx, wgClientModule, "start", wgPeerRef{groupID, peerID}, nil)
 }
 
@@ -335,7 +337,7 @@ func (s *WireGuardClientService) Stop(ctx context.Context) error {
 }
 
 // GetSetting returns the setting of the peer peerID of the group groupID.
-func (s *WireGuardClientService) GetSetting(ctx context.Context, groupID, peerID int) (*WireGuardClientSetting, error) {
+func (s *WireGuardClientService) GetSetting(ctx context.Context, groupID, peerID int64) (*WireGuardClientSetting, error) {
 	var res WireGuardClientSetting
 	if err := s.client.Call(ctx, wgClientModule, "get_setting", wgPeerRef{groupID, peerID}, &res); err != nil {
 		return nil, err
@@ -349,7 +351,7 @@ func (s *WireGuardClientService) GetSetting(ctx context.Context, groupID, peerID
 // It accepts an MTU of 68-65535; it sends MTU 0 when the field is empty.
 //
 // Not verified on a router: the parameters come from the web UI code.
-func (s *WireGuardClientService) SetSetting(ctx context.Context, groupID, peerID int, setting WireGuardClientSetting) error {
+func (s *WireGuardClientService) SetSetting(ctx context.Context, groupID, peerID int64, setting WireGuardClientSetting) error {
 	params := struct {
 		wgPeerRef
 		WireGuardClientSetting
@@ -358,7 +360,7 @@ func (s *WireGuardClientService) SetSetting(ctx context.Context, groupID, peerID
 }
 
 // ListRoutes returns the route rules of the peer peerID of the group groupID.
-func (s *WireGuardClientService) ListRoutes(ctx context.Context, groupID, peerID int) (*VPNRoutes, error) {
+func (s *WireGuardClientService) ListRoutes(ctx context.Context, groupID, peerID int64) (*VPNRoutes, error) {
 	var res VPNRoutes
 	if err := s.client.Call(ctx, wgClientModule, "get_route_list", wgPeerRef{groupID, peerID}, &res); err != nil {
 		return nil, err
@@ -370,7 +372,7 @@ func (s *WireGuardClientService) ListRoutes(ctx context.Context, groupID, peerID
 // AddRoute adds a route rule to the peer peerID of the group groupID. route.ID is not sent.
 //
 // Not verified on a router: the parameters come from the web UI code.
-func (s *WireGuardClientService) AddRoute(ctx context.Context, groupID, peerID int, route VPNRoute) error {
+func (s *WireGuardClientService) AddRoute(ctx context.Context, groupID, peerID int64, route VPNRoute) error {
 	route.ID = 0
 	return s.client.Call(ctx, wgClientModule, "add_route", wgRouteParams(groupID, peerID, route), nil)
 }
@@ -378,7 +380,7 @@ func (s *WireGuardClientService) AddRoute(ctx context.Context, groupID, peerID i
 // SetRoute sets the route rule route.ID of the peer peerID of the group groupID.
 //
 // Not verified on a router: the parameters come from the web UI code.
-func (s *WireGuardClientService) SetRoute(ctx context.Context, groupID, peerID int, route VPNRoute) error {
+func (s *WireGuardClientService) SetRoute(ctx context.Context, groupID, peerID int64, route VPNRoute) error {
 	return s.client.Call(ctx, wgClientModule, "set_route", wgRouteParams(groupID, peerID, route), nil)
 }
 
@@ -386,19 +388,19 @@ func (s *WireGuardClientService) SetRoute(ctx context.Context, groupID, peerID i
 // route.ID and route.Dest (for the address family) are used.
 //
 // Not verified on a router: the parameters come from the web UI code.
-func (s *WireGuardClientService) RemoveRoute(ctx context.Context, groupID, peerID int, route VPNRoute) error {
+func (s *WireGuardClientService) RemoveRoute(ctx context.Context, groupID, peerID int64, route VPNRoute) error {
 	params := map[string]any{"group_id": groupID, "peer_id": peerID, "rule_id": route.ID, "route_flag": routeFlag(route.Dest)}
 	return s.client.Call(ctx, wgClientModule, "remove_route", params, nil)
 }
 
-func wgRouteParams(groupID, peerID int, route VPNRoute) map[string]any {
+func wgRouteParams(groupID, peerID int64, route VPNRoute) map[string]any {
 	p := routeParams(route)
 	p["group_id"] = groupID
 	p["peer_id"] = peerID
 	return p
 }
 
-func wgPeerParams(groupID int, peer WireGuardPeer) map[string]any {
+func wgPeerParams(groupID int64, peer WireGuardPeer) map[string]any {
 	p := map[string]any{
 		"group_id":            groupID,
 		"name":                peer.Name,
@@ -429,24 +431,24 @@ func wgPeerParams(groupID int, peer WireGuardPeer) map[string]any {
 	return p
 }
 
-func groupIDs(groups []WireGuardGroup) []int {
-	ids := make([]int, len(groups))
+func groupIDs(groups []WireGuardGroup) []int64 {
+	ids := make([]int64, len(groups))
 	for i, g := range groups {
 		ids[i] = g.ID
 	}
 	return ids
 }
 
-func peerIDs(peers []WireGuardPeer) []int {
-	ids := make([]int, len(peers))
+func peerIDs(peers []WireGuardPeer) []int64 {
+	ids := make([]int64, len(peers))
 	for i, p := range peers {
 		ids[i] = p.ID
 	}
 	return ids
 }
 
-func newIDs(before, after []int) []int {
-	var ids []int
+func newIDs(before, after []int64) []int64 {
+	var ids []int64
 	for _, id := range after {
 		if !slices.Contains(before, id) {
 			ids = append(ids, id)

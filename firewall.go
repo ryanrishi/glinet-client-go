@@ -126,8 +126,12 @@ var removeAllParams = struct {
 // after a removed rule or port forward change. The router does not check the values and accepts duplicates.
 //
 // Ports are strings because they can be a range, such as "50004-50005".
-// Proto is "tcp", "udp" or "tcp udp", and Target is "ACCEPT", "REJECT" or "DROP".
+// Proto can be "tcp", "udp" or "tcp udp", and Target is "ACCEPT", "REJECT" or "DROP".
 // The router writes an empty string as no value.
+//
+// AddRule was tested on firmware 4.8.3 with an IPv6 SrcIP or DestIP, IPv4 and IPv6 CIDR blocks,
+// the Proto values "esp" and "icmpv6", and an upper-case SrcMAC. The router accepted each rule,
+// and its nftables rule set (fw4) then had a correct rule.
 type Rule struct {
 	ID       string `json:"id,omitempty"`
 	Name     string `json:"name"`
@@ -189,6 +193,10 @@ func (s *FirewallService) AddRule(ctx context.Context, rule Rule) (string, error
 // SetRule replaces all values of the rule with the ID rule.ID. It keeps its position.
 // The router changes nothing and returns no error when no firewall section has that ID.
 // It does not check the section type: with the ID of a port forward, it writes to that port forward.
+// The ID is the position of the rule and can change, so look it up before each call.
+//
+// Firmware 4.8.3 cannot change a rule that has no dest_port: it returns HTTP status 500 with a Lua
+// error page, not a JSON-RPC error. See RemoveRule.
 func (s *FirewallService) SetRule(ctx context.Context, rule Rule) error {
 	return s.client.Call(ctx, "firewall", "set_rule", rule, nil)
 }
@@ -196,7 +204,12 @@ func (s *FirewallService) SetRule(ctx context.Context, rule Rule) error {
 // RemoveRule removes the rule with the ID id.
 // The router returns HTTP status 500 and changes nothing when no firewall section has that ID
 // or when the section has no dest_port. It does not check the section type: with the ID of a
-// port forward, it removes that port forward.
+// port forward, it removes that port forward. The ID is the position of the rule and can change,
+// so look it up before each call.
+//
+// On firmware 4.8.3 the error page for a rule that has no dest_port is a Lua error page, not a
+// JSON-RPC error. The API cannot remove such a rule. Remove it over SSH with
+// uci delete firewall.<section>, then uci commit firewall, then a firewall reload.
 func (s *FirewallService) RemoveRule(ctx context.Context, id string) error {
 	params := struct {
 		ID string `json:"id"`

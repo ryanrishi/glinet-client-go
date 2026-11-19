@@ -10,8 +10,10 @@ import "context"
 // and "02:00:00:00:00:A1" are two entries, and a remove with the other case removes nothing.
 // The web UI compares MACs without letter case and writes them in upper case.
 //
-// Only mode "black" was tested on a router (firmware 4.7.0). Mode "white", the allow list and
-// the mode switch are from the web UI code of firmware 4.8.3 and were not tested on a router.
+// Mode "black" was tested on a router (firmware 4.7.0). An allow-list write with set_single_mac
+// in mode "black" was tested on a router (firmware 4.8.3). Mode "white", SetConfig with the allow
+// list and the mode switch are from the web UI code of firmware 4.8.3 and were not tested on a
+// router.
 // The web UI does not let the user save an allow list without the MAC of the client that shows
 // the web UI (label key clients.whitelist_self_error_tips), or a block list with that MAC.
 type AccessControlService service
@@ -24,8 +26,7 @@ const (
 
 // AccessControlConfig is the result of black_white_list get_config. Mode is
 // AccessControlBlockList or AccessControlAllowList. BlackMAC is the block list and WhiteMAC is
-// the allow list; the router leaves a list out when it is empty. WhiteMAC is from the web UI code
-// and was not seen on a router.
+// the allow list; the router leaves a list out when it is empty.
 type AccessControlConfig struct {
 	Mode     string   `json:"mode"`
 	BlackMAC []string `json:"black_mac,omitempty"`
@@ -84,8 +85,9 @@ func (s *AccessControlService) RemoveBlockedMAC(ctx context.Context, mac string)
 // "white". The web UI sends this call with the current mode, so it sends mode "white" only when
 // the router is in mode "white".
 //
-// Not tested on a router: the call is from the web UI code of firmware 4.8.3. What it does when
-// the router is in mode "black" is not known.
+// Tested on a router (GL-AXT1800, firmware 4.8.3) in mode "black": the router added mac to the
+// allow list, and the mode stayed "black". So the allow list can be filled before a change to
+// mode "white". Not tested on a router in mode "white".
 func (s *AccessControlService) AddAllowedMAC(ctx context.Context, mac string) error {
 	return s.setSingleMAC(ctx, AccessControlAllowList, "add", mac)
 }
@@ -93,7 +95,8 @@ func (s *AccessControlService) AddAllowedMAC(ctx context.Context, mac string) er
 // RemoveAllowedMAC removes mac from the allow list, with black_white_list set_single_mac and mode
 // "white".
 //
-// Not tested on a router: the call is from the web UI code of firmware 4.8.3.
+// Tested on a router (GL-AXT1800, firmware 4.8.3) in mode "black": the router removed mac from
+// the allow list. Not tested on a router in mode "white".
 func (s *AccessControlService) RemoveAllowedMAC(ctx context.Context, mac string) error {
 	return s.setSingleMAC(ctx, AccessControlAllowList, "del", mac)
 }
