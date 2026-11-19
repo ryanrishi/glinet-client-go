@@ -112,3 +112,7 @@ $ curl -XPOST http://192.168.8.1/rpc -d '{"jsonrpc": "2.0", "id": 1, "method": "
 ## Releasing
 To release, change the `Version` constant in `glinet.go` and merge the change into `main`.
 The `Release` workflow creates the tag and the GitHub release for a version that has no tag.
+
+## Compatibility
+From v1.0.0, the exported API of the packages `glinet` and `glinettest` follows semantic versioning: a change that breaks a caller needs a new major version.
+The behaviour of a router can change with its firmware. The `REPORT.md` files in `testdata/fixtures/` show which firmware versions each method was tested on.
