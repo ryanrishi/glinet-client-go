@@ -34,17 +34,17 @@ type WireGuardClient struct {
 	mu       sync.Mutex
 	status   map[string]any
 	groups   []map[string]any
-	peers    map[int][]map[string]any
+	peers    map[int64][]map[string]any
 	settings map[peerKey]map[string]any
 	routes   map[peerKey]*vpnRoutes
 	nextID   int
 }
 
-type peerKey struct{ group, peer int }
+type peerKey struct{ group, peer int64 }
 
 func newWireGuardClient() *WireGuardClient {
 	m := &WireGuardClient{
-		peers:    map[int][]map[string]any{},
+		peers:    map[int64][]map[string]any{},
 		settings: map[peerKey]map[string]any{},
 		routes:   map[peerKey]*vpnRoutes{},
 		nextID:   10000,
@@ -60,7 +60,7 @@ func newWireGuardClient() *WireGuardClient {
 	m.groups = groups.Groups
 	mustUnmarshal(wgClientPeers, &m.peers)
 	var settings []struct {
-		Group, Peer int
+		Group, Peer int64
 		Setting     map[string]any
 	}
 	mustUnmarshal(wgClientSettings, &settings)
@@ -131,20 +131,20 @@ func (m *WireGuardClient) register(s *Server) {
 }
 
 func (m *WireGuardClient) group(p map[string]any) (map[string]any, error) {
-	id := toInt(p["group_id"])
-	i := slices.IndexFunc(m.groups, func(g map[string]any) bool { return toInt(g["group_id"]) == id })
+	id := toInt64(p["group_id"])
+	i := slices.IndexFunc(m.groups, func(g map[string]any) bool { return toInt64(g["group_id"]) == id })
 	if i < 0 {
 		return nil, ErrInvalidParams
 	}
 	return m.groups[i], nil
 }
 
-func (m *WireGuardClient) peerIndex(p map[string]any) (int, int, error) {
+func (m *WireGuardClient) peerIndex(p map[string]any) (int64, int, error) {
 	if _, err := m.group(p); err != nil {
 		return 0, 0, err
 	}
-	gid, pid := toInt(p["group_id"]), toInt(p["peer_id"])
-	i := slices.IndexFunc(m.peers[gid], func(peer map[string]any) bool { return toInt(peer["peer_id"]) == pid })
+	gid, pid := toInt64(p["group_id"]), toInt64(p["peer_id"])
+	i := slices.IndexFunc(m.peers[gid], func(peer map[string]any) bool { return toInt64(peer["peer_id"]) == pid })
 	if i < 0 {
 		return 0, 0, ErrInvalidParams
 	}
@@ -155,7 +155,7 @@ func (m *WireGuardClient) groupList(map[string]any) (any, error) {
 	groups := make([]map[string]any, len(m.groups))
 	for i, g := range m.groups {
 		groups[i] = maps.Clone(g)
-		groups[i]["peer_count"] = len(m.peers[toInt(g["group_id"])])
+		groups[i]["peer_count"] = len(m.peers[toInt64(g["group_id"])])
 	}
 	return map[string]any{"groups": groups}, nil
 }
@@ -163,7 +163,7 @@ func (m *WireGuardClient) groupList(map[string]any) (any, error) {
 func (m *WireGuardClient) allConfigList(map[string]any) (any, error) {
 	list := make([]map[string]any, len(m.groups))
 	for i, g := range m.groups {
-		item := map[string]any{"peers": nonNil(m.peers[toInt(g["group_id"])])}
+		item := map[string]any{"peers": nonNil(m.peers[toInt64(g["group_id"])])}
 		for _, k := range []string{"auth_type", "group_id", "group_name", "username", "password"} {
 			if v, ok := g[k]; ok {
 				item[k] = v
@@ -179,7 +179,7 @@ func (m *WireGuardClient) configList(p map[string]any) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return map[string]any{"auth_type": g["auth_type"], "peers": nonNil(m.peers[toInt(g["group_id"])])}, nil
+	return map[string]any{"auth_type": g["auth_type"], "peers": nonNil(m.peers[toInt64(g["group_id"])])}, nil
 }
 
 func (m *WireGuardClient) newID() int {
@@ -205,8 +205,8 @@ func (m *WireGuardClient) removeGroup(p map[string]any) (any, error) {
 	if _, err := m.group(p); err != nil {
 		return nil, err
 	}
-	id := toInt(p["group_id"])
-	m.groups = slices.DeleteFunc(m.groups, func(g map[string]any) bool { return toInt(g["group_id"]) == id })
+	id := toInt64(p["group_id"])
+	m.groups = slices.DeleteFunc(m.groups, func(g map[string]any) bool { return toInt64(g["group_id"]) == id })
 	delete(m.peers, id)
 	return writeResult, nil
 }
@@ -215,7 +215,7 @@ func (m *WireGuardClient) addConfig(p map[string]any) (any, error) {
 	if _, err := m.group(p); err != nil {
 		return nil, err
 	}
-	gid := toInt(p["group_id"])
+	gid := toInt64(p["group_id"])
 	peer := map[string]any{}
 	setPeerFields(peer, p)
 	delete(peer, "group_id")
@@ -248,7 +248,7 @@ func (m *WireGuardClient) clearConfigList(p map[string]any) (any, error) {
 	if _, err := m.group(p); err != nil {
 		return nil, err
 	}
-	delete(m.peers, toInt(p["group_id"]))
+	delete(m.peers, toInt64(p["group_id"]))
 	return writeResult, nil
 }
 
@@ -274,7 +274,7 @@ func (m *WireGuardClient) key(p map[string]any) (peerKey, error) {
 	if _, _, err := m.peerIndex(p); err != nil {
 		return peerKey{}, err
 	}
-	return peerKey{toInt(p["group_id"]), toInt(p["peer_id"])}, nil
+	return peerKey{toInt64(p["group_id"]), toInt64(p["peer_id"])}, nil
 }
 
 func (m *WireGuardClient) getSetting(p map[string]any) (any, error) {

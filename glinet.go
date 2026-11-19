@@ -185,7 +185,7 @@ func (c *Client) GetSid() string {
 
 // Call calls method of module on the router and decodes the result into result.
 // A nil params sends an empty object. A nil result discards the response.
-// A result object with a non-zero err_code is an *RPCError.
+// A result object with a non-zero err_code is an *RPCError. An HTTP status that is not 200 is an *HTTPError.
 // If the session is not valid, Call logs in again one time and repeats the call.
 func (c *Client) Call(ctx context.Context, module, method string, params, result any) error {
 	if params == nil {
@@ -193,7 +193,7 @@ func (c *Client) Call(ctx context.Context, module, method string, params, result
 	}
 
 	sid := c.GetSid()
-	err := c.rpc(ctx, "call", []any{sid, module, method, params}, result)
+	err := c.call(ctx, sid, module, method, params, result)
 
 	var rpcErr *RPCError
 	if !errors.As(err, &rpcErr) || rpcErr.Code != CodeAccessDenied || c.username == "" {
@@ -204,7 +204,17 @@ func (c *Client) Call(ctx context.Context, module, method string, params, result
 		return err
 	}
 
-	return c.rpc(ctx, "call", []any{c.GetSid(), module, method, params}, result)
+	return c.call(ctx, c.GetSid(), module, method, params, result)
+}
+
+func (c *Client) call(ctx context.Context, sid, module, method string, params, result any) error {
+	err := c.rpc(ctx, "call", []any{sid, module, method, params}, result)
+
+	var httpErr *HTTPError
+	if errors.As(err, &httpErr) {
+		httpErr.Module, httpErr.Method = module, method
+	}
+	return err
 }
 
 // login gets a new session unless another caller already replaced staleSid.
@@ -257,7 +267,7 @@ func (c *Client) rpc(ctx context.Context, method string, params, result any) err
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("glinet: %s: unexpected HTTP status %s", method, res.Status)
+		return &HTTPError{StatusCode: res.StatusCode, Method: method}
 	}
 
 	var rpcRes rpcResponse

@@ -14,8 +14,8 @@ type FanConfig struct {
 // Fan serves the fan module. The configuration and the status are those of the test router
 // until a test sets them. set_config sets Temperature when the params have temperature, and
 // keeps WarnTemperature. A temperature that is not an integer gives ErrInvalidParams. The router
-// accepted 60, which is out of the range of the web UI; that it accepts each integer, and that it
-// keeps warn_temperature, is an assumption. set_config does not change the status.
+// accepted 60 and 62, which are out of the range of the web UI, and kept warn_temperature; that it
+// accepts each integer is an assumption. set_config does not change the status.
 type Fan struct {
 	mu     sync.Mutex
 	config FanConfig
