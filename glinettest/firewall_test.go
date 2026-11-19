@@ -12,3 +12,15 @@ func TestFirewallMatchesRouterFixtures(t *testing.T) {
 func TestFirewallZonesMatchRouterFixture(t *testing.T) {
 	replayFixtures(t, "firewall.get_zone_list.json")
 }
+
+func TestFirewallDMZDoesNotSharePriority(t *testing.T) {
+	srv := NewServer(t)
+	higher := true
+	srv.Firewall.SetDMZ(DMZ{Enabled: true, DestIP: "198.51.100.50", Priority: &higher})
+
+	higher = false
+	*srv.Firewall.DMZ().Priority = false
+	if got := srv.Firewall.DMZ().Priority; got == nil || !*got {
+		t.Errorf("Priority = %v, want true: a change through a pointer of SetDMZ or DMZ changed the state", got)
+	}
+}

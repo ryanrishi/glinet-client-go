@@ -50,14 +50,22 @@ func newLocalAccess() *LocalAccess {
 func (m *LocalAccess) Config() LocalAccessConfig {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return m.config
+	return m.config.clone()
 }
 
 // SetConfig sets the configuration.
 func (m *LocalAccess) SetConfig(c LocalAccessConfig) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.config = c
+	m.config = c.clone()
+}
+
+func (c LocalAccessConfig) clone() LocalAccessConfig {
+	if c.SSHEnabled != nil {
+		sshEnabled := *c.SSHEnabled
+		c.SSHEnabled = &sshEnabled
+	}
+	return c
 }
 
 func (m *LocalAccess) register(s *Server) {
@@ -75,7 +83,7 @@ func (m *LocalAccess) setConfig(params json.RawMessage) (any, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	c := m.config
-	c.SSHEnabled = nil // json.Unmarshal must not write through the pointer that Config returned.
+	c.SSHEnabled = nil // json.Unmarshal must not write through the pointer of m.config.
 	if err := json.Unmarshal(params, &c); err != nil {
 		return nil, ErrInvalidParams
 	}
