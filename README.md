@@ -56,6 +56,15 @@ if errors.As(err, &rpcErr) && rpcErr.Code == glinet.CodeMethodNotFound {
 }
 ```
 
+An HTTP status that is not 200 is `*glinet.HTTPError`. It has the status code and the module and method of the call. For the login, `Module` is empty and `Method` is `challenge` or `login`. For example, the router returns HTTP status 500 when `firewall.remove_rule` gets an unknown ID:
+
+```go
+var httpErr *glinet.HTTPError
+if errors.As(err, &httpErr) && httpErr.StatusCode == http.StatusInternalServerError {
+	// The router returned HTTP status 500.
+}
+```
+
 ### Tests
 Package `glinettest` starts a fake router with `httptest`. It implements `challenge`, `login` and `call`, and keeps the state of each module in memory.
 

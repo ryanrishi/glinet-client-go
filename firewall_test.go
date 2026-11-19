@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/http"
 	"reflect"
 	"slices"
 	"testing"
@@ -135,8 +136,9 @@ func TestFirewallPortForwardErrors(t *testing.T) {
 
 	for _, id := range []string{glinettest.PortForwardID(5), glinettest.PortForwardID(0)} {
 		err := c.Firewall.RemovePortForward(ctx, id)
-		if err == nil || errors.As(err, &rpcErr) {
-			t.Errorf("RemovePortForward(%q): error %v, want an HTTP status error", id, err)
+		var httpErr *glinet.HTTPError
+		if !errors.As(err, &httpErr) || httpErr.StatusCode != http.StatusInternalServerError {
+			t.Errorf("RemovePortForward(%q): error %v, want HTTP status 500", id, err)
 		}
 	}
 
@@ -270,8 +272,9 @@ func TestFirewallRuleErrors(t *testing.T) {
 
 	for _, id := range []string{glinettest.RuleID(5), glinettest.RuleID(0)} {
 		err := c.Firewall.RemoveRule(ctx, id)
-		if err == nil || errors.As(err, &rpcErr) {
-			t.Errorf("RemoveRule(%q): error %v, want an HTTP status error", id, err)
+		var httpErr *glinet.HTTPError
+		if !errors.As(err, &httpErr) || httpErr.StatusCode != http.StatusInternalServerError {
+			t.Errorf("RemoveRule(%q): error %v, want HTTP status 500", id, err)
 		}
 	}
 
