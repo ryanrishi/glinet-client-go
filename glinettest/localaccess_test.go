@@ -13,3 +13,17 @@ func TestLocalAccessConcurrentPartialWrites(t *testing.T) {
 		"ssh_port":        numbers(500),
 	})
 }
+
+func TestLocalAccessConfigDoesNotShareSSHEnabled(t *testing.T) {
+	srv := NewServer(t)
+	enabled := true
+	c := srv.LocalAccess.Config()
+	c.SSHEnabled = &enabled
+	srv.LocalAccess.SetConfig(c)
+
+	enabled = false
+	*srv.LocalAccess.Config().SSHEnabled = false
+	if got := srv.LocalAccess.Config().SSHEnabled; got == nil || !*got {
+		t.Errorf("SSHEnabled = %v, want true: a change through a pointer of SetConfig or Config changed the state", got)
+	}
+}

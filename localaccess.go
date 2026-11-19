@@ -14,17 +14,18 @@ type LocalAccessService service
 // SessionTimeout is the session timeout of the web UI in seconds. SSHEnabled
 // enables the SSH server and SSHPort is its port.
 //
-// Firmware 4.7.0 does not return ssh_enabled, so SSHEnabled is false there.
+// SSHEnabled is nil when the router does not return ssh_enabled. Firmware 4.7.0 does not return
+// it; firmware 4.8.3 does.
 type LocalAccessConfig struct {
-	HTTPPort          int  `json:"http_port"`
-	HTTPSPort         int  `json:"https_port"`
-	RedirectHTTPS     bool `json:"redirect_https"`
-	LuCIHTTPPort      int  `json:"luci_http_port"`
-	LuCIHTTPSPort     int  `json:"luci_https_port"`
-	LuCIRedirectHTTPS bool `json:"luci_redirect_https"`
-	SessionTimeout    int  `json:"session_timeout"`
-	SSHEnabled        bool `json:"ssh_enabled"`
-	SSHPort           int  `json:"ssh_port"`
+	HTTPPort          int   `json:"http_port"`
+	HTTPSPort         int   `json:"https_port"`
+	RedirectHTTPS     bool  `json:"redirect_https"`
+	LuCIHTTPPort      int   `json:"luci_http_port"`
+	LuCIHTTPSPort     int   `json:"luci_https_port"`
+	LuCIRedirectHTTPS bool  `json:"luci_redirect_https"`
+	SessionTimeout    int   `json:"session_timeout"`
+	SSHEnabled        *bool `json:"ssh_enabled,omitempty"`
+	SSHPort           int   `json:"ssh_port"`
 }
 
 // GetConfig returns the local access configuration.
@@ -39,9 +40,12 @@ func (s *LocalAccessService) GetConfig(ctx context.Context) (*LocalAccessConfig,
 
 // SetConfig replaces the local access configuration with one local-access set_config that has
 // all fields of config, as the web UI does, also the LuCI fields when LuCI is not installed.
+// When SSHEnabled is nil, SetConfig does not send ssh_enabled, so a configuration that GetConfig
+// read from firmware 4.7.0 goes back to the router without the key.
 //
-// Not tested on a router: the call is from the web UI code of firmware 4.8.3. What firmware 4.7.0
-// does with ssh_enabled is not known. The web UI permits:
+// Not tested on a router: the call is from the web UI code of firmware 4.8.3, which always sends
+// ssh_enabled. What firmware 4.7.0 does with ssh_enabled, and what firmware 4.8.3 does with a
+// set_config without ssh_enabled, is not known. The web UI permits:
 //   - Ports 1 to 65535, each port different from the four other ports. For the four web ports,
 //     it does not permit the ports that browsers block (for example 22, 25 and 6000).
 //   - SessionTimeout 60 to 10800 (1 to 180 minutes) in steps of 60.

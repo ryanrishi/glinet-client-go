@@ -51,13 +51,13 @@ Only fields and types are compared, not values that are runtime data.
 | `system.get_info` | `hardware_feature` has the new keys `screen` (bool), `simo` (bool), `usb_power` (string) | `HardwareFeature.Screen`, `SIMO`, `USBPower` |
 | `system.get_status` | no `wgclient` and no `ovpnclient` items in `service` | no decode error |
 | `wg-client.get_all_config_list` | each group has the new key `group_type` | `WireGuardGroupPeers.Type` (0 on 4.7.0) |
-| `wg-server.get_config` | no `ipv6_enable` | `WireGuardServerConfig.IPv6Enable` is false; the cause is not known |
+| `wg-server.get_config` | no `ipv6_enable` | `WireGuardServerConfig.IPv6Enable` is nil; the cause is not known |
 | `ovpn-server.get_config` | no `ipv6_enable` | not in the client |
 | `wifi.get_config` | new top-level key `bandmode`, an empty array | not in `WifiConfig`, because the item type is not known |
 | `repeater.get_config` | `auto` is a number (1), not a bool | `RepeaterConfig.Auto` reads both; `true` is 1 and `false` is 0 (assumption) |
 | `switch-button.get_funcs` | `funcs` items are objects `{func, sub_func?:[{func}]}`, not strings; `vpn` with the tunnel IDs as `sub_func` replaces `wireguard` and `openvpn` | not in the client |
 | `switch-button.get_config` | new key `sub_func` (a tunnel ID as a string when `func` is `vpn`) | not in the client |
-| `local-access.get_config` | new key `ssh_enabled` (bool) | `LocalAccessConfig.SSHEnabled` (false on 4.7.0) |
+| `local-access.get_config` | new key `ssh_enabled` (bool) | `LocalAccessConfig.SSHEnabled` (nil on 4.7.0) |
 | `switch-button.get_funcs` | `funcs` items are objects `{func, sub_func?:[{func}]}`, not strings; `vpn` with the tunnel IDs as `sub_func` replaces `wireguard` and `openvpn` | `SwitchButton.GetFuncs` decodes both shapes |
 | `switch-button.get_config` | new key `sub_func` (a tunnel ID as a string when `func` is `vpn`) | `SwitchButtonConfig.SubFunc` |
 | `local-access.get_config` | new key `ssh_enabled` (bool) | not in the client |
@@ -69,7 +69,7 @@ All other ok methods have the same fields and types as on 4.7.0.
 
 These differences come from the router state, not from the firmware:
 
-- `firewall.get_dmz` has `priority` (bool). On 4.7.0 it appeared after the first `set_dmz` of the write test. `DMZ.Priority` (client `v0.12.0`) has it.
+- `firewall.get_dmz` has `priority` (bool). On 4.7.0 it appeared after the first `set_dmz` of the write test. `DMZ.Priority` (client `v0.12.0`) has it; it is nil when `get_dmz` has no `priority`.
 - `zerotier.get_config` has `id`: the made-up network ID of the 4.7.0 write test.
 - `wg-client.get_config_list` has no `ipv6_enable` and no `mtu`, because the probe read the group of type 3 on 4.8.3 and the custom group (type 2) on 4.7.0. The `get_all_config_list` peers of the custom group still have `ipv6_enable` and `mtu`.
 
@@ -133,7 +133,7 @@ What the router does with `lpr: []`, with `""` for a number field of a WireGuard
 
 The client differs from the web UI in these cases:
 
-- `WireGuardServer.SetConfig` does not send `private_key: ""`. The private key input of the web UI shows "Auto Generate" when it is empty, but the web UI code does not settle what the router does with `""`. The client sends `ipv6_enable` with a non-empty `address_v6`, as the web UI of firmware 4.7.0 did.
+- `WireGuardServer.SetConfig` does not send `private_key: ""`. The private key input of the web UI shows "Auto Generate" when it is empty, but the web UI code does not settle what the router does with `""`. The client sends `ipv6_enable` only when `IPv6Enable` is not nil and `address_v6` is not empty, as the web UI of firmware 4.7.0 did. So a configuration read from firmware 4.8.3 goes back without it.
 - `WireGuardClient.SetPeer` sends `""` for each of `listen_port`, `persistent_keepalive` and `mtu` that is 0. The web UI sends `""` only for an input that the user emptied. `WireGuardClient.AddPeer` does not send them when they are 0, as the web UI does for a new peer.
 
 Read fields:

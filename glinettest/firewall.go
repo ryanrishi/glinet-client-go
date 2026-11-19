@@ -39,10 +39,11 @@ type Rule struct {
 }
 
 // DMZ is the DMZ configuration of the firewall module. An empty DestIP means the router has no value.
+// A nil Priority means the router has no priority, as before the first set_dmz.
 type DMZ struct {
 	Enabled  bool   `json:"enabled"`
 	DestIP   string `json:"dest_ip,omitempty"`
-	Priority bool   `json:"priority"`
+	Priority *bool  `json:"priority,omitempty"`
 }
 
 // Firewall serves the port forward, rule, DMZ and zone methods of the firewall module. Like the router,
@@ -180,9 +181,12 @@ func (m *Firewall) DMZ() DMZ {
 func (m *Firewall) SetDMZ(dmz DMZ) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	values := map[string]any{"enabled": dmz.Enabled, "priority": dmz.Priority}
+	values := map[string]any{"enabled": dmz.Enabled}
 	if dmz.DestIP != "" {
 		values["dest_ip"] = dmz.DestIP
+	}
+	if dmz.Priority != nil {
+		values["priority"] = *dmz.Priority
 	}
 	m.setDMZValues(values)
 }

@@ -14,11 +14,15 @@ const wgServerModule = "wg-server"
 // button, which calls Initialize. AddressV4 and AddressV6 are the tunnel addresses of the server
 // with a prefix length. Port is the UDP listen port. PrivateKey is a secret; PrivateKey and
 // PublicKey are "" before the initialization.
+//
+// IPv6Enable is nil when the router does not return ipv6_enable. Firmware 4.7.0 returns it;
+// firmware 4.8.3 does not, and the web UI of firmware 4.8.3 does not use it. Whether firmware
+// 4.8.3 removed it or returns it only in some states is not known.
 type WireGuardServerConfig struct {
 	Initialization bool   `json:"initialization"`
 	AddressV4      string `json:"address_v4"`
 	AddressV6      string `json:"address_v6"`
-	IPv6Enable     bool   `json:"ipv6_enable"`
+	IPv6Enable     *bool  `json:"ipv6_enable,omitempty"`
 	LocalAccess    bool   `json:"local_access"`
 	Port           int    `json:"port"`
 	PrivateKey     string `json:"private_key"`
@@ -111,14 +115,17 @@ func (s *WireGuardServerService) Initialize(ctx context.Context) error {
 }
 
 // SetConfig sets the configuration of the WireGuard server. It sends address_v4, address_v6 and
-// port; private_key only when it is not empty; and ipv6_enable only when AddressV6 is not empty.
+// port; private_key only when it is not empty; and ipv6_enable only when IPv6Enable is not nil
+// and AddressV6 is not empty.
 // Initialization, LocalAccess and PublicKey are not sent. An empty AddressV6 is sent as "".
 //
 // The web UI of firmware 4.8.3 sends address_v4, address_v6, port and private_key, each also when
 // it is "", and no ipv6_enable. Its private key input shows "Auto Generate" when it is empty; what
-// the router does with private_key "" is not known, so SetConfig does not send it. Firmware 4.7.0
-// sent private_key only when it was not empty, and ipv6_enable and address_v6 only while IPv6 was
-// enabled on the router.
+// the router does with private_key "" is not known, so SetConfig does not send it. The web UI of
+// firmware 4.7.0 sent private_key only when it was not empty, and ipv6_enable and address_v6 only
+// while IPv6 was enabled on the router. So a configuration that GetConfig read goes back with
+// ipv6_enable only from a router that returned it. What firmware 4.8.3 does with ipv6_enable is
+// not known.
 //
 // The web UI lets the user change the configuration only while the server is stopped. It accepts
 // a private IPv4 address with a prefix length up to 30 (default /24), an IPv6 prefix length up to
@@ -130,8 +137,8 @@ func (s *WireGuardServerService) SetConfig(ctx context.Context, config WireGuard
 	if config.PrivateKey != "" {
 		params["private_key"] = config.PrivateKey
 	}
-	if config.AddressV6 != "" {
-		params["ipv6_enable"] = config.IPv6Enable
+	if config.IPv6Enable != nil && config.AddressV6 != "" {
+		params["ipv6_enable"] = *config.IPv6Enable
 	}
 	return s.client.Call(ctx, wgServerModule, "set_config", params, nil)
 }
