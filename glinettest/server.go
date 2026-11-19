@@ -74,6 +74,7 @@ type Server struct {
 	IPv6            *IPv6
 	LAN             *LAN
 	LED             *LED
+	MultiWAN        *MultiWAN
 	Network         *Network
 	Tailscale       *Tailscale
 	Timer           *Timer
@@ -130,6 +131,8 @@ func NewServer(t testing.TB) *Server {
 	s.LAN.register(s)
 	s.LED = newLED()
 	s.LED.register(s)
+	s.MultiWAN = newMultiWAN()
+	s.MultiWAN.register(s)
 	s.Network = newNetwork()
 	s.Network.register(s)
 	s.Tailscale = newTailscale()
