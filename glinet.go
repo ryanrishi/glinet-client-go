@@ -48,8 +48,10 @@ type Client struct {
 	LAN             *LANService
 	LED             *LEDService
 	Network         *NetworkService
+	Repeater        *RepeaterService
 	System          *SystemService
 	Tailscale       *TailscaleService
+	Tethering       *TetheringService
 	Timer           *TimerService
 	VPNPolicy       *VPNPolicyService
 	Wifi            *WifiService
@@ -116,8 +118,10 @@ func newClient(host string) (*Client, error) {
 	c.LAN = (*LANService)(&c.common)
 	c.LED = (*LEDService)(&c.common)
 	c.Network = (*NetworkService)(&c.common)
+	c.Repeater = (*RepeaterService)(&c.common)
 	c.System = (*SystemService)(&c.common)
 	c.Tailscale = (*TailscaleService)(&c.common)
+	c.Tethering = (*TetheringService)(&c.common)
 	c.Timer = (*TimerService)(&c.common)
 	c.VPNPolicy = (*VPNPolicyService)(&c.common)
 	c.Wifi = (*WifiService)(&c.common)
