@@ -576,6 +576,11 @@ These reads were not in the probe. Each one was called one time on the GL-AXT180
 | `netmode.get_mode` | `{"mode":string}` |
 | `wifi.get_mlo_config` | `{"res":{"random_bssid":bool,"encryptions":[string],"ifaces":[{"name":string,"mlo_enable":bool}]}}` (2 interfaces; the router has no Wi-Fi 7 radio, so the interfaces have no `mlo_band` and no SSID fields) |
 
+## Writes tested on the router (2026-11-18)
+
+- `fan.set_config {"temperature":60}` returned `[]`. The next `fan.get_config` had `temperature: 60`, and the fan started.
+- `black_white_list.set_single_mac {"mode":"white","operate":"add","mac":<a made-up MAC>}` while the mode was `black`: the router accepted the write, `white_mac` then had the MAC, and the mode stayed `black`. The same call with `"operate":"del"` removed it. So the allow list can be filled before a change to allow-list mode. The opposite case (a `black` write in mode `white`) was not tested.
+
 ## Cellular modem (not built)
 
 The client has no typed methods for the modules `modem` and `mvas`. The GL-AXT1800 has no modem: `modem.get_info` gives `{"modems":[],"offline_doc":false}`, `modem.get_status` gives `{"modems":[],"new_sms_count":0}`, and the other reads give empty results or `err_code` 20002001. No read shape of a modem is known.
