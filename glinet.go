@@ -38,6 +38,7 @@ type Client struct {
 	// services
 	AccessControl   *AccessControlService
 	AdGuard         *AdGuardService
+	Bark            *BarkService
 	Cable           *CableService
 	Clients         *ClientsService
 	DDNS            *DDNSService
@@ -56,6 +57,7 @@ type Client struct {
 	SwitchButton    *SwitchButtonService
 	NetworkMode     *NetworkModeService
 	Repeater        *RepeaterService
+	ParentalControl *ParentalControlService
 	System          *SystemService
 	Tailscale       *TailscaleService
 	Tethering       *TetheringService
@@ -115,6 +117,7 @@ func newClient(host string) (*Client, error) {
 
 	c.AccessControl = (*AccessControlService)(&c.common)
 	c.AdGuard = (*AdGuardService)(&c.common)
+	c.Bark = (*BarkService)(&c.common)
 	c.Cable = (*CableService)(&c.common)
 	c.Clients = (*ClientsService)(&c.common)
 	c.Digest = (*DigestService)(&c.common)
@@ -133,6 +136,7 @@ func newClient(host string) (*Client, error) {
 	c.SwitchButton = (*SwitchButtonService)(&c.common)
 	c.NetworkMode = (*NetworkModeService)(&c.common)
 	c.Repeater = (*RepeaterService)(&c.common)
+	c.ParentalControl = (*ParentalControlService)(&c.common)
 	c.System = (*SystemService)(&c.common)
 	c.Tailscale = (*TailscaleService)(&c.common)
 	c.Tethering = (*TetheringService)(&c.common)

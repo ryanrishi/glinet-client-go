@@ -530,3 +530,33 @@ Open points:
 - The result of `tethering.get_config` on a router, and whether the router keeps the `set_connect` values when no phone is on USB.
 
 A repeater write on a router whose uplink is the repeater can cut its Internet access: `connect` replaces the uplink network, and `disconnect` takes the uplink down.
+## Parental control and Bark (web UI code)
+
+`ParentalControl` calls `parental-control` and `Bark` calls `bark` (view `parentalcontrol`). The reads `get_config`, `get_status` and `get_app_list` are fixtures (no groups, only the preset rulesets `drop` and `accept`, `enable_app` false). The test router has no `bark` module (-32601). Each other call is from the web UI code of firmware 4.8.3 and the archived API reference, and was not tested on a router.
+
+| Call | Params | Client method |
+|---|---|---|
+| `parental-control.set_config` | `{"enable", "drop_anonymous", "auto_update"}` | `SetConfig` |
+| `parental-control.add_group` | `{"name", "default_rule", "macs"}`; result `{"id"}` | `AddGroup` |
+| `parental-control.set_group` | `{"id", "name", "default_rule", "macs"}` | `SetGroup` |
+| `parental-control.set_group` | `{"id", "schedules": [{"id"?, "week", "begin", "end", "rule"}]}`; `[]` removes all | `SetSchedules` |
+| `parental-control.remove_group` | `{"id"}` | `RemoveGroup` |
+| `parental-control.add_rule` | `{"name", "color", "apps", "manual": true, "blacklist"}` or `{..., "manual": false, "url"}`; result `{"id"}` | `AddRule` |
+| `parental-control.set_rule` | as `add_rule`, with `"id"` | `SetRule` |
+| `parental-control.remove_rule` | `{"id"}`; -2 default ruleset of a group, -3 temporary ruleset of a group | `RemoveRule` |
+| `parental-control.get_brief` | `{"group_id"}` | `GetBrief` |
+| `parental-control.set_brief` | `{"enable": true, "manual_stop", "rule_id", "group_id", "time"?}` or `{"enable": false, "group_id"}` | `StartBrief`, `StopBrief` |
+| `parental-control.get_mode`, `set_mode` | `{"mode"}`: 1 parental control, 2 Bark | `GetMode`, `SetMode` |
+| `bark.get_config`, `set_config` | `{"enable", "ipv6_enable"}` | `Bark.GetConfig`, `Bark.SetConfig` |
+| `bark.get_status` | result `{"status", "pairing_code"}` | `Bark.GetStatus` |
+| `bark.logout` | `{}` | `Bark.Logout` |
+
+Open points:
+
+- IDs of groups, rulesets and schedules are strings that the router makes. The reference examples look like UCI section names. Whether an ID stays the same after other items change was not tested. The reference says that ruleset names are unique; it says nothing about group names.
+- Schedule `id`: the reference gives the type as number and shows strings; the client requires a string. Whether `begin` and `end` come back with seconds, and whether `"24:00"` is stored, is not known.
+- The web UI sends back with `set_rule` the other fields that it read (`preset`, `url_success`); the client does not. That `get_config` returns `url` of a ruleset is an assumption.
+- `add_rule` and `set_rule` error -2 also return `valid_list`, which `RPCError` does not keep.
+- The fields of `get_status` groups (`id`, `rule`, `brief`, `schedule_id`) and of `get_brief` were not seen on a router.
+- `get_mode` and `set_mode` are only called by the web UI on a router with Bark (`software_feature.bark`, firmware category `2c`, country `us`).
+- Not built: `check_blacklist_online {"url"}` (the "detect" button of a URL ruleset; the type of `invalid_lines` is not known) and `update` (reference only; the web UI does not call it).

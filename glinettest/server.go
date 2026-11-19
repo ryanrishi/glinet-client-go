@@ -66,6 +66,7 @@ type Server struct {
 	System          *System
 	AccessControl   *AccessControl
 	AdGuardHome     *AdGuardHome
+	Bark            *Bark
 	Cable           *Cable
 	Clients         *Clients
 	DDNS            *DDNS
@@ -82,6 +83,7 @@ type Server struct {
 	SwitchButton    *SwitchButton
 	NetworkMode     *NetworkMode
 	Repeater        *Repeater
+	ParentalControl *ParentalControl
 	Tailscale       *Tailscale
 	Tethering       *Tethering
 	Timer           *Timer
@@ -122,6 +124,8 @@ func NewServer(t testing.TB) *Server {
 	s.AccessControl.register(s)
 	s.AdGuardHome = newAdGuardHome()
 	s.AdGuardHome.register(s)
+	s.Bark = newBark()
+	s.Bark.register(s)
 	s.Cable = newCable()
 	s.Cable.register(s)
 	s.Clients = newClients()
@@ -154,6 +158,8 @@ func NewServer(t testing.TB) *Server {
 	s.NetworkMode.register(s)
 	s.Repeater = newRepeater()
 	s.Repeater.register(s)
+	s.ParentalControl = newParentalControl()
+	s.ParentalControl.register(s)
 	s.Tailscale = newTailscale()
 	s.Tailscale.register(s)
 	s.Tethering = newTethering()
