@@ -18,7 +18,7 @@ func (r *vpnRoutes) result() map[string]any {
 }
 
 func (r *vpnRoutes) list(p map[string]any) *[]map[string]any {
-	if toInt(p["route_flag"]) == 6 {
+	if toInt64(p["route_flag"]) == 6 {
 		return &r.ipv6
 	}
 	return &r.ipv4
@@ -42,8 +42,8 @@ func (r *vpnRoutes) add(p map[string]any) {
 
 func (r *vpnRoutes) index(p map[string]any) (*[]map[string]any, int) {
 	l := r.list(p)
-	id := toInt(p["rule_id"])
-	return l, slices.IndexFunc(*l, func(rule map[string]any) bool { return toInt(rule["rule_id"]) == id })
+	id := toInt64(p["rule_id"])
+	return l, slices.IndexFunc(*l, func(rule map[string]any) bool { return toInt64(rule["rule_id"]) == id })
 }
 
 func (r *vpnRoutes) set(p map[string]any) error {
@@ -71,10 +71,14 @@ func nonNil(l []map[string]any) []map[string]any {
 	return l
 }
 
-func toInt(v any) int {
-	f, _ := v.(float64)
-	if i, ok := v.(int); ok {
-		return i
+func toInt64(v any) int64 {
+	switch n := v.(type) {
+	case int:
+		return int64(n)
+	case int64:
+		return n
+	case float64:
+		return int64(n)
 	}
-	return int(f)
+	return 0
 }

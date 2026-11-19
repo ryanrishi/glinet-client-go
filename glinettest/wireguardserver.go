@@ -127,8 +127,8 @@ func (m *WireGuardServer) unusedClientIP() string {
 }
 
 func (m *WireGuardServer) peerIndex(p map[string]any) (int, error) {
-	id := toInt(p["peer_id"])
-	i := slices.IndexFunc(m.peers, func(peer map[string]any) bool { return toInt(peer["peer_id"]) == id })
+	id := toInt64(p["peer_id"])
+	i := slices.IndexFunc(m.peers, func(peer map[string]any) bool { return toInt64(peer["peer_id"]) == id })
 	if i < 0 {
 		return 0, ErrInvalidParams
 	}
