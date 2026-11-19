@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/ryanrishi/glinet-client-go"
@@ -162,5 +163,57 @@ func TestCableSecondWANStatus(t *testing.T) {
 	}
 	if got.SecondWAN.Status != 1 || got.SecondWAN.ErrCode != 0 {
 		t.Errorf("GetStatus = %+v, want second WAN status 1", *got)
+	}
+}
+
+func TestCablePorts(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+	var params []string
+	handler := srv.Handler("cable", "set_port_config")
+	srv.Handle("cable", "set_port_config", func(p json.RawMessage) (any, error) {
+		params = append(params, string(p))
+		return handler(p)
+	})
+
+	ports, err := c.Cable.ListPorts(ctx)
+	if err != nil {
+		t.Fatalf("ListPorts: %v", err)
+	}
+	checkLossless(t, map[string]any{"ports": ports}, srv.Cable.Ports())
+
+	writes := []struct {
+		mode string
+		mac  glinet.CablePortMAC
+		want glinet.CablePortMAC
+	}{
+		{"wan", glinet.CablePortMAC{Mode: "clone", MACAddr: "02:00:00:00:00:a1"}, glinet.CablePortMAC{Mode: "clone", MACAddr: "02:00:00:00:00:a1", DefaultMACAddr: "02:00:00:00:00:02"}},
+		{"wan", glinet.CablePortMAC{Mode: "random", MACAddr: "02:00:00:00:00:a2", Update: "none", Period: 24}, glinet.CablePortMAC{Mode: "random", MACAddr: "02:00:00:00:00:a2", DefaultMACAddr: "02:00:00:00:00:02", Update: "none"}},
+		{"wan", glinet.CablePortMAC{Mode: "random", MACAddr: "02:00:00:00:00:a3", Update: "reboot", Period: 168}, glinet.CablePortMAC{Mode: "random", MACAddr: "02:00:00:00:00:a3", DefaultMACAddr: "02:00:00:00:00:02", Update: "reboot", Period: 168}},
+		{"wan", glinet.CablePortMAC{Mode: "default", MACAddr: "02:00:00:00:00:02", DefaultMACAddr: "02:00:00:00:00:ff"}, glinet.CablePortMAC{Mode: "default", MACAddr: "02:00:00:00:00:02", DefaultMACAddr: "02:00:00:00:00:02"}},
+		{"lan", glinet.CablePortMAC{Mode: "clone", MACAddr: "02:00:00:00:00:a4"}, glinet.CablePortMAC{Mode: "default", MACAddr: "02:00:00:00:00:02", DefaultMACAddr: "02:00:00:00:00:02"}},
+	}
+	for _, w := range writes {
+		if err := c.Cable.SetPort(ctx, "wan", w.mode, w.mac); err != nil {
+			t.Fatalf("SetPort(%s, %+v): %v", w.mode, w.mac, err)
+		}
+		ports, err := c.Cable.ListPorts(ctx)
+		if err != nil {
+			t.Fatalf("ListPorts: %v", err)
+		}
+		if len(ports) != 1 || ports[0].Mode != w.mode || ports[0].MAC == nil || *ports[0].MAC != w.want {
+			t.Errorf("ListPorts after SetPort(%s, %+v) = %+v", w.mode, w.mac, ports)
+		}
+	}
+
+	want := []string{
+		`{"macaddr":{"macaddr":"02:00:00:00:00:a1","mode":"clone"},"mode":"wan","name":"wan"}`,
+		`{"macaddr":{"macaddr":"02:00:00:00:00:a2","mode":"random","update":"none"},"mode":"wan","name":"wan"}`,
+		`{"macaddr":{"macaddr":"02:00:00:00:00:a3","mode":"random","period":168,"update":"reboot"},"mode":"wan","name":"wan"}`,
+		`{"macaddr":{"macaddr":"02:00:00:00:00:02","mode":"default"},"mode":"wan","name":"wan"}`,
+		`{"mode":"lan","name":"wan"}`,
+	}
+	if !slices.Equal(params, want) {
+		t.Errorf("params = %v, want %v", params, want)
 	}
 }

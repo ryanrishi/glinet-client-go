@@ -54,9 +54,12 @@ Only fields and types are compared, not values that are runtime data.
 | `wg-server.get_config` | no `ipv6_enable` | `WireGuardServerConfig.IPv6Enable` is false; the cause is not known |
 | `ovpn-server.get_config` | no `ipv6_enable` | not in the client |
 | `wifi.get_config` | new top-level key `bandmode`, an empty array | not in `WifiConfig`, because the item type is not known |
-| `repeater.get_config` | `auto` is a number (1), not a bool | not in the client |
+| `repeater.get_config` | `auto` is a number (1), not a bool | `RepeaterConfig.Auto` reads both; `true` is 1 and `false` is 0 (assumption) |
 | `switch-button.get_funcs` | `funcs` items are objects `{func, sub_func?:[{func}]}`, not strings; `vpn` with the tunnel IDs as `sub_func` replaces `wireguard` and `openvpn` | not in the client |
 | `switch-button.get_config` | new key `sub_func` (a tunnel ID as a string when `func` is `vpn`) | not in the client |
+| `local-access.get_config` | new key `ssh_enabled` (bool) | `LocalAccessConfig.SSHEnabled` (false on 4.7.0) |
+| `switch-button.get_funcs` | `funcs` items are objects `{func, sub_func?:[{func}]}`, not strings; `vpn` with the tunnel IDs as `sub_func` replaces `wireguard` and `openvpn` | `SwitchButton.GetFuncs` decodes both shapes |
+| `switch-button.get_config` | new key `sub_func` (a tunnel ID as a string when `func` is `vpn`) | `SwitchButtonConfig.SubFunc` |
 | `local-access.get_config` | new key `ssh_enabled` (bool) | not in the client |
 | `cloud.get_config` | new key `aw_api_url` (string) | not in the client |
 | `modem.get_profile_list` | result is `{"err_code":20002001,"err_msg":"Parameter not found"}`, not a profile list (the router has no modem) | not in the client |
@@ -145,7 +148,7 @@ Read fields:
 
 Not built, because the web UI code does not settle the shapes:
 
-- `cable.get_ports_config` (view `internet`, `getPortsConfig`, params `{}`). The web UI reads only `ports[]`, keeps the items whose `name` is `"wan"` or `"secondwan"`, and shows `silk` (the port label on the case). Other fields, other `name` values and the types are not in that code, and no fixture has the result.
+- `cable.get_ports_config`: built later from the view `netport` as `Cable.ListPorts`; see "Network mode, ports and advanced network settings (web UI code)".
 
 - `wifi.get_mlo_config` and `wifi.set_mlo_config` (MLO, when `software_feature.mlo` is true). The web UI reads `res` with `random_bssid`, `encryptions`, `mlo_bandsupport` and `ifaces[]`; it reads `name`, `guest`, `mlo_enable`, `mlo_band` (a list of `"2g"`, `"5g"`, `"6g"`, at least 2), `ssid`, `encryption`, `key` and `hidden` of an interface. It writes `{name, mlo_enable}` for the switch, and for the form all fields of the interface object as the router gave them, plus `random_bssid` for a main interface. So the full params depend on fields of the result that the web UI code does not name.
 - The provider groups (type 1) of `wg-client`. The web UI uses `wg_client.create_provider_account {group_id, username, password}` (result `expires_at`), `wg_client.get_provider_server_list` or `wg-client.get_third_config` (AzireVPN and Mullvad) with `{group_id, username, password?}`, `wg_client.generate_provider_config` or `wg-client.get_recommend_config` with `{group_id, country_name:[string]}` or `{group_id, server_info:[{country_name, cities:[{city_name, hostname:[string]}]}]}`, `wg_client.update_provider_config {group_id, update_all:true}`, `wg_client.get_provider_user_info {group_id}` (result `allocated`, `available`, `expires_at`), `wg_client.get_max_client`, `wg-client.clear_user_pass {group_id}` and `wg-client.clear_config_list {group_id, delete_key}`. The module, the form fields and the steps change with the provider name (a list in the web UI code), with `auth_type` (1: the form has a password) and with `procedure` (1: the user selects servers). The results are only partly read. These calls send account data to a third-party VPN service through the router.
@@ -358,3 +361,236 @@ Kept as on 4.7.0: IDs (group, peer, tunnel, UCI section), the flags and numbers 
 | `wifi.get_status` | ok | same |
 | `zerotier.get_config` | ok | same |
 | `zerotier.get_status` | ok | same |
+
+## Remote and local access (web UI code)
+
+These calls come from the web UI view `security` of firmware 4.8.3 (cards "remote access" and "local access"). The reads have fixtures on 4.7.0 and 4.8.3. The writes were NOT tested on a router.
+
+| Client | Call | Params or result | Web UI |
+|---|---|---|---|
+| `Firewall.GetWANAccess` | `firewall.get_wan_access` | `{enable_https, enable_ssh, enable_ping, enable_whitelist, whitelist:[{ipaddr, name}]}`; the fixtures have an empty `whitelist` | `getRemoteAccessConfig` |
+| `Firewall.SetWANAccess` | `firewall.set_wan_access` | the same object, always with all fields, also `false` and `whitelist: []` | `handleApply` of the remote access card |
+| `LocalAccess.GetConfig` | `local-access.get_config` | `{http_port, https_port, redirect_https, luci_http_port, luci_https_port, luci_redirect_https, session_timeout, ssh_enabled, ssh_port}`; no `ssh_enabled` on 4.7.0 | `getLocalAccessConfig` |
+| `LocalAccess.SetConfig` | `local-access.set_config` | the same object, always with all fields, also the LuCI fields when LuCI is not installed; `session_timeout` in seconds | `handleApply` of the local access card |
+
+Web UI rules:
+
+- Whitelist item: `ipaddr` is an IPv4 or IPv6 address; `name` is optional (at most 64 characters) and is sent as `""` when empty.
+- The `enable_ssh` switch shows only while `ssh_enabled` of `local-access` is true. The `enable_whitelist` switch shows only while one of `enable_https`, `enable_ssh` and `enable_ping` is true. The web UI always sends all fields.
+- Ports are 1 to 65535, and the five ports are all different. The four web ports cannot be a port that browsers block (a list of 80 ports, for example 22, 25 and 6000).
+- `session_timeout`: the web UI shows minutes (1 to 180) and sends the value times 60. It shows 5 minutes when the result has no value.
+- The LuCI fields show only when `luci.get_status` gives `status` 2 (installed).
+
+Side effects in the web UI code:
+
+- After `firewall.set_wan_access`, the web UI reads `firewall.get_rule_list` again.
+- After `local-access.set_config`, the web UI waits 3 s and loads the page from the new address: HTTPS and `https_port` when `redirect_https` is true or the page used HTTPS, otherwise HTTP and `http_port`.
+- `local-access.set_config` errors (`err_code`): -1 HTTP port in use, -2 HTTPS port in use, -3 another port in use (the `err_msg` has "ssh", "https" for LuCI HTTPS, or else LuCI HTTP), -4 SSH needs a strong admin password (label key `security.ssh_need_strong_pwd_tips`).
+
+Open points:
+
+- Whether `set_wan_access` adds or changes firewall rules, and so changes the IDs of the rules and port forwards.
+- The `whitelist` item shape as the router returns it (no fixture has an item), and whether the router accepts an address with a prefix length.
+- What a `set_wan_access` or `set_config` without some fields does.
+- What firmware 4.7.0 does with `ssh_enabled` in `local-access.set_config`.
+- Whether `local-access.set_config` restarts the web server before it answers, and so whether the answer arrives when a port changes.
+## Client name, icon and speed limit (web UI code)
+
+From the web UI code of firmware 4.8.3 (view `clients`). No write was tested on a router.
+
+| Call | Params | Client method | Notes |
+|---|---|---|---|
+| `clients.get_list` | `{}` | `Clients.ListClients` | read; fixture. `alias` and `class` only when set. `limit_rx` (download) and `limit_tx` (upload) in KiB/s, 0 is no limit |
+| `clients.set_info` | `{mac, alias, class}` | `Clients.SetInfo` | always all three fields; `""` removes the name or the icon |
+| `qos.set_speed_limit_rule` | `{mac, download, upload}` | `QoS.SetSpeedLimit` | KiB/s, 1 to 1073741824, a fraction in steps of 0.125 in the Kbps mode, 0 is no limit; the UI waits up to 30 s |
+| `qos.remove_speed_limit_rule` | `{mac}` | `QoS.RemoveSpeedLimit` | the UI waits up to 30 s |
+
+- The alias has at most 32 characters and no `,` or `"`. The web UI offers the classes `computer`, `phone`, `pad`, `camera`, `watch`, `laptop`, `printer`, `sound`, `television`, `smartappliances`, `games`, `gateway`, `nas`, `server`, `switch`.
+- The web UI shows the speed limit options only in system mode 0 (router) and 6 (passthrough). It shows "set limit" only while `netnat_enabled` (network acceleration) is false, and "remove limit" also while it is true. The test router has `netnat_enabled: true`.
+- The web UI has the unit modes KB/s and Kbps. Each input accepts only digits. In the KB/s mode the web UI sends the input (1 to 1073741824). In the Kbps mode it accepts 8 to 8589934592 and sends the input divided by 8, for example `1.125` for 9 Kbps. So `SpeedLimit.Download` and `Upload`, and `ClientDevice.LimitRx` and `LimitTx`, are `float64`.
+
+Open points:
+
+- Whether `set_info` removes `alias` and `class` for `""` or keeps an empty value in `get_list`.
+- What `set_speed_limit_rule` does with `download: 0, upload: 0` (the web UI permits it), and whether the router keeps a fraction in `limit_rx` and `limit_tx` or rounds it.
+- Whether `set_info` and the `qos` writes accept a MAC that is not in `get_list`, and whether they compare MACs with their letter case.
+- What network acceleration does to a limit.
+- `qos.get_config` (`{"enable": false, "mode": "0"}`), `get_client_list`, `get_device_group`, `get_bandwidth_config` and `get_channel_bandwidth_ratio` give empty or default results on the test router, and no view of the web UI of firmware 4.8.3 calls them or `qos.set_config`. The client has no typed method for them.
+## Hardware settings (web UI code)
+
+These calls come from the web UI code of firmware 4.8.3 (the views `overview`, `timedtask` and `btnsettings`). Only `fan.set_config` was tested on a router.
+
+| Client | Call | Params or result | Source |
+|---|---|---|---|
+| `Fan.GetConfig` | `fan.get_config` | `{temperature, warn_temperature}` (integers, °C) | fixture |
+| `Fan.GetStatus` | `fan.get_status` | `{speed, status}`: speed in RPM, status true while the fan turns | fixture |
+| `Fan.SetTemperature` | `fan.set_config` | `{temperature}`; the web UI sends no other key and lets the user select 70 to 90 | tested on a router on 2026-11-18 (GL-AXT1800, firmware 4.8.3): `{"temperature": 60}` returned `[]`, the next `get_config` had `temperature: 60`, and the fan started (status true, speed more than 0) with the CPU at 69 °C |
+| `System.GetUSB3Disabled` | `system.get_usb3_disable` | `{usb3_disable: bool}`; the web UI shows true when the key is missing | web UI code, `getUsb3` |
+| `System.SetUSB3Disabled` | `system.set_usb3_disable` | `{usb3_disable: bool}`; true is USB 2.0, false is USB 3.0 | web UI code, `handleSetUsb3` |
+| `Timer.GetScreenSchedule` | `timer.get_screen` | the fields of `timer.get_led` | web UI code, `getScreenTimer` |
+| `Timer.SetScreenSchedule` | `timer.set_screen` | `{enable, week}`, and `turnon_hour`, `turnon_min`, `turnoff_hour`, `turnoff_min` only with `enable` true, as for `set_led` | web UI code, `setScreenTimer` |
+| `SwitchButton.GetConfig` | `switch-button.get_config` | `{func, sub_func?}` | fixture |
+| `SwitchButton.GetFuncs` | `switch-button.get_funcs` | `{funcs:[{func, sub_func?:[{func}]}]}`; strings on firmware 4.7.0 | fixtures |
+| `SwitchButton.SetConfig` | `switch-button.set_config` | `{func, sub_func?, sync: bool}`; `func` `"none"` has no `sub_func` | web UI code, `setBtnConfig` |
+
+The web UI shows the fan dialog when `hardware_feature.fan` is true, the USB switch when `hardware_feature.usb3` is not empty, and the screen schedule when `hardware_feature.screen` is true. The test router has a fan and a USB 3.0 port, and no screen.
+
+The web UI sends `sync: true` only when the user accepts the dialog with label key `btnsettings.auto_sync_tips`, after `switch-button.check_sync_status {func, sub_func?}` returned `sync_status` 0. It does not call `check_sync_status` for `"none"`. In the VPN global proxy mode, it shows one item "VPN client" and sends `func` `"vpn"` with the first `sub_func` of the `vpn` function.
+
+Not known:
+
+- If the router accepts a fan temperature out of 70 to 90 other than 60, and if `fan.set_config` changes `warn_temperature`. The web UI only shows a warning when `temperature` is `warn_temperature` or less.
+- The result of `system.get_usb3_disable` and `timer.get_screen` on a router (no fixture; the probe does not call them). The test router has no screen.
+- The effect of the USB switch on the connected devices: the texts of the label keys `overview.switching_to_usb2_tips`, `overview.switching_warning_tips` and `overview.switching_to_usb3_tips` are not in the web UI code.
+- If `timer.set_screen` with `enable` true needs all values, as `set_led` does.
+- What `sync: true` does, and the meaning of the `sync_status` values other than 0. `check_sync_status` is not in the client.
+- What `switch-button.get_config` returns when the function is `"none"`, and how the router answers a `func` that is not in `get_funcs`.
+## Network mode, ports and advanced network settings (web UI code)
+
+From the web UI views `netadvanced`, `igmp`, `bridge` (network mode) and `netport` (Ethernet ports) of firmware 4.8.3. No write was tested on a router.
+
+| Client | Method | Params or result | Source |
+|---|---|---|---|
+| `Network.GetAdvancedConfig` | `network.get_advance_config` | `{nat_enable, sip_enable}`, 0 or 1 | view `netadvanced`; no fixture |
+| `Network.SetAdvancedConfig` | `network.set_advance_config` | `{nat_enable, sip_enable}`, both always | view `netadvanced`; the web UI waits 2 s |
+| `IGMP.GetConfig` | `igmp.get_config` | `{enable: bool, version: int}` | fixture |
+| `IGMP.SetConfig` | `igmp.set_config` | `{enable, version}`, both always; version 1, 2 or 3 | view `igmp`; the web UI waits 15 s |
+| `NetworkMode.GetMode` | `netmode.get_mode` | `{mode}`; `mask` and `mac` for `passthrough` | fixture (`{"mode":"router"}`); `mask`, `mac` from view `bridge` |
+| `NetworkMode.SetMode` | `netmode.set_mode` | `{mode}` for `router` and `ap`; `{mode, ssid, key?, identity?}` for `relay` and `wds`; `{mode, mask, mac}` for `passthrough` | view `bridge`; result `lanip` after a change to `router` |
+| `Cable.ListPorts` | `cable.get_ports_config` | `ports[]` of `{name, mode, default_mode, silk, macaddr: {mode, macaddr, defmacaddr, update, period}}` | view `netport`; no fixture |
+| `Cable.SetPort` | `cable.set_port_config` | `{name, mode}`; for mode `wan` also `macaddr: {mode, macaddr, update?, period?}` | view `netport`; the web UI waits 3 s, or 15 s after a mode change |
+
+Network mode:
+
+- The web UI offers `router`, `ap`, `relay` (extender), `wds` and `passthrough`, each one only when the router supports it (`hidden_features`, `hardware_feature.radio` and `nowds`, `software_feature.passthrough`). In a mode other than `router` it offers only the change back to `router`. The menu list also has the mode `mesh`, which this view cannot set.
+- `system.get_status` `system.mode` is a number. From the conditions of the view: 0 router, 1 WDS, 2 extender, 4 access point, 6 passthrough. Not checked on a router.
+- `relay` and `wds` connect to an upstream Wi-Fi network: `key` and `identity` (802.1X) are sent only when not empty. Error codes of the result: 1 connection failed, 2 no IP address from upstream, 3 conflict with the LAN, 4 wrong password.
+- A change reconfigures the whole router. In `ap`, `relay` and `wds` the router takes its address from the upstream network: the web UI tells the user to find it there. After a change to `router`, the web UI opens the address in `lanip`. The web UI waits up to 60 s for the answer and then 2 s to 40 s.
+- Before a change, the web UI reads `network.check_wan_cable` (and `cable.get_status` for `passthrough`) and stops when the cable state does not fit the mode, or when `macclone_enabled` is true.
+
+MAC clone:
+
+- The module `macclone` gives -32601 on 4.7.0 and 4.8.3, and the web UI of 4.8.3 does not call it; the router has no view `macclone`.
+- The MAC address of a wired WAN port is in `cable.get_ports_config` and `cable.set_port_config` (`macaddr`, modes `default`, `clone`, `random`). `network.check_wan_cable` `macclone_enabled` shows it. The extender mode has its own MAC setting in the `repeater` module, which this client does not have.
+
+Open points:
+
+- No router result for `network.get_advance_config`, `cable.get_ports_config` and `cable.get_ports_status`. The probe allowlist now has them. The types (for example of `period`), the other fields, and the names of the LAN ports are not known.
+- `cable.get_ports_status` (`ports[]` of `{name, speed, duplex}`, runtime values) is not in the client.
+- What the router restarts for `network.set_advance_config` and `igmp.set_config`, what `netmode.set_mode` returns for modes other than `router`, and what the router does with a mode change that the web UI does not offer.
+## Multi-WAN (web UI code)
+
+The module `kmwan` (client `MultiWAN`, view `multiwan`). The reads `get_config` and `get_status` were called on 4.7.0 and 4.8.3 (fixtures). The writes and `get_sensitivity` come from the web UI code of firmware 4.8.3 and were NOT tested on a router. `mwan3.get_config` and `mwan3.get_status` return -32601.
+
+| Client | Call | Params or result | Web UI |
+|---|---|---|---|
+| `MultiWAN.GetConfig` | `kmwan.get_config` | result `{mode, interfaces:[{interface, metric, weight, enable_check, track_mode, track_proto, track_method, track_ipv4, track_ipv6, enable_ssl}]}` (fixture) | `getMwanConfig` |
+| `MultiWAN.GetStatus` | `kmwan.get_status` | result `{interfaces:[{interface, status_v4, status_v6}]}` (fixture); 0 online, 1 offline, 2 error | `getMwanStatus`, each 10 s |
+| `MultiWAN.GetSensitivity` | `kmwan.get_sensitivity` | result `{sensitivity:{level, val}}`; the web UI shows `medium` and 5 when `sensitivity` is missing | `getSensitiveData` |
+| `MultiWAN.SetFailover` | `kmwan.set_config` | `{mode:0, interfaces:[{interface, metric}]}`, metric 1, 2, 3 in the order of the user; the hidden interfaces last | config card, `handleSetConfig` |
+| `MultiWAN.SetLoadBalance` | `kmwan.set_config` | `{mode:1, interfaces:[{interface, weight}]}`, weight 0 to 10; no hidden interfaces | config card, `handleSetConfig`, `confirmSetWeight` |
+| `MultiWAN.SetInterface` | `kmwan.set_interface` | `{interface, enable_check}`; with `enable_check` true also `track_proto`, `track_method`, `track_mode`, `track_ipv4` (proto 0 or 2), `track_ipv6` (proto 1 or 2), `enable_ssl` (method 1) | tracking dialog, `handleSetInterface` |
+| `MultiWAN.SetSensitivity` | `kmwan.set_sensitivity` | `{sensitivity:{level, val}}`; level `low`, `medium`, `high` or `custom`; `val` 0.5 or 1 to 90 seconds, set only for `custom` | sensitivity dialog, `setSensitivity` |
+
+Values from the web UI: mode 0 failover, 1 load balance; `track_mode` 1 normal, 0 low data (badge "passive"), 2 strict; `track_proto` 0 IPv4, 1 IPv6, 2 both (the selector shows only when IPv6 is enabled); `track_method` 0 ping, the only item of the list. The form has 4 host inputs for each protocol, the first 2 required, and sends the filled inputs. Interfaces in `system.get_info` `hidden_features` are not shown. The web UI warns when fewer than 2 interfaces have a weight that is not 0, but sends the write when the user accepts.
+
+Side effects: a write can change the uplink that the router uses and so stop its Internet access. After `set_config` and `set_interface` the web UI waits 10 s, then reads the configuration and the system status again; after `set_sensitivity` it waits 1 s.
+
+Open points: the meaning of `track_method` 1 (the web UI sends `enable_ssl` for it but does not list it) and of the track modes; what `val` does with a level other than `custom`; the result of `get_sensitivity` (needs a read on a router); if the writes keep the fields that they do not send (metrics in load balance mode, weights in failover mode, tracking fields when `enable_check` is false); what the router does with an interface that a `set_config` does not have, or with an unknown interface; what weight 0 does.
+## Repeater and USB tethering (web UI code)
+
+Source: the `internet` view (`internet.js`) and the Wi-Fi connect dialog in `app.js` of firmware 4.8.3. No write was tested on a router. The reads `repeater.get_config`, `repeater.get_saved_ap_list`, `repeater.get_status` and `tethering.get_status` have fixtures; `tethering.get_config` was not read on a router.
+
+| Call | Params from the web UI | Client |
+|---|---|---|
+| `repeater.get_config` | `{}`; result `{auto, dfs_support, macaddr}`, `lock_band` when set; the UI ignores `status_interval` | `Repeater.GetConfig` |
+| `repeater.set_config` | `{auto}` (0, 1 or 2) and `lock_band` only when it is not `""` | `Repeater.SetConfig` |
+| `repeater.get_saved_ap_list` | `{}`; result `{res: [network]}`, with the Wi-Fi keys | `Repeater.ListSavedNetworks` |
+| `repeater.remove_saved_ap` | `{ssid}` | `Repeater.RemoveSavedNetwork` |
+| `repeater.connect` | `{ssid, protocol, disguise, manual, auto_portal, remember}`; `key` and `identity` when not empty; `macaddr: {mode, macaddr?, update?, period?}`, `ttl` and `ttl_ipv6` when `disguise` is false; `mtu` when set; `bssid` with the BSSID lock; `ip`, `netmask`, `gateway`, `dns` for `protocol` `static`. A click on a saved network sends the saved item with `remember: true`. In bridge mode only `{ssid, key?, identity?}`. UI timeout 30 s | `Repeater.Connect` |
+| `repeater.disconnect` | `{}` | `Repeater.Disconnect` |
+| `repeater.get_status` | read by the status poll of the UI (`repeater.status`); the UI also reads `eap`, `portal_url` and `ipv6` (`ip` is an array) | `Repeater.GetStatus` (no `ipv6`) |
+| `repeater.scan` | `{all_band, refresh?}`, UI timeout 300 s; the UI shows errors -1 and -2 differently from other errors | not in the client |
+| `repeater.enter_bare_mode`, `exit_bare_mode` | `{}`: the captive portal login mode | not in the client |
+| `repeater.get_channel_prompt`, `set_channel_prompt` | `{chan_prompt_en?, popup_prompt_en?}`: hints of the UI | not in the client |
+| `tethering.get_status` | `{}`; result `{status, devices: [{device, type, use}], ipv4?, ipv6?}`; status 0 not connected, 1 connected, 2 connecting | `Tethering.GetStatus` (no `ipv6`) |
+| `tethering.get_config` | `{}`; result `{device, ttl?, ttl_ipv6?, mtu?}` | `Tethering.GetConfig` |
+| `tethering.set_connect` | `{device}`, and `ttl`, `ttl_ipv6`, `mtu` when set | `Tethering.Connect` |
+| `tethering.disconnect` | `{}` | `Tethering.Disconnect` |
+
+The web UI has no call that saves or changes a saved network without a connect: "Modify" connects to the network with the new values.
+
+Open points:
+
+- Whether `set_config` without `lock_band` removes the band lock. The UI sends no `lock_band` for "all bands", and the test router, with all bands, returned no `lock_band`.
+- Firmware 4.7.0 returns `auto` as a bool. Not known: whether it accepts a number in `set_config`.
+- The meaning of `manual` in a saved network, and what `connect` with `remember: false` does to a saved network with the same SSID.
+- What `remove_saved_ap` does when the repeater is connected to that SSID.
+- The shape of `ipv6` in `repeater.get_status` and `tethering.get_status`, and the result of `repeater.scan`: no read on a router.
+- The result of `tethering.get_config` on a router, and whether the router keeps the `set_connect` values when no phone is on USB.
+
+A repeater write on a router whose uplink is the repeater can cut its Internet access: `connect` replaces the uplink network, and `disconnect` takes the uplink down.
+## Parental control and Bark (web UI code)
+
+`ParentalControl` calls `parental-control` and `Bark` calls `bark` (view `parentalcontrol`). The reads `get_config`, `get_status` and `get_app_list` are fixtures (no groups, only the preset rulesets `drop` and `accept`, `enable_app` false). The test router has no `bark` module (-32601). Each other call is from the web UI code of firmware 4.8.3 and the archived API reference, and was not tested on a router.
+
+| Call | Params | Client method |
+|---|---|---|
+| `parental-control.set_config` | `{"enable", "drop_anonymous", "auto_update"}` | `SetConfig` |
+| `parental-control.add_group` | `{"name", "default_rule", "macs"}`; result `{"id"}` | `AddGroup` |
+| `parental-control.set_group` | `{"id", "name", "default_rule", "macs"}` | `SetGroup` |
+| `parental-control.set_group` | `{"id", "schedules": [{"id"?, "week", "begin", "end", "rule"}]}`; `[]` removes all | `SetSchedules` |
+| `parental-control.remove_group` | `{"id"}` | `RemoveGroup` |
+| `parental-control.add_rule` | `{"name", "color", "apps", "manual": true, "blacklist"}` or `{..., "manual": false, "url"}`; result `{"id"}` | `AddRule` |
+| `parental-control.set_rule` | as `add_rule`, with `"id"` | `SetRule` |
+| `parental-control.remove_rule` | `{"id"}`; -2 default ruleset of a group, -3 temporary ruleset of a group | `RemoveRule` |
+| `parental-control.get_brief` | `{"group_id"}` | `GetBrief` |
+| `parental-control.set_brief` | `{"enable": true, "manual_stop", "rule_id", "group_id", "time"?}` or `{"enable": false, "group_id"}` | `StartBrief`, `StopBrief` |
+| `parental-control.get_mode`, `set_mode` | `{"mode"}`: 1 parental control, 2 Bark | `GetMode`, `SetMode` |
+| `bark.get_config`, `set_config` | `{"enable", "ipv6_enable"}` | `Bark.GetConfig`, `Bark.SetConfig` |
+| `bark.get_status` | result `{"status", "pairing_code"}` | `Bark.GetStatus` |
+| `bark.logout` | `{}` | `Bark.Logout` |
+
+Open points:
+
+- IDs of groups, rulesets and schedules are strings that the router makes. The reference examples look like UCI section names. Whether an ID stays the same after other items change was not tested. The reference says that ruleset names are unique; it says nothing about group names.
+- Schedule `id`: the reference gives the type as number and shows strings; the client requires a string. Whether `begin` and `end` come back with seconds, and whether `"24:00"` is stored, is not known.
+- The web UI sends back with `set_rule` the other fields that it read (`preset`, `url_success`); the client does not. That `get_config` returns `url` of a ruleset is an assumption.
+- `add_rule` and `set_rule` error -2 also return `valid_list`, which `RPCError` does not keep.
+- The fields of `get_status` groups (`id`, `rule`, `brief`, `schedule_id`) and of `get_brief` were not seen on a router.
+- `get_mode` and `set_mode` are only called by the web UI on a router with Bark (`software_feature.bark`, firmware category `2c`, country `us`).
+- Not built: `check_blacklist_online {"url"}` (the "detect" button of a URL ruleset; the type of `invalid_lines` is not known) and `update` (reference only; the web UI does not call it).
+
+## Read shapes confirmed on the router (2026-11-18)
+
+These reads were not in the probe. Each one was called one time on the GL-AXT1800 with firmware 4.8.3, and only the keys and the value types were recorded, not the values. There are no fixtures for them.
+
+| Method | Result shape |
+|---|---|
+| `kmwan.get_sensitivity` | `{"sensitivity":{"level":string,"val":number}}` |
+| `system.get_usb3_disable` | `{"usb3_disable":bool}` |
+| `timer.get_screen` | `{"enable":bool,"turnon_hour":string,"turnon_min":string,"turnoff_hour":string,"turnoff_min":string,"week":[number]}` (7 items; the router has no screen) |
+| `network.get_advance_config` | `{"nat_enable":number,"sip_enable":number}` |
+| `cable.get_ports_config` | `{"ports":[{"name":string,"mode":string,"default_mode":string,"silk":string,"macaddr":{"mode":string,"macaddr":string,"defmacaddr":string}}]}` (3 ports; no `update` and no `period` in MAC mode `default`) |
+| `cable.get_ports_status` | `{"ports":[{"name":string}]}` (3 ports) |
+| `netmode.get_mode` | `{"mode":string}` |
+| `wifi.get_mlo_config` | `{"res":{"random_bssid":bool,"encryptions":[string],"ifaces":[{"name":string,"mlo_enable":bool}]}}` (2 interfaces; the router has no Wi-Fi 7 radio, so the interfaces have no `mlo_band` and no SSID fields) |
+
+## Writes tested on the router (2026-11-18)
+
+- `fan.set_config {"temperature":60}` returned `[]`. The next `fan.get_config` had `temperature: 60`, and the fan started.
+- `black_white_list.set_single_mac {"mode":"white","operate":"add","mac":<a made-up MAC>}` while the mode was `black`: the router accepted the write, `white_mac` then had the MAC, and the mode stayed `black`. The same call with `"operate":"del"` removed it. So the allow list can be filled before a change to allow-list mode. The opposite case (a `black` write in mode `white`) was not tested.
+
+## Cellular modem (not built)
+
+The client has no typed methods for the modules `modem` and `mvas`. The GL-AXT1800 has no modem: `modem.get_info` gives `{"modems":[],"offline_doc":false}`, `modem.get_status` gives `{"modems":[],"new_sms_count":0}`, and the other reads give empty results or `err_code` 20002001. No read shape of a modem is known.
+
+What the web UI code of firmware 4.8.3 shows:
+
+- Each call takes `bus` (and the SIM calls also `iccid`) from `modem.get_info` and `modem.get_status`. Their format is not known.
+- `modem.get_sim_config {bus, iccid}` and `modem.set_sim_config {bus, iccid, config}` are the connection profile (`apn`, `auth`, `username`, `password`, `protocol`, `ip_type`, `roaming`, `ttl`, `ttl_ipv6`, `mtu`, the band selection). The write sends back each key of the read that the web UI does not use. These keys are not known, so a typed write could remove router settings.
+- `modem.set_connect {bus}` and `modem.disconnect {bus}` start and stop the connection.
+- Dual SIM (`get_slot_config`, `set_slot_config`), the traffic limit (`get_traffic_config`, `set_traffic_config`), APN polling, and the operator and cell tower locks have their own calls.
+
+Before a typed API is possible, a router with a modem must show the results of `modem.get_info`, `modem.get_status` and `modem.get_sim_config`, and one `set_sim_config` call of its web UI.
+

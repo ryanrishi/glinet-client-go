@@ -15,7 +15,7 @@ import (
 
 // Version is the version of this client. It is in the default User-Agent.
 const (
-	Version          = "v0.12.1"
+	Version          = "v0.13.0"
 	defaultBaseURL   = "http://192.168.8.1"
 	defaultUserAgent = "glinet-client-go" + "/" + Version
 )
@@ -38,18 +38,29 @@ type Client struct {
 	// services
 	AccessControl   *AccessControlService
 	AdGuard         *AdGuardService
+	Bark            *BarkService
 	Cable           *CableService
 	Clients         *ClientsService
 	DDNS            *DDNSService
 	Digest          *DigestService
 	DNS             *DNSService
+	Fan             *FanService
 	Firewall        *FirewallService
+	IGMP            *IGMPService
 	IPv6            *IPv6Service
 	LAN             *LANService
 	LED             *LEDService
+	LocalAccess     *LocalAccessService
+	MultiWAN        *MultiWANService
 	Network         *NetworkService
+	QoS             *QoSService
+	SwitchButton    *SwitchButtonService
+	NetworkMode     *NetworkModeService
+	Repeater        *RepeaterService
+	ParentalControl *ParentalControlService
 	System          *SystemService
 	Tailscale       *TailscaleService
+	Tethering       *TetheringService
 	Timer           *TimerService
 	VPNPolicy       *VPNPolicyService
 	Wifi            *WifiService
@@ -106,18 +117,29 @@ func newClient(host string) (*Client, error) {
 
 	c.AccessControl = (*AccessControlService)(&c.common)
 	c.AdGuard = (*AdGuardService)(&c.common)
+	c.Bark = (*BarkService)(&c.common)
 	c.Cable = (*CableService)(&c.common)
 	c.Clients = (*ClientsService)(&c.common)
 	c.Digest = (*DigestService)(&c.common)
 	c.DDNS = (*DDNSService)(&c.common)
 	c.DNS = (*DNSService)(&c.common)
+	c.Fan = (*FanService)(&c.common)
 	c.Firewall = (*FirewallService)(&c.common)
+	c.IGMP = (*IGMPService)(&c.common)
 	c.IPv6 = (*IPv6Service)(&c.common)
 	c.LAN = (*LANService)(&c.common)
 	c.LED = (*LEDService)(&c.common)
+	c.LocalAccess = (*LocalAccessService)(&c.common)
+	c.MultiWAN = (*MultiWANService)(&c.common)
 	c.Network = (*NetworkService)(&c.common)
+	c.QoS = (*QoSService)(&c.common)
+	c.SwitchButton = (*SwitchButtonService)(&c.common)
+	c.NetworkMode = (*NetworkModeService)(&c.common)
+	c.Repeater = (*RepeaterService)(&c.common)
+	c.ParentalControl = (*ParentalControlService)(&c.common)
 	c.System = (*SystemService)(&c.common)
 	c.Tailscale = (*TailscaleService)(&c.common)
+	c.Tethering = (*TetheringService)(&c.common)
 	c.Timer = (*TimerService)(&c.common)
 	c.VPNPolicy = (*VPNPolicyService)(&c.common)
 	c.Wifi = (*WifiService)(&c.common)

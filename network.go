@@ -45,3 +45,37 @@ func (s *NetworkService) ListARPEntries(ctx context.Context) ([]ARPEntry, error)
 
 	return res.Entries, nil
 }
+
+// NetworkAdvancedConfig is the result of network get_advance_config and the params of
+// network set_advance_config (web UI view netadvanced). Each value is 1 (enabled) or 0
+// (disabled):
+//   - FullConeNAT (nat_enable) enables Full Cone NAT.
+//   - SIPALG (sip_enable) enables the SIP ALG.
+//
+// The fields and the values are from the web UI code of firmware 4.8.3. The test router did not
+// give a get_advance_config result: the web UI reads a missing value as 0, and compares the values
+// with the numbers 1 and 0, so the router is expected to give numbers. Other fields of the result
+// are not known.
+type NetworkAdvancedConfig struct {
+	FullConeNAT int `json:"nat_enable"`
+	SIPALG      int `json:"sip_enable"`
+}
+
+// GetAdvancedConfig returns the advanced network settings.
+func (s *NetworkService) GetAdvancedConfig(ctx context.Context) (*NetworkAdvancedConfig, error) {
+	var res NetworkAdvancedConfig
+	if err := s.client.Call(ctx, "network", "get_advance_config", nil, &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+// SetAdvancedConfig sets the advanced network settings. It sends
+// {"nat_enable": 0|1, "sip_enable": 0|1}, always with both values, as the web UI does.
+//
+// From the web UI code of firmware 4.8.3, not tested on a router. The web UI waits 2 s after the
+// write and then reads the settings again. What the router restarts for the write is not known.
+func (s *NetworkService) SetAdvancedConfig(ctx context.Context, config NetworkAdvancedConfig) error {
+	return s.client.Call(ctx, "network", "set_advance_config", config, nil)
+}

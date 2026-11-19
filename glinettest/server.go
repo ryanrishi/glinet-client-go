@@ -66,16 +66,26 @@ type Server struct {
 	System          *System
 	AccessControl   *AccessControl
 	AdGuardHome     *AdGuardHome
+	Bark            *Bark
 	Cable           *Cable
 	Clients         *Clients
 	DDNS            *DDNS
 	DNS             *DNS
+	Fan             *Fan
 	Firewall        *Firewall
+	IGMP            *IGMP
 	IPv6            *IPv6
 	LAN             *LAN
 	LED             *LED
+	LocalAccess     *LocalAccess
+	MultiWAN        *MultiWAN
 	Network         *Network
+	SwitchButton    *SwitchButton
+	NetworkMode     *NetworkMode
+	Repeater        *Repeater
+	ParentalControl *ParentalControl
 	Tailscale       *Tailscale
+	Tethering       *Tethering
 	Timer           *Timer
 	VPNPolicy       *VPNPolicy
 	Wifi            *Wifi
@@ -114,6 +124,8 @@ func NewServer(t testing.TB) *Server {
 	s.AccessControl.register(s)
 	s.AdGuardHome = newAdGuardHome()
 	s.AdGuardHome.register(s)
+	s.Bark = newBark()
+	s.Bark.register(s)
 	s.Cable = newCable()
 	s.Cable.register(s)
 	s.Clients = newClients()
@@ -122,18 +134,36 @@ func NewServer(t testing.TB) *Server {
 	s.DDNS.register(s)
 	s.DNS = newDNS()
 	s.DNS.register(s)
+	s.Fan = newFan()
+	s.Fan.register(s)
 	s.Firewall = newFirewall()
 	s.Firewall.register(s)
+	s.IGMP = newIGMP()
+	s.IGMP.register(s)
 	s.IPv6 = newIPv6()
 	s.IPv6.register(s)
 	s.LAN = newLAN()
 	s.LAN.register(s)
 	s.LED = newLED()
 	s.LED.register(s)
+	s.LocalAccess = newLocalAccess()
+	s.LocalAccess.register(s)
+	s.MultiWAN = newMultiWAN()
+	s.MultiWAN.register(s)
 	s.Network = newNetwork()
 	s.Network.register(s)
+	s.SwitchButton = newSwitchButton()
+	s.SwitchButton.register(s)
+	s.NetworkMode = newNetworkMode()
+	s.NetworkMode.register(s)
+	s.Repeater = newRepeater()
+	s.Repeater.register(s)
+	s.ParentalControl = newParentalControl()
+	s.ParentalControl.register(s)
 	s.Tailscale = newTailscale()
 	s.Tailscale.register(s)
+	s.Tethering = newTethering()
+	s.Tethering.register(s)
 	s.Timer = newTimer()
 	s.Timer.register(s)
 	s.VPNPolicy = newVPNPolicy()

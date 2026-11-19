@@ -3,6 +3,7 @@ package glinet_test
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"testing"
 
 	"github.com/ryanrishi/glinet-client-go"
@@ -47,4 +48,40 @@ func TestNetworkARPListDecodesRouterFixture(t *testing.T) {
 		t.Fatalf("ListARPEntries: %v", err)
 	}
 	checkLossless(t, map[string]any{"entries": got}, arpList)
+}
+
+func TestNetworkAdvancedConfig(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+	var params []string
+	handler := srv.Handler("network", "set_advance_config")
+	srv.Handle("network", "set_advance_config", func(p json.RawMessage) (any, error) {
+		params = append(params, string(p))
+		return handler(p)
+	})
+
+	got, err := c.Network.GetAdvancedConfig(ctx)
+	if err != nil {
+		t.Fatalf("GetAdvancedConfig: %v", err)
+	}
+	if *got != (glinet.NetworkAdvancedConfig{}) {
+		t.Errorf("GetAdvancedConfig = %+v, want both disabled", *got)
+	}
+
+	for _, config := range []glinet.NetworkAdvancedConfig{{FullConeNAT: 1, SIPALG: 0}, {FullConeNAT: 0, SIPALG: 1}} {
+		if err := c.Network.SetAdvancedConfig(ctx, config); err != nil {
+			t.Fatalf("SetAdvancedConfig: %v", err)
+		}
+		got, err := c.Network.GetAdvancedConfig(ctx)
+		if err != nil {
+			t.Fatalf("GetAdvancedConfig: %v", err)
+		}
+		if *got != config {
+			t.Errorf("GetAdvancedConfig = %+v, want %+v", *got, config)
+		}
+	}
+	want := []string{`{"nat_enable":1,"sip_enable":0}`, `{"nat_enable":0,"sip_enable":1}`}
+	if !slices.Equal(params, want) {
+		t.Errorf("params = %v, want %v", params, want)
+	}
 }
