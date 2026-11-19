@@ -148,6 +148,19 @@ func TestWireGuardClientGroupsAndPeers(t *testing.T) {
 		t.Errorf("FindPeer = %+v, want %+v", got, peer)
 	}
 
+	setSent := sentParams(srv, "wg-client", "set_config")
+	peer.PersistentKeepalive = 0
+	if err := c.WireGuardClient.SetPeer(ctx, groupID, peer); err != nil {
+		t.Fatalf("SetPeer without keepalive: %v", err)
+	}
+	sent := (*setSent)[0]
+	if sent["persistent_keepalive"] != "" || sent["listen_port"] != "" || sent["mtu"] != float64(1420) {
+		t.Errorf("set_config params = %v, want persistent_keepalive and listen_port \"\" and mtu 1420", sent)
+	}
+	if got, err := c.WireGuardClient.FindPeer(ctx, groupID, peerID); err != nil || got == nil || *got != peer {
+		t.Errorf("FindPeer = %+v, %v, want %+v", got, err, peer)
+	}
+
 	if err := c.WireGuardClient.RemovePeer(ctx, groupID, peerID); err != nil {
 		t.Fatalf("RemovePeer: %v", err)
 	}

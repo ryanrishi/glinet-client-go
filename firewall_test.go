@@ -299,6 +299,43 @@ func TestFirewallRemoveRuleWithPortForwardID(t *testing.T) {
 	}
 }
 
+func TestFirewallRemoveAll(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+	forwards := sentParams(srv, "firewall", "remove_port_forward")
+	rules := sentParams(srv, "firewall", "remove_rule")
+	srv.Firewall.SetPortForwards([]glinettest.PortForward{
+		{Name: "a", Proto: "tcp", Src: "wan", SrcDport: "50002", Dest: "lan", DestIP: "192.168.8.50", DestPort: "50002"},
+		{Name: "b", Proto: "udp", Src: "wan", SrcDport: "50003", Dest: "lan", DestIP: "192.168.8.51", DestPort: "50003"},
+	})
+	rule := glinettest.Rule{Name: "r", Src: "wan", Proto: "tcp", DestPort: "50004", Target: "ACCEPT"}
+	srv.Firewall.SetRules([]glinettest.Rule{rule})
+
+	if err := c.Firewall.RemoveAllPortForwards(ctx); err != nil {
+		t.Fatalf("RemoveAllPortForwards: %v", err)
+	}
+	all := map[string]any{"all": true}
+	if !reflect.DeepEqual((*forwards)[0], all) {
+		t.Errorf("remove_port_forward params = %v, want %v", (*forwards)[0], all)
+	}
+	if got := srv.Firewall.PortForwards(); len(got) != 0 {
+		t.Errorf("server port forwards = %+v, want empty", got)
+	}
+	if got := srv.Firewall.Rules(); !slices.Equal(got, []glinettest.Rule{rule}) {
+		t.Errorf("server rules = %+v, want %+v", got, rule)
+	}
+
+	if err := c.Firewall.RemoveAllRules(ctx); err != nil {
+		t.Fatalf("RemoveAllRules: %v", err)
+	}
+	if !reflect.DeepEqual((*rules)[0], all) {
+		t.Errorf("remove_rule params = %v, want %v", (*rules)[0], all)
+	}
+	if got := srv.Firewall.Rules(); len(got) != 0 {
+		t.Errorf("server rules = %+v, want empty", got)
+	}
+}
+
 func TestFirewallDMZ(t *testing.T) {
 	c, srv := newClient(t)
 	ctx := context.Background()

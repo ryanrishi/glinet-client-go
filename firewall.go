@@ -105,6 +105,19 @@ func (s *FirewallService) RemovePortForward(ctx context.Context, id string) erro
 	return s.client.Call(ctx, "firewall", "remove_port_forward", params, nil)
 }
 
+// RemoveAllPortForwards removes every port forward with firewall remove_port_forward
+// {"all": true}, as the "remove all" button of the web UI does.
+//
+// Not verified on a router: the parameters come from the web UI code of firmware 4.8.3. Whether
+// the router also removes rules, and how it changes the IDs of the rules, is not known.
+func (s *FirewallService) RemoveAllPortForwards(ctx context.Context) error {
+	return s.client.Call(ctx, "firewall", "remove_port_forward", removeAllParams, nil)
+}
+
+var removeAllParams = struct {
+	All bool `json:"all"`
+}{All: true}
+
 // Rule is a traffic rule that applies Target to the traffic from the Src zone to the Dest zone.
 // A rule without Dest is for traffic to the router itself.
 //
@@ -189,6 +202,16 @@ func (s *FirewallService) RemoveRule(ctx context.Context, id string) error {
 		ID string `json:"id"`
 	}{ID: id}
 	return s.client.Call(ctx, "firewall", "remove_rule", params, nil)
+}
+
+// RemoveAllRules removes every rule with firewall remove_rule {"all": true}, as the "remove all"
+// button of the web UI does.
+//
+// Not verified on a router: the parameters come from the web UI code of firmware 4.8.3. Whether
+// the router also removes port forwards, and how it changes the IDs of the port forwards, is not
+// known.
+func (s *FirewallService) RemoveAllRules(ctx context.Context) error {
+	return s.client.Call(ctx, "firewall", "remove_rule", removeAllParams, nil)
 }
 
 // DMZ is the DMZ host configuration. When Enabled, the router forwards incoming traffic

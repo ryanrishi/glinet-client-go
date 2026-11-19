@@ -62,7 +62,7 @@ func TestWireGuardServerConfig(t *testing.T) {
 	if err := c.WireGuardServer.SetConfig(ctx, glinet.WireGuardServerConfig{AddressV4: "10.0.1.1/24", Port: 51821, PublicKey: "not sent"}); err != nil {
 		t.Fatalf("SetConfig: %v", err)
 	}
-	want := map[string]any{"address_v4": "10.0.1.1/24", "port": float64(51821)}
+	want := map[string]any{"address_v4": "10.0.1.1/24", "address_v6": "", "port": float64(51821)}
 	if got := (*sent)[0]; !reflect.DeepEqual(got, want) {
 		t.Errorf("set_config params = %v, want %v", got, want)
 	}
@@ -108,7 +108,7 @@ func TestWireGuardServerPeers(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AddPeer: %v", err)
 	}
-	want := map[string]any{"name": "phone", "presharedkey_enable": true, "presharedkey": "", "allowed_ips": "0.0.0.0/0"}
+	want := map[string]any{"name": "phone", "presharedkey_enable": true, "presharedkey": "", "allowed_ips": "0.0.0.0/0", "persistent_keepalive": "", "mtu": ""}
 	if got := (*sent)[0]; !reflect.DeepEqual(got, want) {
 		t.Errorf("add_peer params = %v, want %v", got, want)
 	}
@@ -125,6 +125,14 @@ func TestWireGuardServerPeers(t *testing.T) {
 	}
 	if len(peers) != 1 || peers[0].ID != id || peers[0].DNS != "10.0.0.1" || peers[0].MTU != 1420 || peers[0].ClientIP == "not sent" {
 		t.Errorf("ListPeers = %+v", peers)
+	}
+
+	peer.MTU = 0
+	if err := c.WireGuardServer.SetPeer(ctx, peer); err != nil {
+		t.Fatalf("SetPeer without MTU: %v", err)
+	}
+	if peers, err := c.WireGuardServer.ListPeers(ctx); err != nil || peers[0].MTU != 0 {
+		t.Errorf("ListPeers after SetPeer without MTU = %+v, %v", peers, err)
 	}
 
 	config, err := c.WireGuardServer.GetPeerConfig(ctx, id)
@@ -147,9 +155,31 @@ func TestWireGuardServerPeers(t *testing.T) {
 	}
 }
 
-func TestWireGuardServerRoutes(t *testing.T) {
-	c, _ := newClient(t)
+func TestWireGuardServerRemoveAllPeers(t *testing.T) {
+	c, srv := newClient(t)
 	ctx := context.Background()
+	sent := sentParams(srv, "wg-server", "remove_peer")
+	for _, name := range []string{"a", "b"} {
+		if _, err := c.WireGuardServer.AddPeer(ctx, glinet.WireGuardServerPeer{Name: name}); err != nil {
+			t.Fatalf("AddPeer %s: %v", name, err)
+		}
+	}
+
+	if err := c.WireGuardServer.RemoveAllPeers(ctx); err != nil {
+		t.Fatalf("RemoveAllPeers: %v", err)
+	}
+	if want := (map[string]any{"all": true}); !reflect.DeepEqual((*sent)[0], want) {
+		t.Errorf("remove_peer params = %v, want %v", (*sent)[0], want)
+	}
+	if peers, err := c.WireGuardServer.ListPeers(ctx); err != nil || len(peers) != 0 {
+		t.Errorf("ListPeers after RemoveAllPeers = %+v, %v, want empty", peers, err)
+	}
+}
+
+func TestWireGuardServerRoutes(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+	sent := sentParams(srv, "wg-server", "set_route")
 
 	if err := c.WireGuardServer.AddRoute(ctx, glinet.VPNRoute{Dest: "192.168.60.0/24", Scope: "link"}); err != nil {
 		t.Fatalf("AddRoute: %v", err)
@@ -162,6 +192,10 @@ func TestWireGuardServerRoutes(t *testing.T) {
 	route.MTU = 1400
 	if err := c.WireGuardServer.SetRoute(ctx, route); err != nil {
 		t.Fatalf("SetRoute: %v", err)
+	}
+	want := map[string]any{"rule_id": float64(route.ID), "dest": "192.168.60.0/24", "gateway": "", "metric": float64(0), "mtu": float64(1400), "scope": "link", "route_flag": float64(4)}
+	if got := (*sent)[0]; !reflect.DeepEqual(got, want) {
+		t.Errorf("set_route params = %v, want %v", got, want)
 	}
 	if routes, err := c.WireGuardServer.ListRoutes(ctx); err != nil || routes.IPv4[0] != route {
 		t.Errorf("ListRoutes = %+v, %v, want %+v", routes, err, route)

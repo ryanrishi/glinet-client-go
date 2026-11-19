@@ -17,7 +17,9 @@ import (
 //   - generate_key sets initialization to true and sets made-up keys.
 //   - set_config and set_setting set the fields that they get and keep the others.
 //   - add_peer adds a peer with the sent fields, a new peer_id and the first unused client_ip, and returns
-//     {"peer_id": <id>}; set_peer sets the fields that it gets; remove_peer removes the peer.
+//     {"peer_id": <id>}; set_peer sets the fields that it gets; remove_peer removes the peer, or
+//     all peers with {"all": true}. The value "" for persistent_keepalive or mtu removes that
+//     field.
 //   - generate_peer returns a configuration built from the server and the peer.
 //   - start and stop set server.status in get_status to 1 and 0.
 //   - The other writes return []. An unknown peer gives ErrInvalidParams.
@@ -106,7 +108,8 @@ func (m *WireGuardServer) register(s *Server) {
 
 func (m *WireGuardServer) addPeer(p map[string]any) (any, error) {
 	m.nextID++
-	peer := maps.Clone(p)
+	peer := map[string]any{}
+	setPeerFields(peer, p)
 	peer["peer_id"] = m.nextID
 	peer["client_ip"] = m.unusedClientIP()
 	peer["deprecated"] = 0
@@ -137,11 +140,15 @@ func (m *WireGuardServer) setPeer(p map[string]any) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	maps.Copy(m.peers[i], p)
+	setPeerFields(m.peers[i], p)
 	return writeResult, nil
 }
 
 func (m *WireGuardServer) removePeer(p map[string]any) (any, error) {
+	if p["all"] == true {
+		m.peers = []map[string]any{}
+		return writeResult, nil
+	}
 	i, err := m.peerIndex(p)
 	if err != nil {
 		return nil, err
@@ -168,4 +175,16 @@ func (m *WireGuardServer) generatePeer(p map[string]any) (any, error) {
 		"presharedkey":         peer["presharedkey"],
 		"mtu":                  peer["mtu"],
 	}, nil
+}
+
+// setPeerFields sets the fields of p in peer. The value "" for a number field of a WireGuard peer
+// removes that field, as the web UI sends "" for an empty number input.
+func setPeerFields(peer, p map[string]any) {
+	for k, v := range p {
+		if v == "" && slices.Contains([]string{"listen_port", "persistent_keepalive", "mtu"}, k) {
+			delete(peer, k)
+		} else {
+			peer[k] = v
+		}
+	}
 }

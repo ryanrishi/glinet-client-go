@@ -21,7 +21,8 @@ import (
 //   - add_group adds a group of type 2 with a new group_id; set_group sets its name; remove_group
 //     removes it with its peers.
 //   - add_config adds a peer with a new peer_id and the sent fields; set_config sets the fields
-//     that it gets and keeps the others; remove_config and clear_config_list remove peers.
+//     that it gets and keeps the others; remove_config and clear_config_list remove peers. The
+//     value "" for listen_port, persistent_keepalive or mtu removes that field.
 //   - start sets status 1, the peer of the tunnel, and domain and port from its end_point; stop
 //     sets status 0 and keeps the rest.
 //   - set_setting sets the fields that it gets. A peer without a setting has
@@ -215,7 +216,8 @@ func (m *WireGuardClient) addConfig(p map[string]any) (any, error) {
 		return nil, err
 	}
 	gid := toInt(p["group_id"])
-	peer := maps.Clone(p)
+	peer := map[string]any{}
+	setPeerFields(peer, p)
 	delete(peer, "group_id")
 	peer["peer_id"] = m.newID()
 	m.peers[gid] = append(m.peers[gid], peer)
@@ -229,7 +231,7 @@ func (m *WireGuardClient) setConfig(p map[string]any) (any, error) {
 	}
 	fields := maps.Clone(p)
 	delete(fields, "group_id")
-	maps.Copy(m.peers[gid][i], fields)
+	setPeerFields(m.peers[gid][i], fields)
 	return writeResult, nil
 }
 

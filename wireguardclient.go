@@ -249,8 +249,9 @@ func (s *WireGuardClientService) RemoveGroup(ctx context.Context, groupID int) e
 // Like AddGroup, it reads the peers before and after the write, as the web UI does not read the
 // result of add_config.
 //
-// Not verified on a router: the parameters come from the web UI code. See SetPeer for the fields
-// that are sent.
+// Not verified on a router: the parameters come from the web UI code. It sends the fields of
+// SetPeer without peer_id, and listen_port, persistent_keepalive and mtu only when they are not 0,
+// as the web UI does for a new peer.
 func (s *WireGuardClientService) AddPeer(ctx context.Context, groupID int, peer WireGuardPeer) (int, error) {
 	s.client.wgAddMu.Lock()
 	defer s.client.wgAddMu.Unlock()
@@ -281,13 +282,18 @@ func (s *WireGuardClientService) AddPeer(ctx context.Context, groupID int, peer 
 //
 // Not verified on a router: the parameters come from the web UI code. Like the web UI, it sends
 // name, address_v4, address_v6, ipv6_enable, private_key, public_key, allowed_ips, end_point and
-// presharedkey_enable; preshared_key only when PresharedKeyEnable is true; and dns, listen_port,
-// persistent_keepalive and mtu only when they are not empty. Whether the router keeps a field that
-// is not sent is not known. The web UI requires Name (1-64 characters), AddressV4, Endpoint,
+// presharedkey_enable; preshared_key only when PresharedKeyEnable is true; dns only when it is not
+// empty; and listen_port, persistent_keepalive and mtu, with "" for 0. The web UI sends "" for
+// these three when the user empties the input, and does not send an input that the user did not
+// fill, so SetPeer can remove a value. What the router does with "", and whether it keeps a field
+// that is not sent, is not known. The web UI requires Name (1-64 characters), AddressV4, Endpoint,
 // PrivateKey and PublicKey (44 characters of base64), PersistentKeepalive 1-65535 and MTU 576-65535.
 func (s *WireGuardClientService) SetPeer(ctx context.Context, groupID int, peer WireGuardPeer) error {
 	params := wgPeerParams(groupID, peer)
 	params["peer_id"] = peer.ID
+	params["listen_port"] = numberOrEmpty(peer.ListenPort)
+	params["persistent_keepalive"] = numberOrEmpty(peer.PersistentKeepalive)
+	params["mtu"] = numberOrEmpty(peer.MTU)
 	return s.client.Call(ctx, wgClientModule, "set_config", params, nil)
 }
 

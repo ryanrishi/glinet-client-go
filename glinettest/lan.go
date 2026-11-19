@@ -21,6 +21,8 @@ type StaticBind struct {
 // test or a write sets them.
 // Like the router, it identifies a binding by its exact MAC string. A write removes each binding
 // that has the same MAC or IP and appends the new binding at the end of the list.
+// remove_static_bind with mode 1 removes all bindings; this is an assumption from the web UI code,
+// as mode 1 was not tested on a router.
 //
 // set_config sets each field that it gets in the item of get_config_list with the same
 // "interface", keeps the other fields and returns []. The router was verified only for
@@ -191,15 +193,19 @@ func (m *LAN) removeStaticBind(params json.RawMessage) (any, error) {
 	if err := json.Unmarshal(params, &p); err != nil {
 		return nil, ErrInvalidParams
 	}
-	if p.Mode == nil || *p.Mode != 0 {
+	if p.Mode == nil || (*p.Mode != 0 && *p.Mode != 1) {
 		return nil, invalidParams("invalid mode")
-	}
-	if !macPattern.MatchString(p.MAC) {
-		return nil, invalidParams("invalid mac")
 	}
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if *p.Mode == 1 {
+		m.binds = []StaticBind{}
+		return writeResult, nil
+	}
+	if !macPattern.MatchString(p.MAC) {
+		return nil, invalidParams("invalid mac")
+	}
 	if i := m.index(p.MAC); i >= 0 {
 		m.binds = slices.Delete(m.binds, i, i+1)
 	}
