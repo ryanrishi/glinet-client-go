@@ -48,6 +48,7 @@ type Client struct {
 	LAN             *LANService
 	LED             *LEDService
 	Network         *NetworkService
+	QoS             *QoSService
 	System          *SystemService
 	Tailscale       *TailscaleService
 	Timer           *TimerService
@@ -116,6 +117,7 @@ func newClient(host string) (*Client, error) {
 	c.LAN = (*LANService)(&c.common)
 	c.LED = (*LEDService)(&c.common)
 	c.Network = (*NetworkService)(&c.common)
+	c.QoS = (*QoSService)(&c.common)
 	c.System = (*SystemService)(&c.common)
 	c.Tailscale = (*TailscaleService)(&c.common)
 	c.Timer = (*TimerService)(&c.common)
