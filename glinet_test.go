@@ -277,8 +277,44 @@ func TestServerInternalServerError(t *testing.T) {
 	})
 
 	err := c.Call(context.Background(), "test", "fail", nil, nil)
-	if err == nil || !strings.Contains(err.Error(), "500") {
-		t.Errorf("error = %v, want HTTP status 500", err)
+	var httpErr *glinet.HTTPError
+	if !errors.As(err, &httpErr) || *httpErr != (glinet.HTTPError{StatusCode: http.StatusInternalServerError, Module: "test", Method: "fail"}) {
+		t.Fatalf("error = %#v, want an *HTTPError with status 500 for test.fail", err)
+	}
+	if want := "glinet: test.fail: unexpected HTTP status 500 Internal Server Error"; err.Error() != want {
+		t.Errorf("error text = %q, want %q", err.Error(), want)
+	}
+}
+
+func TestLoginInternalServerError(t *testing.T) {
+	for _, method := range []string{"challenge", "login"} {
+		t.Run(method, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				body, _ := io.ReadAll(r.Body)
+				if strings.Contains(string(body), `"method":"`+method+`"`) {
+					http.Error(w, "<html>error page</html>", http.StatusInternalServerError)
+					return
+				}
+				_, _ = io.WriteString(w, `{"jsonrpc":"2.0","id":1,"result":{"alg":1,"salt":"abcdefgh","nonce":"n"}}`)
+			}))
+			t.Cleanup(srv.Close)
+
+			_, err := glinet.NewClientWithHost(srv.URL, "root", []byte("password"))
+			var httpErr *glinet.HTTPError
+			if !errors.As(err, &httpErr) || *httpErr != (glinet.HTTPError{StatusCode: http.StatusInternalServerError, Method: method}) {
+				t.Fatalf("error = %#v, want an *HTTPError with status 500 for %s", err, method)
+			}
+			if want := "glinet: login: glinet: " + method + ": unexpected HTTP status 500 Internal Server Error"; err.Error() != want {
+				t.Errorf("error text = %q, want %q", err.Error(), want)
+			}
+		})
+	}
+}
+
+func TestHTTPErrorUnknownStatus(t *testing.T) {
+	err := &glinet.HTTPError{StatusCode: 599, Module: "system", Method: "get_info"}
+	if want := "glinet: system.get_info: unexpected HTTP status 599"; err.Error() != want {
+		t.Errorf("error text = %q, want %q", err.Error(), want)
 	}
 }
 
