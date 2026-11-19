@@ -47,6 +47,7 @@ type Client struct {
 	IPv6            *IPv6Service
 	LAN             *LANService
 	LED             *LEDService
+	LocalAccess     *LocalAccessService
 	Network         *NetworkService
 	System          *SystemService
 	Tailscale       *TailscaleService
@@ -115,6 +116,7 @@ func newClient(host string) (*Client, error) {
 	c.IPv6 = (*IPv6Service)(&c.common)
 	c.LAN = (*LANService)(&c.common)
 	c.LED = (*LEDService)(&c.common)
+	c.LocalAccess = (*LocalAccessService)(&c.common)
 	c.Network = (*NetworkService)(&c.common)
 	c.System = (*SystemService)(&c.common)
 	c.Tailscale = (*TailscaleService)(&c.common)

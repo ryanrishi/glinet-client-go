@@ -274,3 +274,49 @@ func (s *FirewallService) GetZones(ctx context.Context) (*FirewallZones, error) 
 
 	return &res, nil
 }
+
+// WANAccess is the access to the router from the WAN (the remote access card of the web UI view
+// security). EnableHTTPS permits the web UI over HTTPS, EnableSSH permits SSH and EnablePing
+// permits ping. When EnableWhitelist is true, only the sources in Whitelist have this access.
+//
+// The fixtures of firmware 4.7.0 and 4.8.3 have all fields with an empty Whitelist. The fields of
+// a Whitelist item come from the web UI code of firmware 4.8.3.
+type WANAccess struct {
+	EnableHTTPS     bool              `json:"enable_https"`
+	EnableSSH       bool              `json:"enable_ssh"`
+	EnablePing      bool              `json:"enable_ping"`
+	EnableWhitelist bool              `json:"enable_whitelist"`
+	Whitelist       []WANAccessSource `json:"whitelist"`
+}
+
+// WANAccessSource is an item of WANAccess.Whitelist. IPAddr is an IPv4 or IPv6 address; the
+// web UI does not check for a prefix length. Name is a description of at most 64 characters, and
+// the web UI sends "" when the user gives none.
+type WANAccessSource struct {
+	IPAddr string `json:"ipaddr"`
+	Name   string `json:"name"`
+}
+
+// GetWANAccess returns the access to the router from the WAN.
+func (s *FirewallService) GetWANAccess(ctx context.Context) (*WANAccess, error) {
+	var res WANAccess
+	if err := s.client.Call(ctx, "firewall", "get_wan_access", nil, &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+// SetWANAccess replaces the access to the router from the WAN with one
+// firewall set_wan_access {"enable_https", "enable_ssh", "enable_ping", "enable_whitelist",
+// "whitelist"}. It always sends all fields, also false and an empty whitelist, as the web UI does.
+//
+// Not tested on a router: the call is from the web UI code of firmware 4.8.3. After the write,
+// the web UI reads the firewall rule list again, so the write possibly changes the firewall rules
+// and with them the IDs of the rules and port forwards; this is not known. The web UI shows the
+// EnableSSH switch only while SSH is enabled in LocalAccessConfig, and the EnableWhitelist switch
+// only while one of EnableHTTPS, EnableSSH and EnablePing is true, but it always sends all fields.
+func (s *FirewallService) SetWANAccess(ctx context.Context, access WANAccess) error {
+	access.Whitelist = append([]WANAccessSource{}, access.Whitelist...)
+	return s.client.Call(ctx, "firewall", "set_wan_access", access, nil)
+}

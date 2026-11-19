@@ -57,7 +57,7 @@ Only fields and types are compared, not values that are runtime data.
 | `repeater.get_config` | `auto` is a number (1), not a bool | not in the client |
 | `switch-button.get_funcs` | `funcs` items are objects `{func, sub_func?:[{func}]}`, not strings; `vpn` with the tunnel IDs as `sub_func` replaces `wireguard` and `openvpn` | not in the client |
 | `switch-button.get_config` | new key `sub_func` (a tunnel ID as a string when `func` is `vpn`) | not in the client |
-| `local-access.get_config` | new key `ssh_enabled` (bool) | not in the client |
+| `local-access.get_config` | new key `ssh_enabled` (bool) | `LocalAccessConfig.SSHEnabled` (false on 4.7.0) |
 | `cloud.get_config` | new key `aw_api_url` (string) | not in the client |
 | `modem.get_profile_list` | result is `{"err_code":20002001,"err_msg":"Parameter not found"}`, not a profile list (the router has no modem) | not in the client |
 | `challenge` | new key `hash-method` | supported since `v0.10.2` |
@@ -358,3 +358,36 @@ Kept as on 4.7.0: IDs (group, peer, tunnel, UCI section), the flags and numbers 
 | `wifi.get_status` | ok | same |
 | `zerotier.get_config` | ok | same |
 | `zerotier.get_status` | ok | same |
+
+## Remote and local access (web UI code)
+
+These calls come from the web UI view `security` of firmware 4.8.3 (cards "remote access" and "local access"). The reads have fixtures on 4.7.0 and 4.8.3. The writes were NOT tested on a router.
+
+| Client | Call | Params or result | Web UI |
+|---|---|---|---|
+| `Firewall.GetWANAccess` | `firewall.get_wan_access` | `{enable_https, enable_ssh, enable_ping, enable_whitelist, whitelist:[{ipaddr, name}]}`; the fixtures have an empty `whitelist` | `getRemoteAccessConfig` |
+| `Firewall.SetWANAccess` | `firewall.set_wan_access` | the same object, always with all fields, also `false` and `whitelist: []` | `handleApply` of the remote access card |
+| `LocalAccess.GetConfig` | `local-access.get_config` | `{http_port, https_port, redirect_https, luci_http_port, luci_https_port, luci_redirect_https, session_timeout, ssh_enabled, ssh_port}`; no `ssh_enabled` on 4.7.0 | `getLocalAccessConfig` |
+| `LocalAccess.SetConfig` | `local-access.set_config` | the same object, always with all fields, also the LuCI fields when LuCI is not installed; `session_timeout` in seconds | `handleApply` of the local access card |
+
+Web UI rules:
+
+- Whitelist item: `ipaddr` is an IPv4 or IPv6 address; `name` is optional (at most 64 characters) and is sent as `""` when empty.
+- The `enable_ssh` switch shows only while `ssh_enabled` of `local-access` is true. The `enable_whitelist` switch shows only while one of `enable_https`, `enable_ssh` and `enable_ping` is true. The web UI always sends all fields.
+- Ports are 1 to 65535, and the five ports are all different. The four web ports cannot be a port that browsers block (a list of 80 ports, for example 22, 25 and 6000).
+- `session_timeout`: the web UI shows minutes (1 to 180) and sends the value times 60. It shows 5 minutes when the result has no value.
+- The LuCI fields show only when `luci.get_status` gives `status` 2 (installed).
+
+Side effects in the web UI code:
+
+- After `firewall.set_wan_access`, the web UI reads `firewall.get_rule_list` again.
+- After `local-access.set_config`, the web UI waits 3 s and loads the page from the new address: HTTPS and `https_port` when `redirect_https` is true or the page used HTTPS, otherwise HTTP and `http_port`.
+- `local-access.set_config` errors (`err_code`): -1 HTTP port in use, -2 HTTPS port in use, -3 another port in use (the `err_msg` has "ssh", "https" for LuCI HTTPS, or else LuCI HTTP), -4 SSH needs a strong admin password (label key `security.ssh_need_strong_pwd_tips`).
+
+Open points:
+
+- Whether `set_wan_access` adds or changes firewall rules, and so changes the IDs of the rules and port forwards.
+- The `whitelist` item shape as the router returns it (no fixture has an item), and whether the router accepts an address with a prefix length.
+- What a `set_wan_access` or `set_config` without some fields does.
+- What firmware 4.7.0 does with `ssh_enabled` in `local-access.set_config`.
+- Whether `local-access.set_config` restarts the web server before it answers, and so whether the answer arrives when a port changes.

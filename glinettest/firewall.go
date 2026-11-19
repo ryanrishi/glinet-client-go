@@ -65,11 +65,18 @@ type DMZ struct {
 // firmware 4.8.3 and was not tested on a router.
 //
 // The result of get_zone_list is that of the test router until a test sets it.
+//
+// get_wan_access starts with all access from the WAN disabled and an empty whitelist, as on the
+// test router. set_wan_access sets the fields that the params have and keeps the others. It
+// returns ErrInvalidParams when a value is null or has the wrong type. It does not check the
+// addresses and does not change the firewall rules. This is an assumption: the write is from
+// the web UI code of firmware 4.8.3 and was not tested on a router.
 type Firewall struct {
 	mu       sync.Mutex
 	sections []section
 
-	zones readResult
+	zones     readResult
+	wanAccess WANAccess
 }
 
 type section struct {
@@ -110,7 +117,7 @@ func sectionID(i int, suffix string) string {
 }
 
 func newFirewall() *Firewall {
-	m := &Firewall{}
+	m := &Firewall{wanAccess: WANAccess{Whitelist: []WANAccessSource{}}}
 	m.zones.set(json.RawMessage(firewallZones))
 	return m
 }
@@ -237,6 +244,10 @@ func (m *Firewall) register(s *Server) {
 	s.Handle("firewall", "get_zone_list", m.zones.handle)
 	s.Handle("firewall", "get_dmz", m.getDMZ)
 	s.Handle("firewall", "set_dmz", m.setDMZ)
+	s.Handle("firewall", "get_wan_access", func(json.RawMessage) (any, error) {
+		return m.WANAccess(), nil
+	})
+	s.Handle("firewall", "set_wan_access", m.setWANAccess)
 }
 
 func (m *Firewall) list(suffix string) Method {

@@ -40,6 +40,7 @@ func TestReadsDecodeFirmware483Fixtures(t *testing.T) {
 		{"dns.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.DNS.GetConfig(ctx) }, nil},
 		{"dns.get_info", func(ctx context.Context, c *glinet.Client) (any, error) { return c.DNS.GetInfo(ctx) }, nil},
 		{"firewall.get_dmz", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Firewall.GetDMZ(ctx) }, nil},
+		{"firewall.get_wan_access", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Firewall.GetWANAccess(ctx) }, nil},
 		{"firewall.get_zone_list", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Firewall.GetZones(ctx) }, nil},
 		{"firewall.get_port_forward_list", list("res", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Firewall.ListPortForwards(ctx) }), nil},
 		{"firewall.get_rule_list", list("res", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Firewall.ListRules(ctx) }), nil},
@@ -48,6 +49,7 @@ func TestReadsDecodeFirmware483Fixtures(t *testing.T) {
 		{"lan.get_static_bind_list", list("static_bind_list", func(ctx context.Context, c *glinet.Client) (any, error) { return c.LAN.ListStaticBinds(ctx) }), nil},
 		{"lan.get_wan_info", list("wan_info", func(ctx context.Context, c *glinet.Client) (any, error) { return c.LAN.GetWANInfo(ctx) }), nil},
 		{"led.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.LED.GetConfig(ctx) }, nil},
+		{"local-access.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.LocalAccess.GetConfig(ctx) }, nil},
 		{"network.check_wan_cable", func(ctx context.Context, c *glinet.Client) (any, error) {
 			return c.Network.CheckWANCable(ctx, glinet.FirstWANPort)
 		}, nil},

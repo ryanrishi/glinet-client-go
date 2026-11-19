@@ -481,3 +481,70 @@ func TestFirewallZonesDecodeRouterFixture(t *testing.T) {
 	}
 	checkLossless(t, got, zones)
 }
+
+func TestFirewallWANAccess(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+	var sent []string
+	setWANAccess := srv.Handler("firewall", "set_wan_access")
+	srv.Handle("firewall", "set_wan_access", func(params json.RawMessage) (any, error) {
+		sent = append(sent, string(params))
+		return setWANAccess(params)
+	})
+
+	got, err := c.Firewall.GetWANAccess(ctx)
+	if err != nil {
+		t.Fatalf("GetWANAccess: %v", err)
+	}
+	if want := (glinet.WANAccess{Whitelist: []glinet.WANAccessSource{}}); !reflect.DeepEqual(*got, want) {
+		t.Errorf("GetWANAccess = %+v, want %+v", *got, want)
+	}
+
+	enabled := glinet.WANAccess{
+		EnableHTTPS:     true,
+		EnableSSH:       true,
+		EnablePing:      true,
+		EnableWhitelist: true,
+		Whitelist: []glinet.WANAccessSource{
+			{IPAddr: "203.0.113.10", Name: "example"},
+			{IPAddr: "2001:db8::10", Name: ""},
+		},
+	}
+	if err := c.Firewall.SetWANAccess(ctx, enabled); err != nil {
+		t.Fatalf("SetWANAccess: %v", err)
+	}
+	got, err = c.Firewall.GetWANAccess(ctx)
+	if err != nil {
+		t.Fatalf("GetWANAccess: %v", err)
+	}
+	if !reflect.DeepEqual(*got, enabled) {
+		t.Errorf("GetWANAccess = %+v, want %+v", *got, enabled)
+	}
+
+	if err := c.Firewall.SetWANAccess(ctx, glinet.WANAccess{}); err != nil {
+		t.Fatalf("SetWANAccess disable: %v", err)
+	}
+	if state := srv.Firewall.WANAccess(); !reflect.DeepEqual(state, glinettest.WANAccess{Whitelist: []glinettest.WANAccessSource{}}) {
+		t.Errorf("server state = %+v, want all access disabled and an empty whitelist", state)
+	}
+
+	want := []string{
+		`{"enable_https":true,"enable_ssh":true,"enable_ping":true,"enable_whitelist":true,"whitelist":[{"ipaddr":"203.0.113.10","name":"example"},{"ipaddr":"2001:db8::10","name":""}]}`,
+		`{"enable_https":false,"enable_ssh":false,"enable_ping":false,"enable_whitelist":false,"whitelist":[]}`,
+	}
+	if !slices.Equal(sent, want) {
+		t.Errorf("params = %v, want %v", sent, want)
+	}
+}
+
+func TestFirewallWANAccessDecodeRouterFixture(t *testing.T) {
+	c, srv := newClient(t)
+	result := fixtureResult(t, "firewall.get_wan_access.json")
+	srv.Handle("firewall", "get_wan_access", func(json.RawMessage) (any, error) { return result, nil })
+
+	res, err := c.Firewall.GetWANAccess(context.Background())
+	if err != nil {
+		t.Fatalf("GetWANAccess: %v", err)
+	}
+	checkLossless(t, res, result)
+}
