@@ -221,12 +221,13 @@ func (s *FirewallService) RemoveAllRules(ctx context.Context) error {
 // and false has firewall.dmz_priority_lower_label in the web UI of firmware 4.8.3. The web UI
 // shows the DMZ on the port forward page and reads the port forwards again after each set_dmz,
 // but its code does not have the label texts, so it does not settle to what the priority is
-// compared. The router gives Priority false after the first set_dmz when no write sent it, and
-// no priority before the first set_dmz. The web UI shows true when get_dmz has no priority.
+// compared. Priority is nil when the router does not return priority: the router returns no
+// priority before the first set_dmz, and false after the first set_dmz when no write sent it.
+// The web UI shows true when get_dmz has no priority.
 type DMZ struct {
 	Enabled  bool   `json:"enabled"`
 	DestIP   string `json:"dest_ip,omitempty"`
-	Priority bool   `json:"priority"`
+	Priority *bool  `json:"priority,omitempty"`
 }
 
 // GetDMZ returns the DMZ configuration. DestIP is empty when the router has no DMZ host.
@@ -243,9 +244,11 @@ func (s *FirewallService) GetDMZ(ctx context.Context) (*DMZ, error) {
 // The first SetDMZ adds a DMZ section to the firewall configuration, which can change the IDs
 // that AddPortForward returns. The router keeps that section when the DMZ is disabled.
 //
-// SetDMZ sends priority only when Enabled is true, as the web UI of firmware 4.8.3 does. The
-// priority write is from the web UI code and was not tested on a router: what the router does
-// with it, and if a write without priority keeps the value, is not known.
+// SetDMZ sends priority only when Enabled is true and Priority is not nil. The web UI of firmware
+// 4.8.3 sends priority in each write with enabled true, with true when get_dmz had no priority.
+// After writes without priority, firmware 4.7.0 returned priority false. The priority write is
+// from the web UI code and was not tested on a router: what the router does with it, and if a
+// write without priority keeps the value on firmware 4.8.3, is not known.
 func (s *FirewallService) SetDMZ(ctx context.Context, dmz DMZ) error {
 	params := struct {
 		Enabled  bool   `json:"enabled"`
@@ -253,7 +256,7 @@ func (s *FirewallService) SetDMZ(ctx context.Context, dmz DMZ) error {
 		Priority *bool  `json:"priority,omitempty"`
 	}{Enabled: dmz.Enabled, DestIP: dmz.DestIP}
 	if dmz.Enabled {
-		params.Priority = &dmz.Priority
+		params.Priority = dmz.Priority
 	}
 	return s.client.Call(ctx, "firewall", "set_dmz", params, nil)
 }

@@ -344,10 +344,11 @@ func TestFirewallDMZ(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetDMZ: %v", err)
 	}
-	if *got != (glinet.DMZ{}) {
-		t.Errorf("GetDMZ = %+v, want disabled without DestIP", got)
+	if !reflect.DeepEqual(*got, glinet.DMZ{}) {
+		t.Errorf("GetDMZ = %+v, want disabled without DestIP and Priority", got)
 	}
 
+	noPriority := false
 	for _, want := range []glinet.DMZ{
 		{Enabled: true, DestIP: "192.168.8.50"},
 		{DestIP: "192.168.8.50"},
@@ -356,50 +357,63 @@ func TestFirewallDMZ(t *testing.T) {
 		if err := c.Firewall.SetDMZ(ctx, want); err != nil {
 			t.Fatalf("SetDMZ(%+v): %v", want, err)
 		}
+		want.Priority = &noPriority
 		got, err := c.Firewall.GetDMZ(ctx)
 		if err != nil {
 			t.Fatalf("GetDMZ: %v", err)
 		}
-		if *got != want {
-			t.Errorf("GetDMZ after SetDMZ(%+v) = %+v", want, got)
+		if !reflect.DeepEqual(*got, want) {
+			t.Errorf("GetDMZ after SetDMZ = %+v, want %+v", *got, want)
 		}
-		if state := srv.Firewall.DMZ(); state != (glinettest.DMZ{Enabled: want.Enabled, DestIP: want.DestIP}) {
-			t.Errorf("server state after SetDMZ(%+v) = %+v", want, state)
+		if state := srv.Firewall.DMZ(); !reflect.DeepEqual(state, glinettest.DMZ(want)) {
+			t.Errorf("server state after SetDMZ = %+v, want %+v", state, want)
 		}
 	}
 }
 
 func TestFirewallDMZPriority(t *testing.T) {
-	c, srv := newClient(t)
-	ctx := context.Background()
-	var sent map[string]any
-	setDMZ := srv.Handler("firewall", "set_dmz")
-	srv.Handle("firewall", "set_dmz", func(params json.RawMessage) (any, error) {
-		sent = nil
-		_ = json.Unmarshal(params, &sent)
-		return setDMZ(params)
-	})
+	higher, lower := true, false
+	for _, tc := range []struct {
+		name     string
+		priority *bool
+	}{
+		{"present true", &higher},
+		{"present false", &lower},
+		{"absent", nil},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c, srv := newClient(t)
+			ctx := context.Background()
+			srv.Firewall.SetDMZ(glinettest.DMZ{Enabled: true, DestIP: "198.51.100.50", Priority: tc.priority})
+			sent := sentParams(srv, "firewall", "set_dmz")
 
-	enabled := glinet.DMZ{Enabled: true, DestIP: "198.51.100.50", Priority: true}
-	if err := c.Firewall.SetDMZ(ctx, enabled); err != nil {
-		t.Fatalf("SetDMZ: %v", err)
-	}
-	if want := map[string]any{"enabled": true, "dest_ip": "198.51.100.50", "priority": true}; !reflect.DeepEqual(sent, want) {
-		t.Errorf("params = %v, want %v", sent, want)
-	}
-	got, err := c.Firewall.GetDMZ(ctx)
-	if err != nil {
-		t.Fatalf("GetDMZ: %v", err)
-	}
-	if *got != enabled {
-		t.Errorf("GetDMZ = %+v, want %+v", *got, enabled)
-	}
+			got, err := c.Firewall.GetDMZ(ctx)
+			if err != nil {
+				t.Fatalf("GetDMZ: %v", err)
+			}
+			if !reflect.DeepEqual(got.Priority, tc.priority) {
+				t.Errorf("GetDMZ Priority = %v, want %v", got.Priority, tc.priority)
+			}
 
-	if err := c.Firewall.SetDMZ(ctx, glinet.DMZ{Priority: true}); err != nil {
-		t.Fatalf("SetDMZ disable: %v", err)
-	}
-	if want := map[string]any{"enabled": false}; !reflect.DeepEqual(sent, want) {
-		t.Errorf("params = %v, want %v (no priority when disabled)", sent, want)
+			if err := c.Firewall.SetDMZ(ctx, *got); err != nil {
+				t.Fatalf("SetDMZ: %v", err)
+			}
+			want := map[string]any{"enabled": true, "dest_ip": "198.51.100.50"}
+			if tc.priority != nil {
+				want["priority"] = *tc.priority
+			}
+			if !reflect.DeepEqual((*sent)[0], want) {
+				t.Errorf("set_dmz params = %v, want %v", (*sent)[0], want)
+			}
+
+			got.Enabled = false
+			if err := c.Firewall.SetDMZ(ctx, *got); err != nil {
+				t.Fatalf("SetDMZ disable: %v", err)
+			}
+			if want := map[string]any{"enabled": false, "dest_ip": "198.51.100.50"}; !reflect.DeepEqual((*sent)[1], want) {
+				t.Errorf("set_dmz params = %v, want %v (no priority when disabled)", (*sent)[1], want)
+			}
+		})
 	}
 }
 

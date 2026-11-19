@@ -69,7 +69,7 @@ All other ok methods have the same fields and types as on 4.7.0.
 
 These differences come from the router state, not from the firmware:
 
-- `firewall.get_dmz` has `priority` (bool). On 4.7.0 it appeared after the first `set_dmz` of the write test. `DMZ.Priority` (client `v0.12.0`) has it.
+- `firewall.get_dmz` has `priority` (bool). On 4.7.0 it appeared after the first `set_dmz` of the write test. `DMZ.Priority` (client `v0.12.0`) has it; it is nil when `get_dmz` has no `priority`.
 - `zerotier.get_config` has `id`: the made-up network ID of the 4.7.0 write test.
 - `wg-client.get_config_list` has no `ipv6_enable` and no `mtu`, because the probe read the group of type 3 on 4.8.3 and the custom group (type 2) on 4.7.0. The `get_all_config_list` peers of the custom group still have `ipv6_enable` and `mtu`.
 
