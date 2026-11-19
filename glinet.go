@@ -24,7 +24,7 @@ import (
 
 // Version is the version of this client. It is in the default User-Agent.
 const (
-	Version          = "v1.0.0"
+	Version          = "v1.1.0"
 	defaultBaseURL   = "http://192.168.8.1"
 	defaultUserAgent = "glinet-client-go" + "/" + Version
 
@@ -41,7 +41,8 @@ type Client struct {
 	UserAgent string
 	common    service // Reuse a single struct instead of allocating one for each service on the heap.
 
-	httpClient *http.Client
+	httpClient   *http.Client
+	loginContext context.Context
 
 	username string
 	password []byte
@@ -106,6 +107,16 @@ func WithHTTPClient(httpClient *http.Client) Option {
 	}
 }
 
+// WithLoginContext sets the context of the login that NewClient and NewClientWithHost do. Without
+// this option, or with a nil ctx, only the time limit of the HTTP client applies to that login.
+func WithLoginContext(ctx context.Context) Option {
+	return func(c *Client) {
+		if ctx != nil {
+			c.loginContext = ctx
+		}
+	}
+}
+
 // NewClient returns a client for the default host and logs in.
 func NewClient(username string, password []byte, opts ...Option) (*Client, error) {
 	return NewClientWithHost(defaultBaseURL, username, password, opts...)
@@ -121,7 +132,7 @@ func NewClientWithHost(host string, username string, password []byte, opts ...Op
 	c.username = username
 	c.password = bytes.Clone(password)
 
-	if err := c.login(context.Background(), ""); err != nil {
+	if err := c.login(c.loginContext, ""); err != nil {
 		return nil, err
 	}
 
@@ -145,7 +156,7 @@ func newClient(host string, opts []Option) (*Client, error) {
 		return nil, fmt.Errorf("glinet: parse host %q: %w", host, err)
 	}
 
-	c := &Client{BaseURL: baseURL, UserAgent: defaultUserAgent, httpClient: &http.Client{Timeout: defaultTimeout}}
+	c := &Client{BaseURL: baseURL, UserAgent: defaultUserAgent, httpClient: &http.Client{Timeout: defaultTimeout}, loginContext: context.Background()}
 	c.common.client = c
 	for _, opt := range opts {
 		opt(c)

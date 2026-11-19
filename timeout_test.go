@@ -41,6 +41,18 @@ func TestLoginHTTPClientTimeout(t *testing.T) {
 	}
 }
 
+func TestLoginContextDeadline(t *testing.T) {
+	srv := newHangingServer(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+
+	_, err := glinet.NewClientWithHost(srv.URL, "root", []byte("password"), glinet.WithLoginContext(ctx))
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Errorf("error = %v, want context.DeadlineExceeded", err)
+	}
+}
+
 func TestCallContextDeadline(t *testing.T) {
 	srv := newHangingServer(t)
 	c := glinet.NewClientUnauthenticated()
