@@ -15,9 +15,8 @@ type WANCableStatus struct {
 
 // CheckWANCable returns the state of the cable of the wired WAN port port. It sends
 // {"secondwan": bool}, as the cable methods do. The test router gave the fixture result for
-// {"secondwan": false}. The web UI code of firmware 4.8.3 that was read does not call this method,
-// so "secondwan": true for SecondWANPort is not settled by the web UI code and was not tested on a
-// router.
+// {"secondwan": false}. The web UI script netport.js of firmware 4.8.3 calls this method.
+// "secondwan": true for SecondWANPort is not settled and was not tested on a router.
 func (s *NetworkService) CheckWANCable(ctx context.Context, port WANPort) (*WANCableStatus, error) {
 	var res WANCableStatus
 	if err := s.client.Call(ctx, "network", "check_wan_cable", port.params(), &res); err != nil {

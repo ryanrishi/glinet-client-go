@@ -45,9 +45,10 @@ func (s *FanService) GetStatus(ctx context.Context) (*FanStatus, error) {
 // {"temperature": temperature}. This is the only value that the web UI of firmware 4.8.3 sends.
 //
 // Tested on a router (GL-AXT1800, firmware 4.8.3) with 60: the router returned [], the next
-// GetConfig had Temperature 60, and the fan started. The web UI lets the user select 70 to 90.
-// What the router does with a value out of that range other than 60, and whether a write changes
-// WarnTemperature, is not known.
+// GetConfig had Temperature 60, and the fan started. Writes of 62 and 60 were also read back, and
+// WarnTemperature stayed 75 in each read. The web UI offers only 70 to 90 in steps of 5, so the
+// router accepts values that the web UI does not offer. The lowest value that the firmware accepts
+// is not known.
 func (s *FanService) SetTemperature(ctx context.Context, temperature int) error {
 	params := struct {
 		Temperature int `json:"temperature"`
