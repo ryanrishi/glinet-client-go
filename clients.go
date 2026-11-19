@@ -12,7 +12,8 @@ type ClientsService service
 // of the router for this client.
 //
 // LimitRx is the download limit and LimitTx the upload limit of QoSService.SetSpeedLimit, in
-// KiB/s; 0 is no limit. The web UI shows them as KB/s with a base of 1024.
+// KiB/s; 0 is no limit. The web UI shows them as KB/s with a base of 1024. They are float64
+// because the Kbps mode of the web UI can write a fraction (see SpeedLimit).
 //
 // The other fields are runtime values. Type is 0 for Iface "2.4G", 1 for "5G" and 2 for "cable"
 // on the test router. OnlineTime and LastUpdateRate are Unix times. Rx and Tx are the current
@@ -21,13 +22,13 @@ type ClientsService service
 // of 60 numbers on the test router (firmware 4.7.0 and 4.8.3); the web UI does not use them, and
 // their meaning is not known.
 type ClientDevice struct {
-	MAC     string `json:"mac"`
-	Name    string `json:"name"`
-	Alias   string `json:"alias,omitempty"`
-	Class   string `json:"class,omitempty"`
-	Blocked bool   `json:"blocked"`
-	LimitRx int64  `json:"limit_rx"`
-	LimitTx int64  `json:"limit_tx"`
+	MAC     string  `json:"mac"`
+	Name    string  `json:"name"`
+	Alias   string  `json:"alias,omitempty"`
+	Class   string  `json:"class,omitempty"`
+	Blocked bool    `json:"blocked"`
+	LimitRx float64 `json:"limit_rx"`
+	LimitTx float64 `json:"limit_tx"`
 
 	IP             string   `json:"ip"`
 	IPv6           []string `json:"ipv6"`
