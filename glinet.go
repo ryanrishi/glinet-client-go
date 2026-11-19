@@ -44,10 +44,12 @@ type Client struct {
 	Digest          *DigestService
 	DNS             *DNSService
 	Firewall        *FirewallService
+	IGMP            *IGMPService
 	IPv6            *IPv6Service
 	LAN             *LANService
 	LED             *LEDService
 	Network         *NetworkService
+	NetworkMode     *NetworkModeService
 	System          *SystemService
 	Tailscale       *TailscaleService
 	Timer           *TimerService
@@ -112,10 +114,12 @@ func newClient(host string) (*Client, error) {
 	c.DDNS = (*DDNSService)(&c.common)
 	c.DNS = (*DNSService)(&c.common)
 	c.Firewall = (*FirewallService)(&c.common)
+	c.IGMP = (*IGMPService)(&c.common)
 	c.IPv6 = (*IPv6Service)(&c.common)
 	c.LAN = (*LANService)(&c.common)
 	c.LED = (*LEDService)(&c.common)
 	c.Network = (*NetworkService)(&c.common)
+	c.NetworkMode = (*NetworkModeService)(&c.common)
 	c.System = (*SystemService)(&c.common)
 	c.Tailscale = (*TailscaleService)(&c.common)
 	c.Timer = (*TimerService)(&c.common)

@@ -127,3 +127,87 @@ func (s *CableService) SetConfig(ctx context.Context, port WANPort, config Cable
 	}
 	return s.client.Call(ctx, "cable", "set_config", params, nil)
 }
+
+// CablePort is an Ethernet port in the result of cable get_ports_config (web UI views netport and
+// bridge). The fields are from the web UI code of firmware 4.8.3; the test router did not give
+// this result, so the types, the other fields and the names of the LAN ports are not verified.
+//
+//   - Name is the name of the port. The web UI changes only the ports "wan" and "secondwan" (the
+//     second WAN port). For the other ports it shows only the speed (cable get_ports_status).
+//   - Mode is "wan" or "lan": how the port is used. DefaultMode is the mode of the port with the
+//     factory settings.
+//   - Silk is the label of the port on the case.
+//   - MAC is the MAC address of a WAN port (MAC clone).
+type CablePort struct {
+	Name        string        `json:"name"`
+	Mode        string        `json:"mode"`
+	DefaultMode string        `json:"default_mode,omitempty"`
+	Silk        string        `json:"silk,omitempty"`
+	MAC         *CablePortMAC `json:"macaddr,omitempty"`
+}
+
+// CablePortMAC is the MAC address of a WAN port: the MAC clone setting.
+//
+//   - Mode is "default" (the MAC address of the router), "clone" (MACAddr, for example the MAC
+//     address of a client) or "random" (MACAddr, a random MAC address that the web UI makes). The
+//     web UI uses "default" when the result has no Mode.
+//   - MACAddr is the MAC address of the port. DefaultMACAddr (defmacaddr) is the MAC address of
+//     the router for the port; it is read only.
+//   - Update and Period are for Mode "random": Update "none" keeps MACAddr, "time" changes it each
+//     Period hours, and "reboot" changes it at each reboot. The web UI offers a Period of 1 to 180
+//     days, as hours (days × 24), and also sends Period with Update "reboot".
+//
+// For Mode "clone", the web UI does not let the user set 00:00:00:00:00:00 or a multicast MAC
+// address (the second hex digit must be even).
+type CablePortMAC struct {
+	Mode           string `json:"mode,omitempty"`
+	MACAddr        string `json:"macaddr,omitempty"`
+	DefaultMACAddr string `json:"defmacaddr,omitempty"`
+	Update         string `json:"update,omitempty"`
+	Period         int    `json:"period,omitempty"`
+}
+
+// ListPorts returns the Ethernet ports of the router and their configuration.
+func (s *CableService) ListPorts(ctx context.Context) ([]CablePort, error) {
+	var res struct {
+		Ports []CablePort `json:"ports"`
+	}
+	if err := s.client.Call(ctx, "cable", "get_ports_config", nil, &res); err != nil {
+		return nil, err
+	}
+
+	return res.Ports, nil
+}
+
+// SetPort sets the mode of the port name to mode ("wan" or "lan"), and for mode "wan" also the MAC
+// address mac, with cable set_port_config. It sends the params that the web UI sends:
+//
+//   - {"name", "mode"} for mode "lan". mac is not sent.
+//   - {"name", "mode", "macaddr": {"mode", "macaddr"}} for mode "wan". The inner "macaddr" is not
+//     sent when mac.MACAddr is empty. For mac.Mode "default" the web UI sends DefaultMACAddr of
+//     the port as MACAddr. For mac.Mode "random" the object also has "update", and "period" when
+//     update is not "none". mac.DefaultMACAddr is not sent.
+//
+// From the web UI code of firmware 4.8.3, not tested on a router. The web UI changes only the ports
+// "wan" and "secondwan". It waits 3 s after the write, or 15 s when the mode changes, and then
+// reads the ports again. Before it changes a WAN port to "lan", it requires CableEnabled false from
+// Network.CheckWANCable for that port (it tells the user to remove the cable). A change of a WAN
+// port to "lan" removes that wired uplink, and a change of the MAC address can make the upstream
+// network give the router another address.
+func (s *CableService) SetPort(ctx context.Context, name, mode string, mac CablePortMAC) error {
+	params := map[string]any{"name": name, "mode": mode}
+	if mode == "wan" {
+		macParams := map[string]any{"mode": mac.Mode}
+		if mac.MACAddr != "" {
+			macParams["macaddr"] = mac.MACAddr
+		}
+		if mac.Mode == "random" {
+			macParams["update"] = mac.Update
+			if mac.Update != "none" {
+				macParams["period"] = mac.Period
+			}
+		}
+		params["macaddr"] = macParams
+	}
+	return s.client.Call(ctx, "cable", "set_port_config", params, nil)
+}
