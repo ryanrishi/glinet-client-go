@@ -110,10 +110,15 @@ func (s *WireGuardServerService) Initialize(ctx context.Context) error {
 	return s.client.Call(ctx, wgServerModule, "generate_key", nil, nil)
 }
 
-// SetConfig sets the configuration of the WireGuard server. It sends address_v4 and port;
-// private_key only when it is not empty (else the router keeps its key); and ipv6_enable and
-// address_v6 only when AddressV6 is not empty. The web UI sends the IPv6 fields only while IPv6
-// is enabled on the router. Initialization, LocalAccess and PublicKey are not sent.
+// SetConfig sets the configuration of the WireGuard server. It sends address_v4, address_v6 and
+// port; private_key only when it is not empty; and ipv6_enable only when AddressV6 is not empty.
+// Initialization, LocalAccess and PublicKey are not sent. An empty AddressV6 is sent as "".
+//
+// The web UI of firmware 4.8.3 sends address_v4, address_v6, port and private_key, each also when
+// it is "", and no ipv6_enable. Its private key input shows "Auto Generate" when it is empty; what
+// the router does with private_key "" is not known, so SetConfig does not send it. Firmware 4.7.0
+// sent private_key only when it was not empty, and ipv6_enable and address_v6 only while IPv6 was
+// enabled on the router.
 //
 // The web UI lets the user change the configuration only while the server is stopped. It accepts
 // a private IPv4 address with a prefix length up to 30 (default /24), an IPv6 prefix length up to
@@ -121,13 +126,12 @@ func (s *WireGuardServerService) Initialize(ctx context.Context) error {
 //
 // Not verified on a router: the parameters come from the web UI code.
 func (s *WireGuardServerService) SetConfig(ctx context.Context, config WireGuardServerConfig) error {
-	params := map[string]any{"address_v4": config.AddressV4, "port": config.Port}
+	params := map[string]any{"address_v4": config.AddressV4, "address_v6": config.AddressV6, "port": config.Port}
 	if config.PrivateKey != "" {
 		params["private_key"] = config.PrivateKey
 	}
 	if config.AddressV6 != "" {
 		params["ipv6_enable"] = config.IPv6Enable
-		params["address_v6"] = config.AddressV6
 	}
 	return s.client.Call(ctx, wgServerModule, "set_config", params, nil)
 }
@@ -159,9 +163,10 @@ func (s *WireGuardServerService) ListPeers(ctx context.Context) ([]WireGuardServ
 // keys.
 //
 // Not verified on a router: the parameters come from the web UI code. It sends name,
-// presharedkey_enable and presharedkey, and allowed_ips, dns, persistent_keepalive and mtu only
-// when they are not empty (the web UI sends "" for an empty persistent_keepalive or mtu). The web
-// UI requires Name (1-64 characters) and accepts PersistentKeepalive 1-65535 and MTU 576-65535.
+// presharedkey_enable, presharedkey, persistent_keepalive and mtu, with "" for a
+// PersistentKeepalive or MTU of 0, as the web UI does; and allowed_ips and dns only when they are
+// not empty, as the web UI does. What the router does with "" is not known. The web UI requires
+// Name (1-64 characters) and accepts PersistentKeepalive 1-65535 and MTU 576-65535.
 func (s *WireGuardServerService) AddPeer(ctx context.Context, peer WireGuardServerPeer) (int, error) {
 	var res struct {
 		PeerID int `json:"peer_id"`
@@ -190,6 +195,14 @@ func (s *WireGuardServerService) RemovePeer(ctx context.Context, peerID int) err
 		PeerID int `json:"peer_id"`
 	}{peerID}
 	return s.client.Call(ctx, wgServerModule, "remove_peer", params, nil)
+}
+
+// RemoveAllPeers removes every peer with wg-server remove_peer {"all": true}, as the "remove all"
+// button of the web UI of firmware 4.8.3 does.
+//
+// Not verified on a router: the parameters come from the web UI code.
+func (s *WireGuardServerService) RemoveAllPeers(ctx context.Context) error {
+	return s.client.Call(ctx, wgServerModule, "remove_peer", removeAllParams, nil)
 }
 
 // GetPeerConfig returns the configuration file of the peer peerID for the client device
@@ -251,19 +264,31 @@ func (s *WireGuardServerService) ListRoutes(ctx context.Context) (*VPNRoutes, er
 	return &res, nil
 }
 
-// AddRoute adds a route rule to the WireGuard server. route.ID is not sent.
+// AddRoute adds a route rule to the WireGuard server. route.ID is not sent. It sends dest,
+// gateway, metric, mtu and route_flag, also an empty gateway and a metric or mtu of 0, as the web
+// UI of firmware 4.8.3 does, and scope only when it is not empty. That web UI does not send scope.
 //
 // Not verified on a router: the parameters come from the web UI code.
 func (s *WireGuardServerService) AddRoute(ctx context.Context, route VPNRoute) error {
 	route.ID = 0
-	return s.client.Call(ctx, wgServerModule, "add_route", routeParams(route), nil)
+	return s.client.Call(ctx, wgServerModule, "add_route", wgServerRouteParams(route), nil)
 }
 
-// SetRoute sets the route rule route.ID of the WireGuard server.
+// SetRoute sets the route rule route.ID of the WireGuard server. It sends the fields of AddRoute
+// and rule_id, so an empty Gateway, Metric or MTU removes that value.
 //
-// Not verified on a router: the parameters come from the web UI code.
+// Not verified on a router: the parameters come from the web UI code. What the router does with
+// gateway "" and metric or mtu 0 is not known.
 func (s *WireGuardServerService) SetRoute(ctx context.Context, route VPNRoute) error {
-	return s.client.Call(ctx, wgServerModule, "set_route", routeParams(route), nil)
+	return s.client.Call(ctx, wgServerModule, "set_route", wgServerRouteParams(route), nil)
+}
+
+func wgServerRouteParams(route VPNRoute) map[string]any {
+	p := routeParams(route)
+	p["gateway"] = route.Gateway
+	p["metric"] = route.Metric
+	p["mtu"] = route.MTU
+	return p
 }
 
 // RemoveRoute removes the route rule route.ID of the WireGuard server. Only route.ID and
@@ -277,9 +302,11 @@ func (s *WireGuardServerService) RemoveRoute(ctx context.Context, route VPNRoute
 
 func wgServerPeerParams(peer WireGuardServerPeer) map[string]any {
 	p := map[string]any{
-		"name":                peer.Name,
-		"presharedkey_enable": peer.PresharedKeyEnable,
-		"presharedkey":        peer.PresharedKey,
+		"name":                 peer.Name,
+		"presharedkey_enable":  peer.PresharedKeyEnable,
+		"presharedkey":         peer.PresharedKey,
+		"persistent_keepalive": numberOrEmpty(peer.PersistentKeepalive),
+		"mtu":                  numberOrEmpty(peer.MTU),
 	}
 	if peer.AllowedIPs != "" {
 		p["allowed_ips"] = peer.AllowedIPs
@@ -287,11 +314,13 @@ func wgServerPeerParams(peer WireGuardServerPeer) map[string]any {
 	if peer.DNS != "" {
 		p["dns"] = peer.DNS
 	}
-	if peer.PersistentKeepalive != 0 {
-		p["persistent_keepalive"] = peer.PersistentKeepalive
-	}
-	if peer.MTU != 0 {
-		p["mtu"] = peer.MTU
-	}
 	return p
+}
+
+// numberOrEmpty returns n, or "" for 0: the value that the web UI sends for an empty number input.
+func numberOrEmpty(n int) any {
+	if n == 0 {
+		return ""
+	}
+	return n
 }

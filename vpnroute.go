@@ -7,7 +7,8 @@ import "strings"
 //
 // Not verified on a router: the test router had no route rules, so the fields come from the web
 // UI code. The web UI accepts as Scope "host", "link", "global" or a number 1-65535, and as MTU a
-// number 1-65535. It sends only the fields that are not empty.
+// number 1-65535. The web UI of firmware 4.7.0 sends only the fields that are not empty; for the
+// web UI of firmware 4.8.3, see WireGuardServerService.AddRoute.
 type VPNRoute struct {
 	ID      int    `json:"rule_id,omitempty"`
 	Dest    string `json:"dest"`

@@ -64,6 +64,17 @@ func (s *LANService) RemoveStaticBind(ctx context.Context, mac string) error {
 	return s.client.Call(ctx, "lan", "remove_static_bind", params, nil)
 }
 
+// RemoveAllStaticBinds removes all bindings with lan remove_static_bind {"mode": 1}, as the
+// "remove all" button of the web UI does.
+//
+// Not verified on a router: the parameters come from the web UI code.
+func (s *LANService) RemoveAllStaticBinds(ctx context.Context) error {
+	params := struct {
+		Mode int `json:"mode"`
+	}{Mode: 1}
+	return s.client.Call(ctx, "lan", "remove_static_bind", params, nil)
+}
+
 // WANInfo is an item of the result of lan get_wan_info: the IPv4 address of an uplink interface,
 // for example "wan" or "wwan". The values are runtime values.
 type WANInfo struct {
@@ -200,10 +211,12 @@ func (s *LANService) SetAddress(ctx context.Context, address LANAddress) error {
 	return s.client.Call(ctx, "lan", "set_config", params, nil)
 }
 
-// SetDHCP sets the DHCP server of a network with one lan set_config, as the web UI does: with
-// Enable 0 it sends only interface and enable; else it sends all fields, with an empty DNS as []
-// and LPR only when it has items. The web UI waits until the router answers again, for at least
-// 10 s.
+// SetDHCP sets the DHCP server of a network with one lan set_config, as the web UI of firmware
+// 4.8.3 does: with Enable 0 it sends only interface and enable; else it sends all fields, with an
+// empty DNS or LPR as []. So an empty LPR removes all LPR servers. The web UI always has at least
+// one LPR input, so with Enable 1 it always sends lpr, without the empty inputs. Firmware 4.7.0
+// sent the empty inputs, for example [""]. The web UI waits until the router answers again, for at
+// least 10 s.
 //
 // Verified on the test router only for {"interface": "guest", "enable": 0} while the guest DHCP
 // server was already off: the router returned the result [] (no api_extra) within 0.1 s and kept
@@ -219,9 +232,7 @@ func (s *LANService) SetDHCP(ctx context.Context, dhcp LANDHCP) error {
 		params["leasetime"] = dhcp.LeaseTime
 		params["gateway"] = dhcp.Gateway
 		params["dns"] = append([]string{}, dhcp.DNS...)
-		if len(dhcp.LPR) > 0 {
-			params["lpr"] = dhcp.LPR
-		}
+		params["lpr"] = append([]string{}, dhcp.LPR...)
 	}
 	return s.client.Call(ctx, "lan", "set_config", params, nil)
 }

@@ -595,7 +595,7 @@ Write (views `lanip` and `guestip`, one component `NetMain` with `netInterface` 
    c={interface:this.netInterface,enable:t};t&&(c.leasetime=r+"m",c.gateway=a,c.start=s,c.end=o,c.dns=[],e&&(c.dns=[e]),i&&(c.dns=[...c.dns,i]),n.length&&(c.lpr=n))
    ```
 
-   The UI keeps `lpr` as `[""]` when the read had `[]`, so it sends `"lpr":[""]` in that case. The client sends `lpr` only when it has items.
+   The UI keeps `lpr` as `[""]` when the read had `[]`, so it sends `"lpr":[""]` in that case. The web UI of firmware 4.8.3 removes the empty items, so it sends `"lpr":[]` in that case; the client sends `lpr` as the 4.8.3 web UI does (see the 4.8.3 report).
 
 After the write: when the `lan` IP changed, the page waits 13.5 s, shows "changed to <ip>" and after 1.5 s more loads `http://<new ip>/`. Else it polls `http://<ip>/ping.svg` until the router answers, with a first wait of `api_extra + 10` s, where `api_extra` is an optional number in the result (seconds), and then reads `get_config_list` again.
 

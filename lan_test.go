@@ -66,6 +66,25 @@ func TestLANStaticBinds(t *testing.T) {
 	}
 }
 
+func TestLANRemoveAllStaticBinds(t *testing.T) {
+	c, srv := newClient(t)
+	sent := sentParams(srv, "lan", "remove_static_bind")
+	srv.LAN.SetStaticBinds([]glinettest.StaticBind{
+		{MAC: "02:00:00:aa:bb:01", IP: "192.168.8.50"},
+		{MAC: "02:00:00:aa:bb:02", IP: "192.168.8.51"},
+	})
+
+	if err := c.LAN.RemoveAllStaticBinds(context.Background()); err != nil {
+		t.Fatalf("RemoveAllStaticBinds: %v", err)
+	}
+	if want := (map[string]any{"mode": float64(1)}); !reflect.DeepEqual((*sent)[0], want) {
+		t.Errorf("params = %v, want %v", (*sent)[0], want)
+	}
+	if got := srv.LAN.StaticBinds(); len(got) != 0 {
+		t.Errorf("server state = %+v, want no bindings", got)
+	}
+}
+
 func TestLANAddStaticBindExistingMAC(t *testing.T) {
 	c, srv := newClient(t)
 	ctx := context.Background()
@@ -267,9 +286,24 @@ func TestLANSetAddressAndDHCP(t *testing.T) {
 	if err := c.LAN.SetDHCP(ctx, dhcp); err != nil {
 		t.Fatalf("SetDHCP: %v", err)
 	}
-	want = map[string]any{"interface": "guest", "enable": float64(1), "start": "192.168.10.100", "end": "192.168.10.200", "leasetime": "120m", "gateway": "", "dns": []any{}}
+	want = map[string]any{"interface": "guest", "enable": float64(1), "start": "192.168.10.100", "end": "192.168.10.200", "leasetime": "120m", "gateway": "", "dns": []any{}, "lpr": []any{}}
 	if !reflect.DeepEqual(sent, want) {
 		t.Errorf("SetDHCP params = %v, want %v", sent, want)
+	}
+
+	dhcp.LPR = []string{"192.168.10.5", "192.168.10.6"}
+	if err := c.LAN.SetDHCP(ctx, dhcp); err != nil {
+		t.Fatalf("SetDHCP with LPR: %v", err)
+	}
+	if lpr := sent["lpr"]; !reflect.DeepEqual(lpr, []any{"192.168.10.5", "192.168.10.6"}) {
+		t.Errorf("SetDHCP lpr = %v", lpr)
+	}
+	dhcp.LPR = nil
+	if err := c.LAN.SetDHCP(ctx, dhcp); err != nil {
+		t.Fatalf("SetDHCP without LPR: %v", err)
+	}
+	if lpr := sent["lpr"]; !reflect.DeepEqual(lpr, []any{}) {
+		t.Errorf("SetDHCP without LPR: lpr = %v, want []", lpr)
 	}
 
 	guest, err := c.LAN.GetConfig(ctx, "guest")

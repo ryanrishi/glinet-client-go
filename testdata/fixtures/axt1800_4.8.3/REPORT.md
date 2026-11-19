@@ -102,7 +102,7 @@ The web UI reads `proto` from `get_config` only in mode `secure`, `server` as th
 
 Not known: what the router returns in `server` in mode `secure` with `DoT`; if the router returns `proto` in modes other than `secure` and `auto`; if a write keeps the IDs of the other DoT providers; how the router answers an invalid write.
 
-## Write formats from the web UI code (client v0.12.0)
+## Write formats from the web UI code (client v0.12.0 and v0.12.1)
 
 These write formats and read fields come from the web UI code of firmware 4.8.3 (the views `firewallview`, `lanip`, `guestip`, `internet`, `clients` and `wireless`). They were NOT tested on a router. No write was called on 4.8.3.
 
@@ -116,6 +116,22 @@ These write formats and read fields come from the web UI code of firmware 4.8.3 
 | `AccessControl.SetConfig` | `black_white_list.set_config` | `{mode, mac:[string]}` | access control dialog, `handleSetAccessConfig`, `handleChangeMode` |
 | `AccessControl.AddAllowedMAC`, `RemoveAllowedMAC` | `black_white_list.set_single_mac` | `{mode:"white", operate:"add"\|"del", mac}` | client list switch, `blockChange` |
 | `Wifi.SetConfig` | `wifi.set_config` | `chan_6g_only_psc` (bool) for the main interface of a 6G radio | `applyConfig` |
+| `LAN.SetDHCP` | `lan.set_config` | with `enable` 1, always `lpr` without the empty inputs, so `[]` when there is no LPR server | `handleApplyDhcp` |
+| `LAN.RemoveAllStaticBinds` | `lan.remove_static_bind` | `{mode: 1}` | address reservation card, `handleRemoveAll` |
+| `Firewall.RemoveAllPortForwards` | `firewall.remove_port_forward` | `{all: true}` | port forward card, `removePortForward` |
+| `Firewall.RemoveAllRules` | `firewall.remove_rule` | `{all: true}` | rule list (view `security`), `removeRule` |
+| `WireGuardServer.RemoveAllPeers` | `wg-server.remove_peer` | `{all: true}` | peer card, `removePeer` |
+| `WireGuardServer.AddPeer`, `SetPeer` | `wg-server.add_peer`, `set_peer` | `persistent_keepalive` and `mtu` always, `""` when empty | `submitFormData` |
+| `WireGuardServer.AddRoute`, `SetRoute` | `wg-server.add_route`, `set_route` | `gateway` (also `""`), `metric` and `mtu` (0 when empty) always; no `scope` | route dialog, `handleApply` |
+| `WireGuardServer.SetConfig` | `wg-server.set_config` | `{address_v4, address_v6, port, private_key}`, each also when `""`; no `ipv6_enable` | server card, `handleApply` |
+| `WireGuardClient.SetPeer` | `wg-client.set_config` | `listen_port`, `persistent_keepalive` and `mtu` as `""` when the user empties the input; not sent when the user did not fill it | `submitData` |
+
+What the router does with `lpr: []`, with `""` for a number field of a WireGuard peer, with `gateway: ""` and 0 in a route, and with the "remove all" calls is not known.
+
+The client differs from the web UI in these cases:
+
+- `WireGuardServer.SetConfig` does not send `private_key: ""`. The private key input of the web UI shows "Auto Generate" when it is empty, but the web UI code does not settle what the router does with `""`. The client sends `ipv6_enable` with a non-empty `address_v6`, as the web UI of firmware 4.7.0 did.
+- `WireGuardClient.SetPeer` sends `""` for each of `listen_port`, `persistent_keepalive` and `mtu` that is 0. The web UI sends `""` only for an input that the user emptied. `WireGuardClient.AddPeer` does not send them when they are 0, as the web UI does for a new peer.
 
 Read fields:
 
@@ -128,6 +144,8 @@ Read fields:
 - `clients.get_list` `ipv6` (list of IPv6 addresses, shown by the web UI), `last_rx` and `last_tx` (60 numbers each in the fixtures; the web UI does not use them, and their meaning is not known).
 
 Not built, because the web UI code does not settle the shapes:
+
+- `cable.get_ports_config` (view `internet`, `getPortsConfig`, params `{}`). The web UI reads only `ports[]`, keeps the items whose `name` is `"wan"` or `"secondwan"`, and shows `silk` (the port label on the case). Other fields, other `name` values and the types are not in that code, and no fixture has the result.
 
 - `wifi.get_mlo_config` and `wifi.set_mlo_config` (MLO, when `software_feature.mlo` is true). The web UI reads `res` with `random_bssid`, `encryptions`, `mlo_bandsupport` and `ifaces[]`; it reads `name`, `guest`, `mlo_enable`, `mlo_band` (a list of `"2g"`, `"5g"`, `"6g"`, at least 2), `ssid`, `encryption`, `key` and `hidden` of an interface. It writes `{name, mlo_enable}` for the switch, and for the form all fields of the interface object as the router gave them, plus `random_bssid` for a main interface. So the full params depend on fields of the result that the web UI code does not name.
 - The provider groups (type 1) of `wg-client`. The web UI uses `wg_client.create_provider_account {group_id, username, password}` (result `expires_at`), `wg_client.get_provider_server_list` or `wg-client.get_third_config` (AzireVPN and Mullvad) with `{group_id, username, password?}`, `wg_client.generate_provider_config` or `wg-client.get_recommend_config` with `{group_id, country_name:[string]}` or `{group_id, server_info:[{country_name, cities:[{city_name, hostname:[string]}]}]}`, `wg_client.update_provider_config {group_id, update_all:true}`, `wg_client.get_provider_user_info {group_id}` (result `allocated`, `available`, `expires_at`), `wg_client.get_max_client`, `wg-client.clear_user_pass {group_id}` and `wg-client.clear_config_list {group_id, delete_key}`. The module, the form fields and the steps change with the provider name (a list in the web UI code), with `auth_type` (1: the form has a password) and with `procedure` (1: the user selects servers). The results are only partly read. These calls send account data to a third-party VPN service through the router.

@@ -60,6 +60,10 @@ type DMZ struct {
 // moves gets the ID of its new position. It ignores unknown IDs. This is an assumption: the
 // method is from the web UI code of firmware 4.8.3 and was not tested on a router.
 //
+// remove_port_forward and remove_rule with {"all": true} remove every section of their own type
+// and keep the other sections. This is an assumption: the call is from the web UI code of
+// firmware 4.8.3 and was not tested on a router.
+//
 // The result of get_zone_list is that of the test router until a test sets it.
 type Firewall struct {
 	mu       sync.Mutex
@@ -224,12 +228,12 @@ func (m *Firewall) register(s *Server) {
 	s.Handle("firewall", "get_port_forward_list", m.list(portForwardSuffix))
 	s.Handle("firewall", "add_port_forward", m.add(portForwardSuffix, portForwardKeys))
 	s.Handle("firewall", "set_port_forward", m.set(portForwardKeys))
-	s.Handle("firewall", "remove_port_forward", m.remove)
+	s.Handle("firewall", "remove_port_forward", m.remove(portForwardSuffix))
 	s.Handle("firewall", "order_port_forward", m.orderPortForwards)
 	s.Handle("firewall", "get_rule_list", m.list(ruleSuffix))
 	s.Handle("firewall", "add_rule", m.add(ruleSuffix, ruleKeys))
 	s.Handle("firewall", "set_rule", m.set(ruleKeys))
-	s.Handle("firewall", "remove_rule", m.remove)
+	s.Handle("firewall", "remove_rule", m.remove(ruleSuffix))
 	s.Handle("firewall", "get_zone_list", m.zones.handle)
 	s.Handle("firewall", "get_dmz", m.getDMZ)
 	s.Handle("firewall", "set_dmz", m.setDMZ)
@@ -360,23 +364,30 @@ func (m *Firewall) set(keys []string) Method {
 
 // remove fails with HTTP status 500 when no section has the ID or the section has
 // no dest_port, like the router.
-func (m *Firewall) remove(params json.RawMessage) (any, error) {
-	var p struct {
-		ID string `json:"id"`
-	}
-	if err := json.Unmarshal(params, &p); err != nil {
-		return nil, ErrInvalidParams
-	}
+func (m *Firewall) remove(suffix string) Method {
+	return func(params json.RawMessage) (any, error) {
+		var p struct {
+			ID  string `json:"id"`
+			All bool   `json:"all"`
+		}
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, ErrInvalidParams
+		}
 
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	i := m.index(p.ID)
-	if i < 0 || m.sections[i].values["dest_port"] == nil {
-		return nil, ErrInternalServerError
-	}
-	m.sections = slices.Delete(m.sections, i, i+1)
+		m.mu.Lock()
+		defer m.mu.Unlock()
+		if p.All {
+			m.sections = slices.DeleteFunc(m.sections, func(s section) bool { return s.suffix == suffix })
+			return writeResult, nil
+		}
+		i := m.index(p.ID)
+		if i < 0 || m.sections[i].values["dest_port"] == nil {
+			return nil, ErrInternalServerError
+		}
+		m.sections = slices.Delete(m.sections, i, i+1)
 
-	return writeResult, nil
+		return writeResult, nil
+	}
 }
 
 // getDMZ returns only enabled until the first set_dmz, like the router.
