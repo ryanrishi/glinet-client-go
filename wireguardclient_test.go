@@ -103,12 +103,12 @@ func TestWireGuardClientGroupsAndPeers(t *testing.T) {
 		t.Fatalf("ListGroups: %v", err)
 	}
 	last := groups[len(groups)-1]
-	if last.ID != groupID || last.Name != "office" || last.Type != glinet.WireGuardGroupCustom || last.PeerCount != 0 {
+	if last.ID != groupID || last.Name != "office" || last.Type != glinet.WireGuardClientGroupCustom || last.PeerCount != 0 {
 		t.Errorf("new group = %+v", last)
 	}
 
 	addSent := sentParams(srv, "wg-client", "add_config")
-	peer := glinet.WireGuardPeer{
+	peer := glinet.WireGuardClientPeer{
 		ID:                  99,
 		Name:                "office-1",
 		AddressV4:           "10.0.0.2/32",
@@ -133,7 +133,7 @@ func TestWireGuardClientGroupsAndPeers(t *testing.T) {
 	}
 
 	peer.ID = peerID
-	peer.PresharedKeyEnable = true
+	peer.PresharedKeyEnabled = true
 	peer.PresharedKey = "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC="
 	peer.DNS = "10.0.0.1"
 	peer.MTU = 1420
@@ -196,7 +196,7 @@ func TestWireGuardClientAddWithoutNewID(t *testing.T) {
 	if _, err := c.WireGuardClient.AddGroup(ctx, "x"); err == nil {
 		t.Error("AddGroup without a new group: no error")
 	}
-	if _, err := c.WireGuardClient.AddPeer(ctx, customGroup, glinet.WireGuardPeer{Name: "x"}); err == nil {
+	if _, err := c.WireGuardClient.AddPeer(ctx, customGroup, glinet.WireGuardClientPeer{Name: "x"}); err == nil {
 		t.Error("AddPeer without a new peer: no error")
 	}
 }
@@ -208,7 +208,7 @@ func TestWireGuardClientErrorHasNoSecret(t *testing.T) {
 	})
 
 	const key = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
-	err := c.WireGuardClient.SetPeer(context.Background(), customGroup, glinet.WireGuardPeer{ID: tunnelPeer, PrivateKey: key, PresharedKey: key, PresharedKeyEnable: true})
+	err := c.WireGuardClient.SetPeer(context.Background(), customGroup, glinet.WireGuardClientPeer{ID: tunnelPeer, PrivateKey: key, PresharedKey: key, PresharedKeyEnabled: true})
 	if rpcCode(t, err) != 20001206 {
 		t.Errorf("SetPeer error = %v, want code 20001206", err)
 	}
@@ -291,7 +291,7 @@ func TestWireGuardClientStartSetsEndpoint(t *testing.T) {
 	c, _ := newClient(t)
 	ctx := context.Background()
 
-	peerID, err := c.WireGuardClient.AddPeer(ctx, customGroup, glinet.WireGuardPeer{Name: "other", AddressV4: "10.0.0.3/32", Endpoint: "vpn-test.example.com:51821"})
+	peerID, err := c.WireGuardClient.AddPeer(ctx, customGroup, glinet.WireGuardClientPeer{Name: "other", AddressV4: "10.0.0.3/32", Endpoint: "vpn-test.example.com:51821"})
 	if err != nil {
 		t.Fatalf("AddPeer: %v", err)
 	}
@@ -330,7 +330,7 @@ func TestWireGuardClientConcurrentAdds(t *testing.T) {
 		}()
 		go func() {
 			defer wg.Done()
-			ids[n+i], errs[n+i] = c.WireGuardClient.AddPeer(ctx, customGroup, glinet.WireGuardPeer{Name: "peer"})
+			ids[n+i], errs[n+i] = c.WireGuardClient.AddPeer(ctx, customGroup, glinet.WireGuardClientPeer{Name: "peer"})
 		}()
 	}
 	wg.Wait()

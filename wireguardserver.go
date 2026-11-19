@@ -15,14 +15,14 @@ const wgServerModule = "wg-server"
 // with a prefix length. Port is the UDP listen port. PrivateKey is a secret; PrivateKey and
 // PublicKey are "" before the initialization.
 //
-// IPv6Enable is nil when the router does not return ipv6_enable. Firmware 4.7.0 returns it;
+// IPv6Enabled is nil when the router does not return ipv6_enable. Firmware 4.7.0 returns it;
 // firmware 4.8.3 does not, and the web UI of firmware 4.8.3 does not use it. Whether firmware
 // 4.8.3 removed it or returns it only in some states is not known.
 type WireGuardServerConfig struct {
 	Initialization bool   `json:"initialization"`
 	AddressV4      string `json:"address_v4"`
 	AddressV6      string `json:"address_v6"`
-	IPv6Enable     *bool  `json:"ipv6_enable,omitempty"`
+	IPv6Enabled    *bool  `json:"ipv6_enable,omitempty"`
 	LocalAccess    bool   `json:"local_access"`
 	Port           int    `json:"port"`
 	PrivateKey     string `json:"private_key"`
@@ -53,8 +53,9 @@ type WireGuardServerState struct {
 // Not verified on a router: the test router had no peers, so the fields come from the web UI code.
 // ID is the number that add_peer returns. ClientIP is the tunnel address of the client, which the
 // router gives. Deprecated 1 marks a peer that the web UI shows struck through and only lets the
-// user remove. PresharedKey is a secret; the web UI generates it when it is empty and
-// PresharedKeyEnable is true. AllowedIPs has at most 5 items in the web UI.
+// user remove; its other values are not known, so it is a number. PresharedKey is a secret; the
+// web UI generates it when it is empty and PresharedKeyEnabled is true. AllowedIPs has at most 5
+// items in the web UI.
 type WireGuardServerPeer struct {
 	ID                  int64  `json:"peer_id"`
 	Name                string `json:"name"`
@@ -62,7 +63,7 @@ type WireGuardServerPeer struct {
 	Deprecated          int    `json:"deprecated"`
 	AllowedIPs          string `json:"allowed_ips"`
 	DNS                 string `json:"dns"`
-	PresharedKeyEnable  bool   `json:"presharedkey_enable"`
+	PresharedKeyEnabled bool   `json:"presharedkey_enable"`
 	PresharedKey        string `json:"presharedkey"`
 	PersistentKeepalive int    `json:"persistent_keepalive"`
 	MTU                 int    `json:"mtu"`
@@ -115,7 +116,7 @@ func (s *WireGuardServerService) Initialize(ctx context.Context) error {
 }
 
 // SetConfig sets the configuration of the WireGuard server. It sends address_v4, address_v6 and
-// port; private_key only when it is not empty; and ipv6_enable only when IPv6Enable is not nil
+// port; private_key only when it is not empty; and ipv6_enable only when IPv6Enabled is not nil
 // and AddressV6 is not empty.
 // Initialization, LocalAccess and PublicKey are not sent. An empty AddressV6 is sent as "".
 //
@@ -137,8 +138,8 @@ func (s *WireGuardServerService) SetConfig(ctx context.Context, config WireGuard
 	if config.PrivateKey != "" {
 		params["private_key"] = config.PrivateKey
 	}
-	if config.IPv6Enable != nil && config.AddressV6 != "" {
-		params["ipv6_enable"] = *config.IPv6Enable
+	if config.IPv6Enabled != nil && config.AddressV6 != "" {
+		params["ipv6_enable"] = *config.IPv6Enabled
 	}
 	return s.client.Call(ctx, wgServerModule, "set_config", params, nil)
 }
@@ -310,7 +311,7 @@ func (s *WireGuardServerService) RemoveRoute(ctx context.Context, route VPNRoute
 func wgServerPeerParams(peer WireGuardServerPeer) map[string]any {
 	p := map[string]any{
 		"name":                 peer.Name,
-		"presharedkey_enable":  peer.PresharedKeyEnable,
+		"presharedkey_enable":  peer.PresharedKeyEnabled,
 		"presharedkey":         peer.PresharedKey,
 		"persistent_keepalive": numberOrEmpty(peer.PersistentKeepalive),
 		"mtu":                  numberOrEmpty(peer.MTU),

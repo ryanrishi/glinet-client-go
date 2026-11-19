@@ -42,7 +42,7 @@ const (
 // library automatically. EnableApp is true when the router has the app feature library: the web
 // UI shows AutoUpdate and the apps of a ruleset only then. EnableApp is read-only.
 type ParentalControlConfig struct {
-	Enable        bool                   `json:"enable"`
+	Enabled       bool                   `json:"enable"`
 	DropAnonymous bool                   `json:"drop_anonymous"`
 	AutoUpdate    bool                   `json:"auto_update"`
 	EnableApp     bool                   `json:"enable_app"`
@@ -52,7 +52,7 @@ type ParentalControlConfig struct {
 
 // ParentalControlSettings are the values of parental-control set_config.
 type ParentalControlSettings struct {
-	Enable        bool `json:"enable"`
+	Enabled       bool `json:"enable"`
 	DropAnonymous bool `json:"drop_anonymous"`
 	AutoUpdate    bool `json:"auto_update"`
 }
@@ -162,13 +162,13 @@ type ParentalControlGroupStatus struct {
 }
 
 // ParentalControlBrief is the temporary ruleset of a group, the result of parental-control
-// get_brief. While Enable is true, the group uses the ruleset RuleID until the time of day Time
+// get_brief. While Enabled is true, the group uses the ruleset RuleID until the time of day Time
 // ("hh:mm"; the web UI cuts it to 5 characters), or until StopBrief when ManualStop is true.
 //
 // Not seen on a router: the fields are from the web UI code and the reference. The reference also
 // shows group_id in the result.
 type ParentalControlBrief struct {
-	Enable     bool   `json:"enable"`
+	Enabled    bool   `json:"enable"`
 	ManualStop bool   `json:"manual_stop"`
 	Time       string `json:"time,omitempty"`
 	RuleID     string `json:"rule_id,omitempty"`
@@ -368,7 +368,7 @@ func (s *ParentalControlService) GetBrief(ctx context.Context, groupID string) (
 // after the call.
 func (s *ParentalControlService) StartBrief(ctx context.Context, groupID, ruleID, stopTime string) error {
 	params := struct {
-		Enable     bool   `json:"enable"`
+		Enabled    bool   `json:"enable"`
 		ManualStop bool   `json:"manual_stop"`
 		RuleID     string `json:"rule_id"`
 		GroupID    string `json:"group_id"`
@@ -383,7 +383,7 @@ func (s *ParentalControlService) StartBrief(ctx context.Context, groupID, ruleID
 // From the web UI code of firmware 4.8.3, not tested on a router.
 func (s *ParentalControlService) StopBrief(ctx context.Context, groupID string) error {
 	params := struct {
-		Enable  bool   `json:"enable"`
+		Enabled bool   `json:"enable"`
 		GroupID string `json:"group_id"`
 	}{false, groupID}
 	return s.client.Call(ctx, parentalControlModule, "set_brief", params, nil)

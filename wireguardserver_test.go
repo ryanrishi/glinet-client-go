@@ -99,7 +99,7 @@ func TestWireGuardServerConfig(t *testing.T) {
 	}
 }
 
-func TestWireGuardServerIPv6Enable(t *testing.T) {
+func TestWireGuardServerIPv6Enabled(t *testing.T) {
 	enabled, disabled := true, false
 	for _, tc := range []struct {
 		name       string
@@ -124,8 +124,8 @@ func TestWireGuardServerIPv6Enable(t *testing.T) {
 			if err != nil {
 				t.Fatalf("GetConfig: %v", err)
 			}
-			if !reflect.DeepEqual(config.IPv6Enable, tc.ipv6Enable) {
-				t.Errorf("GetConfig IPv6Enable = %v, want %v", config.IPv6Enable, tc.ipv6Enable)
+			if !reflect.DeepEqual(config.IPv6Enabled, tc.ipv6Enable) {
+				t.Errorf("GetConfig IPv6Enabled = %v, want %v", config.IPv6Enabled, tc.ipv6Enable)
 			}
 
 			if err := c.WireGuardServer.SetConfig(ctx, *config); err != nil {
@@ -159,8 +159,8 @@ func TestWireGuardServerDecodeFirmware483Config(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetConfig: %v", err)
 	}
-	if config.IPv6Enable != nil {
-		t.Errorf("IPv6Enable = %v, want nil for firmware 4.8.3", *config.IPv6Enable)
+	if config.IPv6Enabled != nil {
+		t.Errorf("IPv6Enabled = %v, want nil for firmware 4.8.3", *config.IPv6Enabled)
 	}
 }
 
@@ -169,7 +169,7 @@ func TestWireGuardServerPeers(t *testing.T) {
 	ctx := context.Background()
 	sent := sentParams(srv, "wg-server", "add_peer")
 
-	peer := glinet.WireGuardServerPeer{ID: 5, Name: "phone", ClientIP: "not sent", PresharedKeyEnable: true, AllowedIPs: "0.0.0.0/0"}
+	peer := glinet.WireGuardServerPeer{ID: 5, Name: "phone", ClientIP: "not sent", PresharedKeyEnabled: true, AllowedIPs: "0.0.0.0/0"}
 	id, err := c.WireGuardServer.AddPeer(ctx, peer)
 	if err != nil {
 		t.Fatalf("AddPeer: %v", err)

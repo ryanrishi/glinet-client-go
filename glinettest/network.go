@@ -36,23 +36,23 @@ func (m *Network) SetWANCable(result json.RawMessage) {
 	m.wanCable.set(result)
 }
 
-// ARPList returns the result of get_arp_list.
-func (m *Network) ARPList() json.RawMessage {
+// ARPEntries returns the result of get_arp_list.
+func (m *Network) ARPEntries() json.RawMessage {
 	return m.arpList.get()
 }
 
-// SetARPList sets the result of get_arp_list.
-func (m *Network) SetARPList(result json.RawMessage) {
+// SetARPEntries sets the result of get_arp_list.
+func (m *Network) SetARPEntries(result json.RawMessage) {
 	m.arpList.set(result)
 }
 
-// AdvanceConfig returns the result of get_advance_config.
-func (m *Network) AdvanceConfig() json.RawMessage {
+// AdvancedConfig returns the result of get_advance_config.
+func (m *Network) AdvancedConfig() json.RawMessage {
 	return m.advanceConfig.get()
 }
 
-// SetAdvanceConfig sets the result of get_advance_config.
-func (m *Network) SetAdvanceConfig(result json.RawMessage) {
+// SetAdvancedConfig sets the result of get_advance_config.
+func (m *Network) SetAdvancedConfig(result json.RawMessage) {
 	m.advanceConfig.set(result)
 }
 

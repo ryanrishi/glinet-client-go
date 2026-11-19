@@ -28,26 +28,26 @@ const (
 // and "strict". The label texts and the router code are not available, so how the modes differ is
 // not known.
 const (
-	MultiWANTrackLowData = 0
-	MultiWANTrackNormal  = 1
-	MultiWANTrackStrict  = 2
+	MultiWANTrackModeLowData = 0
+	MultiWANTrackModeNormal  = 1
+	MultiWANTrackModeStrict  = 2
 )
 
 // The track protocols of an interface.
 const (
-	MultiWANTrackIPv4 = 0
-	MultiWANTrackIPv6 = 1
-	MultiWANTrackBoth = 2
+	MultiWANTrackProtoIPv4 = 0
+	MultiWANTrackProtoIPv6 = 1
+	MultiWANTrackProtoBoth = 2
 )
 
-// MultiWANTrackPing is the track method ping, the only track method in the web UI.
-const MultiWANTrackPing = 0
+// MultiWANTrackMethodPing is the track method ping, the only track method in the web UI.
+const MultiWANTrackMethodPing = 0
 
 // The values of MultiWANInterfaceStatus.StatusV4 and StatusV6, as the web UI shows them.
 const (
-	MultiWANOnline  = 0
-	MultiWANOffline = 1
-	MultiWANError   = 2
+	MultiWANStatusOnline  = 0
+	MultiWANStatusOffline = 1
+	MultiWANStatusError   = 2
 )
 
 // The sensitivity levels of the tracking. With MultiWANSensitivityCustom, the web UI lets the
@@ -80,12 +80,12 @@ type MultiWANInterface struct {
 
 // MultiWANTracking is the tracking of one WAN interface.
 //
-// When EnableCheck is false, the router uses only the physical state of the interface. TrackMode
-// is a MultiWANTrack mode constant (MultiWANTrackLowData, MultiWANTrackNormal or
-// MultiWANTrackStrict), TrackProto is MultiWANTrackIPv4, MultiWANTrackIPv6 or MultiWANTrackBoth,
-// and TrackMethod is MultiWANTrackPing. TrackIPv4 and TrackIPv6 are the track hosts (IP
-// addresses). EnableSSL applies only to TrackMethod 1; the web UI does not list method 1, so
-// what it is is not known.
+// When EnableCheck is false, the router uses only the physical state of the interface. TrackMode is
+// a MultiWANTrack mode constant (MultiWANTrackModeLowData, MultiWANTrackModeNormal or
+// MultiWANTrackModeStrict), TrackProto is MultiWANTrackProtoIPv4, MultiWANTrackProtoIPv6 or
+// MultiWANTrackProtoBoth, and TrackMethod is MultiWANTrackMethodPing. TrackIPv4 and TrackIPv6 are
+// the track hosts (IP addresses). EnableSSL applies only to TrackMethod 1; the web UI does not list
+// method 1, so what it is is not known.
 type MultiWANTracking struct {
 	Interface   string   `json:"interface"`
 	EnableCheck bool     `json:"enable_check"`
@@ -103,9 +103,9 @@ type MultiWANStatus struct {
 }
 
 // MultiWANInterfaceStatus is the state of one WAN interface in MultiWANStatus. StatusV4 and
-// StatusV6 are MultiWANOnline, MultiWANOffline or MultiWANError. The web UI uses StatusV4 for
-// track protocol IPv4, StatusV6 for IPv6, and both for MultiWANTrackBoth or when EnableCheck is
-// false.
+// StatusV6 are MultiWANStatusOnline, MultiWANStatusOffline or MultiWANStatusError. The web UI uses
+// StatusV4 for track protocol IPv4, StatusV6 for IPv6, and both for MultiWANTrackProtoBoth or when
+// EnableCheck is false.
 type MultiWANInterfaceStatus struct {
 	Interface string `json:"interface"`
 	StatusV4  int    `json:"status_v4"`
@@ -220,13 +220,13 @@ func (s *MultiWANService) SetLoadBalance(ctx context.Context, weights []MultiWAN
 //
 //   - always interface and enable_check;
 //   - when EnableCheck is true, also track_proto, track_method and track_mode, track_ipv4 when
-//     TrackProto is MultiWANTrackIPv4 or MultiWANTrackBoth, track_ipv6 when TrackProto is
-//     MultiWANTrackIPv6 or MultiWANTrackBoth, and enable_ssl when TrackMethod is 1.
+//     TrackProto is MultiWANTrackProtoIPv4 or MultiWANTrackProtoBoth, track_ipv6 when TrackProto is
+//     MultiWANTrackProtoIPv6 or MultiWANTrackProtoBoth, and enable_ssl when TrackMethod is 1.
 //
 // From the web UI code of firmware 4.8.3, not tested on a router. The web UI sends 2 to 4 hosts for
 // each protocol that it sends: IPv4 addresses in track_ipv4 and IPv6 addresses in track_ipv6. It
 // lets the user select the track protocol and set IPv6 hosts only when IPv6 is enabled
-// (SystemStatus.System.Ipv6Enabled). Not known: if the router keeps the fields that the write does
+// (SystemStatus.System.IPv6Enabled). Not known: if the router keeps the fields that the write does
 // not send, and if it checks the hosts. Hosts that do not answer make the router think that the
 // interface is offline, so it can stop using it.
 func (s *MultiWANService) SetInterface(ctx context.Context, tracking MultiWANTracking) error {
@@ -235,11 +235,11 @@ func (s *MultiWANService) SetInterface(ctx context.Context, tracking MultiWANTra
 		params.TrackProto = &tracking.TrackProto
 		params.TrackMethod = &tracking.TrackMethod
 		params.TrackMode = &tracking.TrackMode
-		if tracking.TrackProto == MultiWANTrackIPv4 || tracking.TrackProto == MultiWANTrackBoth {
+		if tracking.TrackProto == MultiWANTrackProtoIPv4 || tracking.TrackProto == MultiWANTrackProtoBoth {
 			hosts := append([]string{}, tracking.TrackIPv4...)
 			params.TrackIPv4 = &hosts
 		}
-		if tracking.TrackProto == MultiWANTrackIPv6 || tracking.TrackProto == MultiWANTrackBoth {
+		if tracking.TrackProto == MultiWANTrackProtoIPv6 || tracking.TrackProto == MultiWANTrackProtoBoth {
 			hosts := append([]string{}, tracking.TrackIPv6...)
 			params.TrackIPv6 = &hosts
 		}

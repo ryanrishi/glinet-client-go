@@ -134,7 +134,7 @@ func TestRepeaterConnect(t *testing.T) {
 		Netmask:  "255.255.255.0",
 		Gateway:  "198.51.100.1",
 		DNS:      []string{"198.51.100.1", "198.51.100.2"},
-		MACAddr:  &glinet.RepeaterMAC{Mode: "random", MAC: "02:00:00:00:00:41", Update: "time", Period: 168},
+		MAC:      &glinet.RepeaterMAC{Mode: "random", MACAddr: "02:00:00:00:00:41", Update: "time", Period: 168},
 		TTL:      64,
 		TTLIPv6:  65,
 		MTU:      1400,
@@ -155,7 +155,7 @@ func TestRepeaterConnect(t *testing.T) {
 	if err := c.Repeater.Connect(ctx, enterprise); err != nil {
 		t.Fatalf("Connect enterprise: %v", err)
 	}
-	open := glinet.RepeaterNetwork{SSID: "example-open", Protocol: "dhcp", MACAddr: &glinet.RepeaterMAC{Mode: "default"}}
+	open := glinet.RepeaterNetwork{SSID: "example-open", Protocol: "dhcp", MAC: &glinet.RepeaterMAC{Mode: "default"}}
 	if err := c.Repeater.Connect(ctx, open); err != nil {
 		t.Fatalf("Connect open: %v", err)
 	}

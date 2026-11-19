@@ -13,7 +13,7 @@ func TestBark(t *testing.T) {
 	ctx := context.Background()
 	sent := sentRaw(srv, "bark", "set_config", "logout")
 
-	if err := c.Bark.SetConfig(ctx, glinet.BarkConfig{Enable: true}); err != nil {
+	if err := c.Bark.SetConfig(ctx, glinet.BarkConfig{Enabled: true}); err != nil {
 		t.Fatalf("SetConfig: %v", err)
 	}
 	if err := c.Bark.Logout(ctx); err != nil {
@@ -25,7 +25,7 @@ func TestBark(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetConfig: %v", err)
 	}
-	if *cfg != (glinet.BarkConfig{Enable: true}) {
+	if *cfg != (glinet.BarkConfig{Enabled: true}) {
 		t.Errorf("GetConfig = %+v", *cfg)
 	}
 

@@ -50,15 +50,15 @@ Only fields and types are compared, not values that are runtime data.
 |---|---|---|
 | `system.get_info` | `hardware_feature` has the new keys `screen` (bool), `simo` (bool), `usb_power` (string) | `HardwareFeature.Screen`, `SIMO`, `USBPower` |
 | `system.get_status` | no `wgclient` and no `ovpnclient` items in `service` | no decode error |
-| `wg-client.get_all_config_list` | each group has the new key `group_type` | `WireGuardGroupPeers.Type` (0 on 4.7.0) |
-| `wg-server.get_config` | no `ipv6_enable` | `WireGuardServerConfig.IPv6Enable` is nil; the cause is not known |
+| `wg-client.get_all_config_list` | each group has the new key `group_type` | `WireGuardClientGroupPeers.Type` (0 on 4.7.0) |
+| `wg-server.get_config` | no `ipv6_enable` | `WireGuardServerConfig.IPv6Enabled` is nil; the cause is not known |
 | `ovpn-server.get_config` | no `ipv6_enable` | not in the client |
 | `wifi.get_config` | new top-level key `bandmode`, an empty array | not in `WifiConfig`, because the item type is not known |
 | `repeater.get_config` | `auto` is a number (1), not a bool | `RepeaterConfig.Auto` reads both; `true` is 1 and `false` is 0 (assumption) |
 | `switch-button.get_funcs` | `funcs` items are objects `{func, sub_func?:[{func}]}`, not strings; `vpn` with the tunnel IDs as `sub_func` replaces `wireguard` and `openvpn` | not in the client |
 | `switch-button.get_config` | new key `sub_func` (a tunnel ID as a string when `func` is `vpn`) | not in the client |
 | `local-access.get_config` | new key `ssh_enabled` (bool) | `LocalAccessConfig.SSHEnabled` (nil on 4.7.0) |
-| `switch-button.get_funcs` | `funcs` items are objects `{func, sub_func?:[{func}]}`, not strings; `vpn` with the tunnel IDs as `sub_func` replaces `wireguard` and `openvpn` | `SwitchButton.GetFuncs` decodes both shapes |
+| `switch-button.get_funcs` | `funcs` items are objects `{func, sub_func?:[{func}]}`, not strings; `vpn` with the tunnel IDs as `sub_func` replaces `wireguard` and `openvpn` | `SwitchButton.ListFuncs` decodes both shapes |
 | `switch-button.get_config` | new key `sub_func` (a tunnel ID as a string when `func` is `vpn`) | `SwitchButtonConfig.SubFunc` |
 | `local-access.get_config` | new key `ssh_enabled` (bool) | not in the client |
 | `cloud.get_config` | new key `aw_api_url` (string) | not in the client |
@@ -133,7 +133,7 @@ What the router does with `lpr: []`, with `""` for a number field of a WireGuard
 
 The client differs from the web UI in these cases:
 
-- `WireGuardServer.SetConfig` does not send `private_key: ""`. The private key input of the web UI shows "Auto Generate" when it is empty, but the web UI code does not settle what the router does with `""`. The client sends `ipv6_enable` only when `IPv6Enable` is not nil and `address_v6` is not empty, as the web UI of firmware 4.7.0 did. So a configuration read from firmware 4.8.3 goes back without it.
+- `WireGuardServer.SetConfig` does not send `private_key: ""`. The private key input of the web UI shows "Auto Generate" when it is empty, but the web UI code does not settle what the router does with `""`. The client sends `ipv6_enable` only when `IPv6Enabled` is not nil and `address_v6` is not empty, as the web UI of firmware 4.7.0 did. So a configuration read from firmware 4.8.3 goes back without it.
 - `WireGuardClient.SetPeer` sends `""` for each of `listen_port`, `persistent_keepalive` and `mtu` that is 0. The web UI sends `""` only for an input that the user emptied. `WireGuardClient.AddPeer` does not send them when they are 0, as the web UI does for a new peer.
 
 Read fields:
@@ -430,7 +430,7 @@ These calls come from the web UI code of firmware 4.8.3 (the views `overview`, `
 | `Timer.GetScreenSchedule` | `timer.get_screen` | the fields of `timer.get_led` | web UI code, `getScreenTimer` |
 | `Timer.SetScreenSchedule` | `timer.set_screen` | `{enable, week}`, and `turnon_hour`, `turnon_min`, `turnoff_hour`, `turnoff_min` only with `enable` true, as for `set_led` | web UI code, `setScreenTimer` |
 | `SwitchButton.GetConfig` | `switch-button.get_config` | `{func, sub_func?}` | fixture |
-| `SwitchButton.GetFuncs` | `switch-button.get_funcs` | `{funcs:[{func, sub_func?:[{func}]}]}`; strings on firmware 4.7.0 | fixtures |
+| `SwitchButton.ListFuncs` | `switch-button.get_funcs` | `{funcs:[{func, sub_func?:[{func}]}]}`; strings on firmware 4.7.0 | fixtures |
 | `SwitchButton.SetConfig` | `switch-button.set_config` | `{func, sub_func?, sync: bool}`; `func` `"none"` has no `sub_func` | web UI code, `setBtnConfig` |
 
 The web UI shows the fan dialog when `hardware_feature.fan` is true, the USB switch when `hardware_feature.usb3` is not empty, and the screen schedule when `hardware_feature.screen` is true. The test router has a fan and a USB 3.0 port, and no screen.

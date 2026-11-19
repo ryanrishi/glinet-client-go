@@ -51,13 +51,13 @@ func TestSwitchButton(t *testing.T) {
 		}
 	}
 
-	funcs, err := c.SwitchButton.GetFuncs(ctx)
+	funcs, err := c.SwitchButton.ListFuncs(ctx)
 	if err != nil {
-		t.Fatalf("GetFuncs: %v", err)
+		t.Fatalf("ListFuncs: %v", err)
 	}
 	wifi := glinet.SwitchButtonFunc{Func: "wifi", SubFuncs: []glinet.SwitchButtonFunc{{Func: "main_wifi"}, {Func: "guest_wifi"}}}
 	if len(funcs) != 6 || !reflect.DeepEqual(funcs[4], wifi) {
-		t.Errorf("GetFuncs = %+v", funcs)
+		t.Errorf("ListFuncs = %+v", funcs)
 	}
 }
 
@@ -65,9 +65,9 @@ func TestSwitchButtonDecodeFirmware470Funcs(t *testing.T) {
 	c, srv := newClient(t)
 	srv.SwitchButton.SetFuncs(fixtureResult(t, "switch-button.get_funcs.json"))
 
-	funcs, err := c.SwitchButton.GetFuncs(context.Background())
+	funcs, err := c.SwitchButton.ListFuncs(context.Background())
 	if err != nil {
-		t.Fatalf("GetFuncs: %v", err)
+		t.Fatalf("ListFuncs: %v", err)
 	}
 	var names []string
 	for _, f := range funcs {
@@ -77,6 +77,6 @@ func TestSwitchButtonDecodeFirmware470Funcs(t *testing.T) {
 		names = append(names, f.Func)
 	}
 	if want := []string{"adguardhome", "openvpn", "tor", "wireguard"}; !slices.Equal(names, want) {
-		t.Errorf("GetFuncs = %v, want %v", names, want)
+		t.Errorf("ListFuncs = %v, want %v", names, want)
 	}
 }

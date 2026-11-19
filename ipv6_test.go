@@ -46,12 +46,12 @@ func TestIPv6SetConfigSendsWebUIParams(t *testing.T) {
 		},
 		{
 			name:   "nat6 with automatic DNS",
-			config: glinet.IPv6Config{Enable: true, LANMode: "nat6", LANDNSMode: true, LANIP: "fd00::1/64", LANDNS1: "fd00::53"},
+			config: glinet.IPv6Config{Enabled: true, LANMode: "nat6", LANDNSMode: true, LANIP: "fd00::1/64", LANDNS1: "fd00::53"},
 			want:   map[string]any{"enable": true, "lan_mode": "nat6", "lan_dns_mode": true},
 		},
 		{
 			name:   "static with manual DNS",
-			config: glinet.IPv6Config{Enable: true, LANMode: "static", LANIP: "fd00::1/64", LANDNS1: "fd00::53"},
+			config: glinet.IPv6Config{Enabled: true, LANMode: "static", LANIP: "fd00::1/64", LANDNS1: "fd00::53"},
 			want:   map[string]any{"enable": true, "lan_mode": "static", "lan_dns_mode": false, "lan_ip": "fd00::1/64", "lan_dns1": "fd00::53"},
 		},
 	}
@@ -70,7 +70,7 @@ func TestIPv6SetConfigSendsWebUIParams(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetConfig: %v", err)
 	}
-	want := glinet.IPv6Config{Enable: true, LANMode: "static", LANIP: "fd00::1/64", LANDNS1: "fd00::53"}
+	want := glinet.IPv6Config{Enabled: true, LANMode: "static", LANIP: "fd00::1/64", LANDNS1: "fd00::53"}
 	if *got != want {
 		t.Errorf("GetConfig after the writes = %+v, want %+v", *got, want)
 	}

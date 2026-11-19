@@ -10,7 +10,7 @@ import (
 // position and off in the other.
 type SwitchButtonService service
 
-// SwitchButtonConfig is the function of the switch. Func is "none" or a Func of GetFuncs, and
+// SwitchButtonConfig is the function of the switch. Func is "none" or a Func of ListFuncs, and
 // SubFunc is one of its SubFuncs, or empty when it has none.
 //
 // The values on firmware 4.8.3 include "adguardhome", "led", "repeater", "tor", "wifi" with
@@ -51,9 +51,9 @@ func (s *SwitchButtonService) GetConfig(ctx context.Context) (*SwitchButtonConfi
 	return &res, nil
 }
 
-// GetFuncs returns the functions that the switch can have. The list depends on the router and
+// ListFuncs returns the functions that the switch can have. The list depends on the router and
 // its configuration, for example the VPN tunnels. "none" is not in the list.
-func (s *SwitchButtonService) GetFuncs(ctx context.Context) ([]SwitchButtonFunc, error) {
+func (s *SwitchButtonService) ListFuncs(ctx context.Context) ([]SwitchButtonFunc, error) {
 	var res struct {
 		Funcs []SwitchButtonFunc `json:"funcs"`
 	}

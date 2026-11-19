@@ -28,8 +28,8 @@ type MultiWANConfig struct {
 
 // MultiWANSensitivity is the sensitivity in the kmwan get_sensitivity result.
 type MultiWANSensitivity struct {
-	Level string  `json:"level"`
-	Val   float64 `json:"val"`
+	Level    string  `json:"level"`
+	Interval float64 `json:"val"`
 }
 
 // MultiWAN serves the kmwan module. The default configuration has the interfaces, metrics, weights
@@ -74,7 +74,7 @@ func newMultiWAN() *MultiWAN {
 			iface("wwan", 20, 1),
 			iface("tethering", 30, 1),
 		}},
-		sensitivity: MultiWANSensitivity{Level: "medium", Val: 5},
+		sensitivity: MultiWANSensitivity{Level: "medium", Interval: 5},
 	}
 	m.status.set(json.RawMessage(multiWANStatus))
 	return m
@@ -242,8 +242,8 @@ func (m *MultiWAN) setInterface(params json.RawMessage) (any, error) {
 func (m *MultiWAN) setSensitivity(params json.RawMessage) (any, error) {
 	var p struct {
 		Sensitivity struct {
-			Level *string  `json:"level"`
-			Val   *float64 `json:"val"`
+			Level    *string  `json:"level"`
+			Interval *float64 `json:"val"`
 		} `json:"sensitivity"`
 	}
 	if err := decodeMultiWANParams(params, &p); err != nil {
@@ -255,8 +255,8 @@ func (m *MultiWAN) setSensitivity(params json.RawMessage) (any, error) {
 	if p.Sensitivity.Level != nil {
 		m.sensitivity.Level = *p.Sensitivity.Level
 	}
-	if p.Sensitivity.Val != nil {
-		m.sensitivity.Val = *p.Sensitivity.Val
+	if p.Sensitivity.Interval != nil {
+		m.sensitivity.Interval = *p.Sensitivity.Interval
 	}
 	return writeResult, nil
 }

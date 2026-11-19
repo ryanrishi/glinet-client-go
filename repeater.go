@@ -18,6 +18,7 @@ type RepeaterService service
 // (repeater.no_switching, repeater.auto_switching, repeater.auto_switching_without_network).
 type RepeaterSwitchMode int
 
+// The values of RepeaterSwitchMode.
 const (
 	RepeaterNoSwitching                 RepeaterSwitchMode = 0
 	RepeaterAutoSwitching               RepeaterSwitchMode = 1
@@ -74,8 +75,8 @@ type SetRepeaterConfigRequest struct {
 //   - Protocol is "dhcp" or "static". For "static", IP, Netmask, Gateway and DNS (one or two
 //     servers) are the static address. Some saved networks of the test router had no protocol.
 //   - Disguise is the disguise option of the web UI (label key repeater.enable_disguise_label).
-//     With Disguise true, the web UI sends no MACAddr, TTL and TTLIPv6.
-//   - MACAddr is the MAC address that the repeater uses on this network.
+//     With Disguise true, the web UI sends no MAC, TTL and TTLIPv6.
+//   - MAC is the MAC address that the repeater uses on this network.
 //   - TTL and TTLIPv6 (1-255) and MTU (576-9200) are optional; 0 means not set.
 //   - Manual: the web UI sends the value that it read, and false for a new network. Its meaning
 //     is not known.
@@ -94,7 +95,7 @@ type RepeaterNetwork struct {
 	Gateway    string       `json:"gateway,omitempty"`
 	DNS        []string     `json:"dns,omitempty"`
 	Disguise   bool         `json:"disguise"`
-	MACAddr    *RepeaterMAC `json:"macaddr,omitempty"`
+	MAC        *RepeaterMAC `json:"macaddr,omitempty"`
 	TTL        int          `json:"ttl,omitempty"`
 	TTLIPv6    int          `json:"ttl_ipv6,omitempty"`
 	MTU        int          `json:"mtu,omitempty"`
@@ -105,16 +106,16 @@ type RepeaterNetwork struct {
 
 // RepeaterMAC is the MAC address that the repeater uses on a network.
 //
-// Mode is "default" (the MAC address of the router), "clone" (MAC, the MAC address of a client)
-// or "random" (MAC, a random MAC address). For mode "random", Update is when the router changes
+// Mode is "default" (the MAC address of the router), "clone" (MACAddr, the MAC address of a client)
+// or "random" (MACAddr, a random MAC address). For mode "random", Update is when the router changes
 // the MAC address: "none", "time" (every Period hours; the web UI sends whole days) or "reboot".
 // The web UI sends Period with Update "time" and "reboot". The test router returned Update "none"
 // with mode "default".
 type RepeaterMAC struct {
-	Mode   string `json:"mode"`
-	MAC    string `json:"macaddr,omitempty"`
-	Update string `json:"update,omitempty"`
-	Period int    `json:"period,omitempty"`
+	Mode    string `json:"mode"`
+	MACAddr string `json:"macaddr,omitempty"`
+	Update  string `json:"update,omitempty"`
+	Period  int    `json:"period,omitempty"`
 }
 
 // RepeaterStatus is the result of repeater get_status. The values are runtime values.

@@ -56,10 +56,10 @@ func TestVPNPolicyWrites(t *testing.T) {
 	}
 
 	sent := sentParams(srv, "vpn-policy", "set_global_policy")
-	if err := c.VPNPolicy.SetClientPolicy(ctx, glinet.VPNGlobalPolicy{KillSwitch: 1, ServicePolicy: 1, VPNServerPolicy: 0}); err != nil {
+	if err := c.VPNPolicy.SetClientPolicy(ctx, glinet.VPNGlobalPolicy{KillSwitch: true, ServicePolicy: true}); err != nil {
 		t.Fatalf("SetClientPolicy: %v", err)
 	}
-	if err := c.VPNPolicy.SetServerPolicy(ctx, 0); err != nil {
+	if err := c.VPNPolicy.SetServerPolicy(ctx, false); err != nil {
 		t.Fatalf("SetServerPolicy: %v", err)
 	}
 	want := []map[string]any{
@@ -70,7 +70,7 @@ func TestVPNPolicyWrites(t *testing.T) {
 		t.Errorf("set_global_policy params = %v, want %v", *sent, want)
 	}
 	global, err := c.VPNPolicy.GetGlobalPolicy(ctx)
-	if err != nil || *global != (glinet.VPNGlobalPolicy{KillSwitch: 1, ServicePolicy: 1}) {
+	if err != nil || *global != (glinet.VPNGlobalPolicy{KillSwitch: true, ServicePolicy: true}) {
 		t.Errorf("GetGlobalPolicy = %+v, %v", global, err)
 	}
 
@@ -88,7 +88,7 @@ func TestVPNPolicyWrites(t *testing.T) {
 		t.Errorf("GetMACPolicy = %+v, %v, want an empty list", got, err)
 	}
 
-	vlans := []glinet.VPNVLAN{{ID: 1, VPN: 1}, {ID: 2, VPN: 0}}
+	vlans := []glinet.VPNVLAN{{ID: 1, VPN: true}, {ID: 2}}
 	if err := c.VPNPolicy.SetVLANPolicy(ctx, vlans); err != nil {
 		t.Fatalf("SetVLANPolicy: %v", err)
 	}

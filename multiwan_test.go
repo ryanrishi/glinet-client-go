@@ -79,28 +79,28 @@ func TestMultiWANSetInterface(t *testing.T) {
 	}{
 		{
 			name:     "no check",
-			tracking: glinet.MultiWANTracking{Interface: "wan", TrackMode: glinet.MultiWANTrackStrict, TrackIPv4: ipv4},
+			tracking: glinet.MultiWANTracking{Interface: "wan", TrackMode: glinet.MultiWANTrackModeStrict, TrackIPv4: ipv4},
 			want:     `{"interface":"wan","enable_check":false}`,
 		},
 		{
 			name: "IPv4",
 			tracking: glinet.MultiWANTracking{
-				Interface: "wan", EnableCheck: true, TrackMode: glinet.MultiWANTrackLowData, TrackProto: glinet.MultiWANTrackIPv4,
-				TrackMethod: glinet.MultiWANTrackPing, TrackIPv4: ipv4, TrackIPv6: ipv6, EnableSSL: true,
+				Interface: "wan", EnableCheck: true, TrackMode: glinet.MultiWANTrackModeLowData, TrackProto: glinet.MultiWANTrackProtoIPv4,
+				TrackMethod: glinet.MultiWANTrackMethodPing, TrackIPv4: ipv4, TrackIPv6: ipv6, EnableSSL: true,
 			},
 			want: `{"interface":"wan","enable_check":true,"track_proto":0,"track_method":0,"track_mode":0,"track_ipv4":["192.0.2.10","192.0.2.11"]}`,
 		},
 		{
 			name: "IPv6",
 			tracking: glinet.MultiWANTracking{
-				Interface: "wwan", EnableCheck: true, TrackMode: glinet.MultiWANTrackNormal, TrackProto: glinet.MultiWANTrackIPv6, TrackIPv4: ipv4, TrackIPv6: ipv6,
+				Interface: "wwan", EnableCheck: true, TrackMode: glinet.MultiWANTrackModeNormal, TrackProto: glinet.MultiWANTrackProtoIPv6, TrackIPv4: ipv4, TrackIPv6: ipv6,
 			},
 			want: `{"interface":"wwan","enable_check":true,"track_proto":1,"track_method":0,"track_mode":1,"track_ipv6":["2001:db8::10","2001:db8::11","2001:db8::12"]}`,
 		},
 		{
 			name: "both with method 1",
 			tracking: glinet.MultiWANTracking{
-				Interface: "tethering", EnableCheck: true, TrackMode: glinet.MultiWANTrackStrict, TrackProto: glinet.MultiWANTrackBoth,
+				Interface: "tethering", EnableCheck: true, TrackMode: glinet.MultiWANTrackModeStrict, TrackProto: glinet.MultiWANTrackProtoBoth,
 				TrackMethod: 1, TrackIPv4: ipv4,
 			},
 			want: `{"interface":"tethering","enable_check":true,"track_proto":2,"track_method":1,"track_mode":2,"track_ipv4":["192.0.2.10","192.0.2.11"],"track_ipv6":[],"enable_ssl":false}`,
@@ -202,9 +202,9 @@ func TestMultiWANStatus(t *testing.T) {
 		t.Fatalf("GetStatus: %v", err)
 	}
 	want := []glinet.MultiWANInterfaceStatus{
-		{Interface: "wan", StatusV4: glinet.MultiWANOffline, StatusV6: glinet.MultiWANOffline},
-		{Interface: "wwan", StatusV4: glinet.MultiWANOnline, StatusV6: glinet.MultiWANOffline},
-		{Interface: "tethering", StatusV4: glinet.MultiWANOffline, StatusV6: glinet.MultiWANOffline},
+		{Interface: "wan", StatusV4: glinet.MultiWANStatusOffline, StatusV6: glinet.MultiWANStatusOffline},
+		{Interface: "wwan", StatusV4: glinet.MultiWANStatusOnline, StatusV6: glinet.MultiWANStatusOffline},
+		{Interface: "tethering", StatusV4: glinet.MultiWANStatusOffline, StatusV6: glinet.MultiWANStatusOffline},
 	}
 	if !slices.Equal(got.Interfaces, want) {
 		t.Errorf("GetStatus = %+v, want %+v", got.Interfaces, want)
