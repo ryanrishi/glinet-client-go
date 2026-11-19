@@ -22,9 +22,15 @@ type TimezoneConfig struct {
 // from localtime and ignores autotimezone_enabled, like the router. It also sets TZOffset to the
 // UTC offset of the POSIX TZ string timezone at that clock, with daylight saving time.
 // A timezone that is not a valid POSIX TZ string gives "+0000".
+//
+// get_usb3_disable returns {"usb3_disable": USB3Disabled}, and set_usb3_disable sets it when the
+// params have usb3_disable as a bool; another type gives ErrInvalidParams. These methods were not
+// seen on a router: the shapes are from the web UI code of firmware 4.8.3, and the fake serves
+// them also when SystemInfo has no USB 3.0 port.
 type System struct {
-	mu       sync.Mutex
-	timezone TimezoneConfig
+	mu           sync.Mutex
+	timezone     TimezoneConfig
+	usb3Disabled bool
 
 	info, status, diskInfo readResult
 }
@@ -76,6 +82,20 @@ func (m *System) SetDiskInfo(result json.RawMessage) {
 	m.diskInfo.set(result)
 }
 
+// USB3Disabled returns true when the USB port works as USB 2.0.
+func (m *System) USB3Disabled() bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.usb3Disabled
+}
+
+// SetUSB3Disabled sets the USB port to USB 2.0 (true) or USB 3.0 (false).
+func (m *System) SetUSB3Disabled(disabled bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.usb3Disabled = disabled
+}
+
 // TimezoneConfig returns the time zone configuration.
 func (m *System) TimezoneConfig() TimezoneConfig {
 	m.mu.Lock()
@@ -98,6 +118,23 @@ func (m *System) register(s *Server) {
 		return m.TimezoneConfig(), nil
 	})
 	s.Handle("system", "set_timezone_config", m.setTimezoneConfig)
+	s.Handle("system", "get_usb3_disable", func(json.RawMessage) (any, error) {
+		return map[string]bool{"usb3_disable": m.USB3Disabled()}, nil
+	})
+	s.Handle("system", "set_usb3_disable", m.setUSB3Disable)
+}
+
+func (m *System) setUSB3Disable(params json.RawMessage) (any, error) {
+	var p struct {
+		USB3Disable *bool `json:"usb3_disable"`
+	}
+	if err := json.Unmarshal(params, &p); err != nil {
+		return nil, ErrInvalidParams
+	}
+	if p.USB3Disable != nil {
+		m.SetUSB3Disabled(*p.USB3Disable)
+	}
+	return writeResult, nil
 }
 
 func (m *System) setTimezoneConfig(params json.RawMessage) (any, error) {

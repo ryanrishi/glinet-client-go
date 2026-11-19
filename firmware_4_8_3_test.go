@@ -39,6 +39,8 @@ func TestReadsDecodeFirmware483Fixtures(t *testing.T) {
 		{"ddns.get_status", func(ctx context.Context, c *glinet.Client) (any, error) { return c.DDNS.GetStatus(ctx) }, nil},
 		{"dns.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.DNS.GetConfig(ctx) }, nil},
 		{"dns.get_info", func(ctx context.Context, c *glinet.Client) (any, error) { return c.DNS.GetInfo(ctx) }, nil},
+		{"fan.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Fan.GetConfig(ctx) }, nil},
+		{"fan.get_status", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Fan.GetStatus(ctx) }, nil},
 		{"firewall.get_dmz", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Firewall.GetDMZ(ctx) }, nil},
 		{"firewall.get_zone_list", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Firewall.GetZones(ctx) }, nil},
 		{"firewall.get_port_forward_list", list("res", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Firewall.ListPortForwards(ctx) }), nil},
@@ -52,6 +54,8 @@ func TestReadsDecodeFirmware483Fixtures(t *testing.T) {
 			return c.Network.CheckWANCable(ctx, glinet.FirstWANPort)
 		}, nil},
 		{"network.get_arp_list", list("entries", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Network.ListARPEntries(ctx) }), nil},
+		{"switch-button.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.SwitchButton.GetConfig(ctx) }, nil},
+		{"switch-button.get_funcs", list("funcs", func(ctx context.Context, c *glinet.Client) (any, error) { return c.SwitchButton.GetFuncs(ctx) }), nil},
 		{"tailscale.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Tailscale.GetConfig(ctx) }, nil},
 		{"tailscale.get_status", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Tailscale.GetStatus(ctx) }, nil},
 		{"timer.get_led", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Timer.GetLEDSchedule(ctx) }, nil},

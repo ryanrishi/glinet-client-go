@@ -2,7 +2,9 @@ package glinet_test
 
 import (
 	"context"
+	"encoding/json"
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/ryanrishi/glinet-client-go"
@@ -97,5 +99,49 @@ func TestTimerLEDScheduleEmptyWeek(t *testing.T) {
 	}
 	if got, want := srv.Timer.LEDSchedule().Week, []int{0, 1, 2, 3, 4, 5, 6}; !reflect.DeepEqual(got, want) {
 		t.Errorf("week = %v, want %v", got, want)
+	}
+}
+
+func TestTimerScreenSchedule(t *testing.T) {
+	c, srv := newClient(t)
+	ctx := context.Background()
+	var sent []string
+	handler := srv.Handler("timer", "set_screen")
+	srv.Handle("timer", "set_screen", func(params json.RawMessage) (any, error) {
+		sent = append(sent, string(params))
+		return handler(params)
+	})
+
+	res, err := c.Timer.GetScreenSchedule(ctx)
+	if err != nil {
+		t.Fatalf("GetScreenSchedule: %v", err)
+	}
+	want := glinet.ScreenSchedule{TurnOnHour: "07", TurnOnMin: "00", TurnOffHour: "22", TurnOffMin: "00", Week: []int{0, 1, 2, 3, 4, 5, 6}}
+	if !reflect.DeepEqual(*res, want) {
+		t.Errorf("GetScreenSchedule = %+v, want %+v", *res, want)
+	}
+
+	if err := c.Timer.SetScreenSchedule(ctx, glinet.ScreenSchedule{Enabled: true, TurnOnHour: "06", TurnOnMin: "10", TurnOffHour: "20", TurnOffMin: "50", Week: []int{2, 4}}); err != nil {
+		t.Fatalf("SetScreenSchedule: %v", err)
+	}
+	wantState := glinettest.ScreenSchedule{Enabled: true, TurnOnHour: "06", TurnOnMin: "10", TurnOffHour: "20", TurnOffMin: "50", Week: []int{2, 4}}
+	if got := srv.Timer.ScreenSchedule(); !reflect.DeepEqual(got, wantState) {
+		t.Errorf("server state = %+v, want %+v", got, wantState)
+	}
+
+	if err := c.Timer.SetScreenSchedule(ctx, glinet.ScreenSchedule{Week: []int{2, 4}}); err != nil {
+		t.Fatalf("SetScreenSchedule disabled: %v", err)
+	}
+	wantState.Enabled = false
+	if got := srv.Timer.ScreenSchedule(); !reflect.DeepEqual(got, wantState) {
+		t.Errorf("server state after disable = %+v, want %+v", got, wantState)
+	}
+
+	wantParams := []string{
+		`{"enable":true,"turnon_hour":"06","turnon_min":"10","turnoff_hour":"20","turnoff_min":"50","week":[2,4]}`,
+		`{"enable":false,"week":[2,4]}`,
+	}
+	if !slices.Equal(sent, wantParams) {
+		t.Errorf("params = %v, want %v", sent, wantParams)
 	}
 }

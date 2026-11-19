@@ -55,8 +55,8 @@ Only fields and types are compared, not values that are runtime data.
 | `ovpn-server.get_config` | no `ipv6_enable` | not in the client |
 | `wifi.get_config` | new top-level key `bandmode`, an empty array | not in `WifiConfig`, because the item type is not known |
 | `repeater.get_config` | `auto` is a number (1), not a bool | not in the client |
-| `switch-button.get_funcs` | `funcs` items are objects `{func, sub_func?:[{func}]}`, not strings; `vpn` with the tunnel IDs as `sub_func` replaces `wireguard` and `openvpn` | not in the client |
-| `switch-button.get_config` | new key `sub_func` (a tunnel ID as a string when `func` is `vpn`) | not in the client |
+| `switch-button.get_funcs` | `funcs` items are objects `{func, sub_func?:[{func}]}`, not strings; `vpn` with the tunnel IDs as `sub_func` replaces `wireguard` and `openvpn` | `SwitchButton.GetFuncs` decodes both shapes |
+| `switch-button.get_config` | new key `sub_func` (a tunnel ID as a string when `func` is `vpn`) | `SwitchButtonConfig.SubFunc` |
 | `local-access.get_config` | new key `ssh_enabled` (bool) | not in the client |
 | `cloud.get_config` | new key `aw_api_url` (string) | not in the client |
 | `modem.get_profile_list` | result is `{"err_code":20002001,"err_msg":"Parameter not found"}`, not a profile list (the router has no modem) | not in the client |
@@ -358,3 +358,33 @@ Kept as on 4.7.0: IDs (group, peer, tunnel, UCI section), the flags and numbers 
 | `wifi.get_status` | ok | same |
 | `zerotier.get_config` | ok | same |
 | `zerotier.get_status` | ok | same |
+
+## Hardware settings (web UI code)
+
+These calls come from the web UI code of firmware 4.8.3 (the views `overview`, `timedtask` and `btnsettings`). Only `fan.set_config` was tested on a router.
+
+| Client | Call | Params or result | Source |
+|---|---|---|---|
+| `Fan.GetConfig` | `fan.get_config` | `{temperature, warn_temperature}` (integers, °C) | fixture |
+| `Fan.GetStatus` | `fan.get_status` | `{speed, status}`: speed in RPM, status true while the fan turns | fixture |
+| `Fan.SetTemperature` | `fan.set_config` | `{temperature}`; the web UI sends no other key and lets the user select 70 to 90 | tested on a router on 2026-11-18 (GL-AXT1800, firmware 4.8.3): `{"temperature": 60}` returned `[]`, the next `get_config` had `temperature: 60`, and the fan started (status true, speed more than 0) with the CPU at 69 °C |
+| `System.GetUSB3Disabled` | `system.get_usb3_disable` | `{usb3_disable: bool}`; the web UI shows true when the key is missing | web UI code, `getUsb3` |
+| `System.SetUSB3Disabled` | `system.set_usb3_disable` | `{usb3_disable: bool}`; true is USB 2.0, false is USB 3.0 | web UI code, `handleSetUsb3` |
+| `Timer.GetScreenSchedule` | `timer.get_screen` | the fields of `timer.get_led` | web UI code, `getScreenTimer` |
+| `Timer.SetScreenSchedule` | `timer.set_screen` | `{enable, week}`, and `turnon_hour`, `turnon_min`, `turnoff_hour`, `turnoff_min` only with `enable` true, as for `set_led` | web UI code, `setScreenTimer` |
+| `SwitchButton.GetConfig` | `switch-button.get_config` | `{func, sub_func?}` | fixture |
+| `SwitchButton.GetFuncs` | `switch-button.get_funcs` | `{funcs:[{func, sub_func?:[{func}]}]}`; strings on firmware 4.7.0 | fixtures |
+| `SwitchButton.SetConfig` | `switch-button.set_config` | `{func, sub_func?, sync: bool}`; `func` `"none"` has no `sub_func` | web UI code, `setBtnConfig` |
+
+The web UI shows the fan dialog when `hardware_feature.fan` is true, the USB switch when `hardware_feature.usb3` is not empty, and the screen schedule when `hardware_feature.screen` is true. The test router has a fan and a USB 3.0 port, and no screen.
+
+The web UI sends `sync: true` only when the user accepts the dialog with label key `btnsettings.auto_sync_tips`, after `switch-button.check_sync_status {func, sub_func?}` returned `sync_status` 0. It does not call `check_sync_status` for `"none"`. In the VPN global proxy mode, it shows one item "VPN client" and sends `func` `"vpn"` with the first `sub_func` of the `vpn` function.
+
+Not known:
+
+- If the router accepts a fan temperature out of 70 to 90 other than 60, and if `fan.set_config` changes `warn_temperature`. The web UI only shows a warning when `temperature` is `warn_temperature` or less.
+- The result of `system.get_usb3_disable` and `timer.get_screen` on a router (no fixture; the probe does not call them). The test router has no screen.
+- The effect of the USB switch on the connected devices: the texts of the label keys `overview.switching_to_usb2_tips`, `overview.switching_warning_tips` and `overview.switching_to_usb3_tips` are not in the web UI code.
+- If `timer.set_screen` with `enable` true needs all values, as `set_led` does.
+- What `sync: true` does, and the meaning of the `sync_status` values other than 0. `check_sync_status` is not in the client.
+- What `switch-button.get_config` returns when the function is `"none"`, and how the router answers a `func` that is not in `get_funcs`.

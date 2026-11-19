@@ -66,3 +66,38 @@ func (s *TimerService) GetRebootSchedule(ctx context.Context) (*RebootSchedule, 
 func (s *TimerService) SetRebootSchedule(ctx context.Context, schedule RebootSchedule) error {
 	return s.client.Call(ctx, "timer", "set_reboot", schedule, nil)
 }
+
+// ScreenSchedule turns the LCD screen off at TurnOffHour:TurnOffMin and on at
+// TurnOnHour:TurnOnMin on the days in Week. Only a router with a screen
+// (SystemInfo.HardwareFeature.Screen) has it.
+type ScreenSchedule struct {
+	Enabled     bool   `json:"enable"`
+	TurnOnHour  string `json:"turnon_hour,omitempty"`
+	TurnOnMin   string `json:"turnon_min,omitempty"`
+	TurnOffHour string `json:"turnoff_hour,omitempty"`
+	TurnOffMin  string `json:"turnoff_min,omitempty"`
+	Week        []int  `json:"week,omitzero"`
+}
+
+// GetScreenSchedule returns the screen schedule, with timer get_screen.
+//
+// From the web UI code of firmware 4.8.3, not seen on a router: the result has the fields of the
+// LED schedule. The test router has no screen, and the result on such a router is not known.
+func (s *TimerService) GetScreenSchedule(ctx context.Context) (*ScreenSchedule, error) {
+	var res ScreenSchedule
+	if err := s.client.Call(ctx, "timer", "get_screen", nil, &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+// SetScreenSchedule sets the screen schedule, with timer set_screen.
+//
+// From the web UI code of firmware 4.8.3, not tested on a router. The web UI sends the same
+// params as for the LED schedule: enable and week always, and the times only with enable true.
+// It does not let the user set the same on and off time. That the router needs all values with
+// enable true, as for the LED schedule, is not known.
+func (s *TimerService) SetScreenSchedule(ctx context.Context, schedule ScreenSchedule) error {
+	return s.client.Call(ctx, "timer", "set_screen", schedule, nil)
+}

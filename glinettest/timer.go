@@ -17,6 +17,16 @@ type LEDSchedule struct {
 	Week        []int  `json:"week"`
 }
 
+// ScreenSchedule is the LCD screen schedule of the timer module.
+type ScreenSchedule struct {
+	Enabled     bool   `json:"enable"`
+	TurnOnHour  string `json:"turnon_hour"`
+	TurnOnMin   string `json:"turnon_min"`
+	TurnOffHour string `json:"turnoff_hour"`
+	TurnOffMin  string `json:"turnoff_min"`
+	Week        []int  `json:"week"`
+}
+
 // RebootSchedule is the reboot schedule of the timer module.
 type RebootSchedule struct {
 	Enabled bool   `json:"enable"`
@@ -31,9 +41,12 @@ type RebootSchedule struct {
 // {"err_code":-1,"err_msg":"parameter missing"} and changes nothing. The values are not checked:
 // a time is kept as a string, also when it was written as a number, and an empty week becomes all days.
 // The enabled write of the reboot schedule was not verified on the router; it works like the LED schedule.
+// The screen schedule was not seen on a router. It works like the LED schedule, and its initial
+// values are those of the web UI form of firmware 4.8.3.
 type Timer struct {
 	mu     sync.Mutex
 	led    LEDSchedule
+	screen ScreenSchedule
 	reboot RebootSchedule
 }
 
@@ -45,6 +58,7 @@ var (
 func newTimer() *Timer {
 	return &Timer{
 		led:    LEDSchedule{TurnOnHour: "07", TurnOnMin: "00", TurnOffHour: "22", TurnOffMin: "00", Week: allDays},
+		screen: ScreenSchedule{TurnOnHour: "07", TurnOnMin: "00", TurnOffHour: "22", TurnOffMin: "00", Week: allDays},
 		reboot: RebootSchedule{Hour: "02", Min: "15", Week: []int{3, 5}},
 	}
 }
@@ -64,6 +78,23 @@ func (m *Timer) SetLEDSchedule(c LEDSchedule) {
 	defer m.mu.Unlock()
 	c.Week = slices.Clone(c.Week)
 	m.led = c
+}
+
+// ScreenSchedule returns the screen schedule.
+func (m *Timer) ScreenSchedule() ScreenSchedule {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	c := m.screen
+	c.Week = slices.Clone(c.Week)
+	return c
+}
+
+// SetScreenSchedule sets the screen schedule.
+func (m *Timer) SetScreenSchedule(c ScreenSchedule) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	c.Week = slices.Clone(c.Week)
+	m.screen = c
 }
 
 // RebootSchedule returns the reboot schedule.
@@ -88,6 +119,10 @@ func (m *Timer) register(s *Server) {
 		return m.LEDSchedule(), nil
 	})
 	s.Handle("timer", "set_led", m.setLED)
+	s.Handle("timer", "get_screen", func(json.RawMessage) (any, error) {
+		return m.ScreenSchedule(), nil
+	})
+	s.Handle("timer", "set_screen", m.setScreen)
 	s.Handle("timer", "get_reboot", func(json.RawMessage) (any, error) {
 		return m.RebootSchedule(), nil
 	})
@@ -109,6 +144,25 @@ func (m *Timer) setLED(params json.RawMessage) (any, error) {
 		return parameterMissing, nil
 	default:
 		m.led = LEDSchedule{Enabled: true, TurnOnHour: w.times[0], TurnOnMin: w.times[1], TurnOffHour: w.times[2], TurnOffMin: w.times[3], Week: w.week}
+	}
+	return writeResult, nil
+}
+
+func (m *Timer) setScreen(params json.RawMessage) (any, error) {
+	w, err := parseSchedule(params, "turnon_hour", "turnon_min", "turnoff_hour", "turnoff_min")
+	if err != nil {
+		return nil, err
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	switch {
+	case !w.enable:
+		m.screen.Enabled = false
+	case w.times == nil || w.week == nil:
+		return parameterMissing, nil
+	default:
+		m.screen = ScreenSchedule{Enabled: true, TurnOnHour: w.times[0], TurnOnMin: w.times[1], TurnOffHour: w.times[2], TurnOffMin: w.times[3], Week: w.week}
 	}
 	return writeResult, nil
 }
