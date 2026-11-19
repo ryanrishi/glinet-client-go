@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 // Version is the version of this client. It is in the default User-Agent.
@@ -18,6 +19,10 @@ const (
 	Version          = "v0.13.0"
 	defaultBaseURL   = "http://192.168.8.1"
 	defaultUserAgent = "glinet-client-go" + "/" + Version
+
+	// defaultTimeout is the longest wait of the web UI for a method of this client: the answer
+	// of netmode set_mode (NetworkModeService.SetMode).
+	defaultTimeout = 60 * time.Second
 )
 
 // Client calls the JSON-RPC API of a GL.iNet router.
@@ -25,6 +30,8 @@ type Client struct {
 	BaseURL   *url.URL
 	UserAgent string
 	common    service // Reuse a single struct instead of allocating one for each service on the heap.
+
+	httpClient *http.Client
 
 	username string
 	password []byte
@@ -73,14 +80,30 @@ type service struct {
 	client *Client
 }
 
+// Option sets a value of a client that a constructor makes.
+type Option func(*Client)
+
+// WithHTTPClient sets the HTTP client that sends the requests to the router. The Timeout of
+// httpClient applies, and a zero Timeout gives no time limit. Without this option, or with a nil
+// httpClient, each request (also the login) has a time limit of 60 s, the longest time that the
+// web UI waits for the answer of a method of this client (NetworkModeService.SetMode). The
+// deadline of the context of a call also applies.
+func WithHTTPClient(httpClient *http.Client) Option {
+	return func(c *Client) {
+		if httpClient != nil {
+			c.httpClient = httpClient
+		}
+	}
+}
+
 // NewClient returns a client for the default host and logs in.
-func NewClient(username string, password []byte) (*Client, error) {
-	return NewClientWithHost(defaultBaseURL, username, password)
+func NewClient(username string, password []byte, opts ...Option) (*Client, error) {
+	return NewClientWithHost(defaultBaseURL, username, password, opts...)
 }
 
 // NewClientWithHost returns a client for host and logs in.
-func NewClientWithHost(host string, username string, password []byte) (*Client, error) {
-	c, err := newClient(host)
+func NewClientWithHost(host string, username string, password []byte, opts ...Option) (*Client, error) {
+	c, err := newClient(host, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -97,12 +120,12 @@ func NewClientWithHost(host string, username string, password []byte) (*Client, 
 
 // NewClientUnauthenticated returns a client for the default host that has no session.
 // Only the Digest service is usable without a session.
-func NewClientUnauthenticated() *Client {
-	c, _ := newClient(defaultBaseURL)
+func NewClientUnauthenticated(opts ...Option) *Client {
+	c, _ := newClient(defaultBaseURL, opts)
 	return c
 }
 
-func newClient(host string) (*Client, error) {
+func newClient(host string, opts []Option) (*Client, error) {
 	if !strings.HasPrefix(host, "http") {
 		host = "http://" + host
 	}
@@ -112,8 +135,11 @@ func newClient(host string) (*Client, error) {
 		return nil, fmt.Errorf("glinet: parse host %q: %w", host, err)
 	}
 
-	c := &Client{BaseURL: baseURL, UserAgent: defaultUserAgent}
+	c := &Client{BaseURL: baseURL, UserAgent: defaultUserAgent, httpClient: &http.Client{Timeout: defaultTimeout}}
 	c.common.client = c
+	for _, opt := range opts {
+		opt(c)
+	}
 
 	c.AccessControl = (*AccessControlService)(&c.common)
 	c.AdGuard = (*AdGuardService)(&c.common)
@@ -224,7 +250,7 @@ func (c *Client) rpc(ctx context.Context, method string, params, result any) err
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", c.UserAgent)
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := c.httpClient.Do(req)
 	if err != nil {
 		return err
 	}
