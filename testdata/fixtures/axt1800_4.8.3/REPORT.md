@@ -54,7 +54,7 @@ Only fields and types are compared, not values that are runtime data.
 | `wg-server.get_config` | no `ipv6_enable` | `WireGuardServerConfig.IPv6Enable` is false; the cause is not known |
 | `ovpn-server.get_config` | no `ipv6_enable` | not in the client |
 | `wifi.get_config` | new top-level key `bandmode`, an empty array | not in `WifiConfig`, because the item type is not known |
-| `repeater.get_config` | `auto` is a number (1), not a bool | not in the client |
+| `repeater.get_config` | `auto` is a number (1), not a bool | `RepeaterConfig.Auto` reads both; `true` is 1 and `false` is 0 (assumption) |
 | `switch-button.get_funcs` | `funcs` items are objects `{func, sub_func?:[{func}]}`, not strings; `vpn` with the tunnel IDs as `sub_func` replaces `wireguard` and `openvpn` | not in the client |
 | `switch-button.get_config` | new key `sub_func` (a tunnel ID as a string when `func` is `vpn`) | not in the client |
 | `local-access.get_config` | new key `ssh_enabled` (bool) | `LocalAccessConfig.SSHEnabled` (false on 4.7.0) |
@@ -497,3 +497,36 @@ Values from the web UI: mode 0 failover, 1 load balance; `track_mode` 1 normal, 
 Side effects: a write can change the uplink that the router uses and so stop its Internet access. After `set_config` and `set_interface` the web UI waits 10 s, then reads the configuration and the system status again; after `set_sensitivity` it waits 1 s.
 
 Open points: the meaning of `track_method` 1 (the web UI sends `enable_ssl` for it but does not list it) and of the track modes; what `val` does with a level other than `custom`; the result of `get_sensitivity` (needs a read on a router); if the writes keep the fields that they do not send (metrics in load balance mode, weights in failover mode, tracking fields when `enable_check` is false); what the router does with an interface that a `set_config` does not have, or with an unknown interface; what weight 0 does.
+## Repeater and USB tethering (web UI code)
+
+Source: the `internet` view (`internet.js`) and the Wi-Fi connect dialog in `app.js` of firmware 4.8.3. No write was tested on a router. The reads `repeater.get_config`, `repeater.get_saved_ap_list`, `repeater.get_status` and `tethering.get_status` have fixtures; `tethering.get_config` was not read on a router.
+
+| Call | Params from the web UI | Client |
+|---|---|---|
+| `repeater.get_config` | `{}`; result `{auto, dfs_support, macaddr}`, `lock_band` when set; the UI ignores `status_interval` | `Repeater.GetConfig` |
+| `repeater.set_config` | `{auto}` (0, 1 or 2) and `lock_band` only when it is not `""` | `Repeater.SetConfig` |
+| `repeater.get_saved_ap_list` | `{}`; result `{res: [network]}`, with the Wi-Fi keys | `Repeater.ListSavedNetworks` |
+| `repeater.remove_saved_ap` | `{ssid}` | `Repeater.RemoveSavedNetwork` |
+| `repeater.connect` | `{ssid, protocol, disguise, manual, auto_portal, remember}`; `key` and `identity` when not empty; `macaddr: {mode, macaddr?, update?, period?}`, `ttl` and `ttl_ipv6` when `disguise` is false; `mtu` when set; `bssid` with the BSSID lock; `ip`, `netmask`, `gateway`, `dns` for `protocol` `static`. A click on a saved network sends the saved item with `remember: true`. In bridge mode only `{ssid, key?, identity?}`. UI timeout 30 s | `Repeater.Connect` |
+| `repeater.disconnect` | `{}` | `Repeater.Disconnect` |
+| `repeater.get_status` | read by the status poll of the UI (`repeater.status`); the UI also reads `eap`, `portal_url` and `ipv6` (`ip` is an array) | `Repeater.GetStatus` (no `ipv6`) |
+| `repeater.scan` | `{all_band, refresh?}`, UI timeout 300 s; the UI shows errors -1 and -2 differently from other errors | not in the client |
+| `repeater.enter_bare_mode`, `exit_bare_mode` | `{}`: the captive portal login mode | not in the client |
+| `repeater.get_channel_prompt`, `set_channel_prompt` | `{chan_prompt_en?, popup_prompt_en?}`: hints of the UI | not in the client |
+| `tethering.get_status` | `{}`; result `{status, devices: [{device, type, use}], ipv4?, ipv6?}`; status 0 not connected, 1 connected, 2 connecting | `Tethering.GetStatus` (no `ipv6`) |
+| `tethering.get_config` | `{}`; result `{device, ttl?, ttl_ipv6?, mtu?}` | `Tethering.GetConfig` |
+| `tethering.set_connect` | `{device}`, and `ttl`, `ttl_ipv6`, `mtu` when set | `Tethering.Connect` |
+| `tethering.disconnect` | `{}` | `Tethering.Disconnect` |
+
+The web UI has no call that saves or changes a saved network without a connect: "Modify" connects to the network with the new values.
+
+Open points:
+
+- Whether `set_config` without `lock_band` removes the band lock. The UI sends no `lock_band` for "all bands", and the test router, with all bands, returned no `lock_band`.
+- Firmware 4.7.0 returns `auto` as a bool. Not known: whether it accepts a number in `set_config`.
+- The meaning of `manual` in a saved network, and what `connect` with `remember: false` does to a saved network with the same SSID.
+- What `remove_saved_ap` does when the repeater is connected to that SSID.
+- The shape of `ipv6` in `repeater.get_status` and `tethering.get_status`, and the result of `repeater.scan`: no read on a router.
+- The result of `tethering.get_config` on a router, and whether the router keeps the `set_connect` values when no phone is on USB.
+
+A repeater write on a router whose uplink is the repeater can cut its Internet access: `connect` replaces the uplink network, and `disconnect` takes the uplink down.

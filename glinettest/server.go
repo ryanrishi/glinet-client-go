@@ -81,7 +81,9 @@ type Server struct {
 	Network         *Network
 	SwitchButton    *SwitchButton
 	NetworkMode     *NetworkMode
+	Repeater        *Repeater
 	Tailscale       *Tailscale
+	Tethering       *Tethering
 	Timer           *Timer
 	VPNPolicy       *VPNPolicy
 	Wifi            *Wifi
@@ -150,8 +152,12 @@ func NewServer(t testing.TB) *Server {
 	s.SwitchButton.register(s)
 	s.NetworkMode = newNetworkMode()
 	s.NetworkMode.register(s)
+	s.Repeater = newRepeater()
+	s.Repeater.register(s)
 	s.Tailscale = newTailscale()
 	s.Tailscale.register(s)
+	s.Tethering = newTethering()
+	s.Tethering.register(s)
 	s.Timer = newTimer()
 	s.Timer.register(s)
 	s.VPNPolicy = newVPNPolicy()

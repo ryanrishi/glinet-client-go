@@ -55,8 +55,10 @@ type Client struct {
 	QoS             *QoSService
 	SwitchButton    *SwitchButtonService
 	NetworkMode     *NetworkModeService
+	Repeater        *RepeaterService
 	System          *SystemService
 	Tailscale       *TailscaleService
+	Tethering       *TetheringService
 	Timer           *TimerService
 	VPNPolicy       *VPNPolicyService
 	Wifi            *WifiService
@@ -130,8 +132,10 @@ func newClient(host string) (*Client, error) {
 	c.QoS = (*QoSService)(&c.common)
 	c.SwitchButton = (*SwitchButtonService)(&c.common)
 	c.NetworkMode = (*NetworkModeService)(&c.common)
+	c.Repeater = (*RepeaterService)(&c.common)
 	c.System = (*SystemService)(&c.common)
 	c.Tailscale = (*TailscaleService)(&c.common)
+	c.Tethering = (*TetheringService)(&c.common)
 	c.Timer = (*TimerService)(&c.common)
 	c.VPNPolicy = (*VPNPolicyService)(&c.common)
 	c.Wifi = (*WifiService)(&c.common)
