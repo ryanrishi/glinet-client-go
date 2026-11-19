@@ -70,12 +70,14 @@ type Server struct {
 	Clients         *Clients
 	DDNS            *DDNS
 	DNS             *DNS
+	Fan             *Fan
 	Firewall        *Firewall
 	IPv6            *IPv6
 	LAN             *LAN
 	LED             *LED
 	LocalAccess     *LocalAccess
 	Network         *Network
+	SwitchButton    *SwitchButton
 	Tailscale       *Tailscale
 	Timer           *Timer
 	VPNPolicy       *VPNPolicy
@@ -123,6 +125,8 @@ func NewServer(t testing.TB) *Server {
 	s.DDNS.register(s)
 	s.DNS = newDNS()
 	s.DNS.register(s)
+	s.Fan = newFan()
+	s.Fan.register(s)
 	s.Firewall = newFirewall()
 	s.Firewall.register(s)
 	s.IPv6 = newIPv6()
@@ -135,6 +139,8 @@ func NewServer(t testing.TB) *Server {
 	s.LocalAccess.register(s)
 	s.Network = newNetwork()
 	s.Network.register(s)
+	s.SwitchButton = newSwitchButton()
+	s.SwitchButton.register(s)
 	s.Tailscale = newTailscale()
 	s.Tailscale.register(s)
 	s.Timer = newTimer()

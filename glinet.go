@@ -43,6 +43,7 @@ type Client struct {
 	DDNS            *DDNSService
 	Digest          *DigestService
 	DNS             *DNSService
+	Fan             *FanService
 	Firewall        *FirewallService
 	IPv6            *IPv6Service
 	LAN             *LANService
@@ -50,6 +51,7 @@ type Client struct {
 	LocalAccess     *LocalAccessService
 	Network         *NetworkService
 	QoS             *QoSService
+	SwitchButton    *SwitchButtonService
 	System          *SystemService
 	Tailscale       *TailscaleService
 	Timer           *TimerService
@@ -113,6 +115,7 @@ func newClient(host string) (*Client, error) {
 	c.Digest = (*DigestService)(&c.common)
 	c.DDNS = (*DDNSService)(&c.common)
 	c.DNS = (*DNSService)(&c.common)
+	c.Fan = (*FanService)(&c.common)
 	c.Firewall = (*FirewallService)(&c.common)
 	c.IPv6 = (*IPv6Service)(&c.common)
 	c.LAN = (*LANService)(&c.common)
@@ -120,6 +123,7 @@ func newClient(host string) (*Client, error) {
 	c.LocalAccess = (*LocalAccessService)(&c.common)
 	c.Network = (*NetworkService)(&c.common)
 	c.QoS = (*QoSService)(&c.common)
+	c.SwitchButton = (*SwitchButtonService)(&c.common)
 	c.System = (*SystemService)(&c.common)
 	c.Tailscale = (*TailscaleService)(&c.common)
 	c.Timer = (*TimerService)(&c.common)

@@ -214,6 +214,37 @@ func (s *SystemService) GetTimezoneConfig(ctx context.Context) (*GetSystemTimezo
 	return &res, nil
 }
 
+// GetUSB3Disabled returns true when the USB port of a router with USB 3.0
+// (SystemInfo.HardwareFeature.USB3 is not empty) works as USB 2.0, with system get_usb3_disable.
+//
+// From the web UI code of firmware 4.8.3, not seen on a router: the result is
+// {"usb3_disable": bool}. Like the web UI, a result without usb3_disable gives true.
+func (s *SystemService) GetUSB3Disabled(ctx context.Context) (bool, error) {
+	var res struct {
+		USB3Disable *bool `json:"usb3_disable"`
+	}
+	if err := s.client.Call(ctx, "system", "get_usb3_disable", nil, &res); err != nil {
+		return false, err
+	}
+
+	return res.USB3Disable == nil || *res.USB3Disable, nil
+}
+
+// SetUSB3Disabled sets the USB port to USB 2.0 (true) or USB 3.0 (false), with system
+// set_usb3_disable {"usb3_disable": disabled}.
+//
+// From the web UI code of firmware 4.8.3, not tested on a router. The web UI shows this setting
+// only when SystemInfo.HardwareFeature.USB3 is not empty. Before the write, it shows a caution
+// dialog, with an additional warning for a switch to USB 2.0. The texts of these warnings are not
+// in the web UI code, so the effect on the connected USB devices is not known. The web UI ignores
+// the result.
+func (s *SystemService) SetUSB3Disabled(ctx context.Context, disabled bool) error {
+	params := struct {
+		USB3Disable bool `json:"usb3_disable"`
+	}{USB3Disable: disabled}
+	return s.client.Call(ctx, "system", "set_usb3_disable", params, nil)
+}
+
 // SetTimezoneConfig sets the time zone configuration.
 func (s *SystemService) SetTimezoneConfig(ctx context.Context, config *SetSystemTimezoneRequest) error {
 	return s.client.Call(ctx, "system", "set_timezone_config", config, nil)
