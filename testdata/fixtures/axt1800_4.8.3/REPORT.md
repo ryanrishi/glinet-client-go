@@ -478,3 +478,22 @@ Open points:
 - No router result for `network.get_advance_config`, `cable.get_ports_config` and `cable.get_ports_status`. The probe allowlist now has them. The types (for example of `period`), the other fields, and the names of the LAN ports are not known.
 - `cable.get_ports_status` (`ports[]` of `{name, speed, duplex}`, runtime values) is not in the client.
 - What the router restarts for `network.set_advance_config` and `igmp.set_config`, what `netmode.set_mode` returns for modes other than `router`, and what the router does with a mode change that the web UI does not offer.
+## Multi-WAN (web UI code)
+
+The module `kmwan` (client `MultiWAN`, view `multiwan`). The reads `get_config` and `get_status` were called on 4.7.0 and 4.8.3 (fixtures). The writes and `get_sensitivity` come from the web UI code of firmware 4.8.3 and were NOT tested on a router. `mwan3.get_config` and `mwan3.get_status` return -32601.
+
+| Client | Call | Params or result | Web UI |
+|---|---|---|---|
+| `MultiWAN.GetConfig` | `kmwan.get_config` | result `{mode, interfaces:[{interface, metric, weight, enable_check, track_mode, track_proto, track_method, track_ipv4, track_ipv6, enable_ssl}]}` (fixture) | `getMwanConfig` |
+| `MultiWAN.GetStatus` | `kmwan.get_status` | result `{interfaces:[{interface, status_v4, status_v6}]}` (fixture); 0 online, 1 offline, 2 error | `getMwanStatus`, each 10 s |
+| `MultiWAN.GetSensitivity` | `kmwan.get_sensitivity` | result `{sensitivity:{level, val}}`; the web UI shows `medium` and 5 when `sensitivity` is missing | `getSensitiveData` |
+| `MultiWAN.SetFailover` | `kmwan.set_config` | `{mode:0, interfaces:[{interface, metric}]}`, metric 1, 2, 3 in the order of the user; the hidden interfaces last | config card, `handleSetConfig` |
+| `MultiWAN.SetLoadBalance` | `kmwan.set_config` | `{mode:1, interfaces:[{interface, weight}]}`, weight 0 to 10; no hidden interfaces | config card, `handleSetConfig`, `confirmSetWeight` |
+| `MultiWAN.SetInterface` | `kmwan.set_interface` | `{interface, enable_check}`; with `enable_check` true also `track_proto`, `track_method`, `track_mode`, `track_ipv4` (proto 0 or 2), `track_ipv6` (proto 1 or 2), `enable_ssl` (method 1) | tracking dialog, `handleSetInterface` |
+| `MultiWAN.SetSensitivity` | `kmwan.set_sensitivity` | `{sensitivity:{level, val}}`; level `low`, `medium`, `high` or `custom`; `val` 0.5 or 1 to 90 seconds, set only for `custom` | sensitivity dialog, `setSensitivity` |
+
+Values from the web UI: mode 0 failover, 1 load balance; `track_mode` 1 normal, 0 low data (badge "passive"), 2 strict; `track_proto` 0 IPv4, 1 IPv6, 2 both (the selector shows only when IPv6 is enabled); `track_method` 0 ping, the only item of the list. The form has 4 host inputs for each protocol, the first 2 required, and sends the filled inputs. Interfaces in `system.get_info` `hidden_features` are not shown. The web UI warns when fewer than 2 interfaces have a weight that is not 0, but sends the write when the user accepts.
+
+Side effects: a write can change the uplink that the router uses and so stop its Internet access. After `set_config` and `set_interface` the web UI waits 10 s, then reads the configuration and the system status again; after `set_sensitivity` it waits 1 s.
+
+Open points: the meaning of `track_method` 1 (the web UI sends `enable_ssl` for it but does not list it) and of the track modes; what `val` does with a level other than `custom`; the result of `get_sensitivity` (needs a read on a router); if the writes keep the fields that they do not send (metrics in load balance mode, weights in failover mode, tracking fields when `enable_check` is false); what the router does with an interface that a `set_config` does not have, or with an unknown interface; what weight 0 does.

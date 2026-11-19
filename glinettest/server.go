@@ -77,6 +77,7 @@ type Server struct {
 	LAN             *LAN
 	LED             *LED
 	LocalAccess     *LocalAccess
+	MultiWAN        *MultiWAN
 	Network         *Network
 	SwitchButton    *SwitchButton
 	NetworkMode     *NetworkMode
@@ -141,6 +142,8 @@ func NewServer(t testing.TB) *Server {
 	s.LED.register(s)
 	s.LocalAccess = newLocalAccess()
 	s.LocalAccess.register(s)
+	s.MultiWAN = newMultiWAN()
+	s.MultiWAN.register(s)
 	s.Network = newNetwork()
 	s.Network.register(s)
 	s.SwitchButton = newSwitchButton()

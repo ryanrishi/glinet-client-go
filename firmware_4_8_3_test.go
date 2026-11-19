@@ -53,6 +53,8 @@ func TestReadsDecodeFirmware483Fixtures(t *testing.T) {
 		{"lan.get_wan_info", list("wan_info", func(ctx context.Context, c *glinet.Client) (any, error) { return c.LAN.GetWANInfo(ctx) }), nil},
 		{"led.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.LED.GetConfig(ctx) }, nil},
 		{"local-access.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.LocalAccess.GetConfig(ctx) }, nil},
+		{"kmwan.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.MultiWAN.GetConfig(ctx) }, nil},
+		{"kmwan.get_status", func(ctx context.Context, c *glinet.Client) (any, error) { return c.MultiWAN.GetStatus(ctx) }, nil},
 		{"network.check_wan_cable", func(ctx context.Context, c *glinet.Client) (any, error) {
 			return c.Network.CheckWANCable(ctx, glinet.FirstWANPort)
 		}, nil},

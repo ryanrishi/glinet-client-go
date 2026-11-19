@@ -50,6 +50,7 @@ type Client struct {
 	LAN             *LANService
 	LED             *LEDService
 	LocalAccess     *LocalAccessService
+	MultiWAN        *MultiWANService
 	Network         *NetworkService
 	QoS             *QoSService
 	SwitchButton    *SwitchButtonService
@@ -124,6 +125,7 @@ func newClient(host string) (*Client, error) {
 	c.LAN = (*LANService)(&c.common)
 	c.LED = (*LEDService)(&c.common)
 	c.LocalAccess = (*LocalAccessService)(&c.common)
+	c.MultiWAN = (*MultiWANService)(&c.common)
 	c.Network = (*NetworkService)(&c.common)
 	c.QoS = (*QoSService)(&c.common)
 	c.SwitchButton = (*SwitchButtonService)(&c.common)
