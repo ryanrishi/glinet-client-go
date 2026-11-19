@@ -28,8 +28,8 @@ type challengeRequest struct {
 	Username string `json:"username"`
 }
 
-// ChallengeResponse is the result of challenge.
-type ChallengeResponse struct {
+// Challenge is the result of challenge.
+type Challenge struct {
 	Salt       string `json:"salt"`
 	Algorithm  int    `json:"alg"`
 	Nonce      string `json:"nonce"`
@@ -41,15 +41,15 @@ type loginRequest struct {
 	Hash     string `json:"hash"`
 }
 
-// LoginResponse is the result of login. Sid is the session ID.
+// LoginResponse is the result of login. SID is the session ID.
 type LoginResponse struct {
 	Username string `json:"username"`
-	Sid      string `json:"sid"`
+	SID      string `json:"sid"`
 }
 
 // Challenge returns the salt, algorithm and nonce for a login of username.
-func (s *DigestService) Challenge(ctx context.Context, username string) (*ChallengeResponse, error) {
-	var res ChallengeResponse
+func (s *DigestService) Challenge(ctx context.Context, username string) (*Challenge, error) {
+	var res Challenge
 	if err := s.client.rpc(ctx, "challenge", challengeRequest{Username: username}, &res); err != nil {
 		return nil, err
 	}

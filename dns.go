@@ -67,14 +67,14 @@ type SetDNSConfigRequest struct {
 
 // DNSInfo is the encrypted DNS protocols and servers that the router supports.
 type DNSInfo struct {
-	Protos          []string          `json:"protos"`
-	ServerList      []EncryptedServer `json:"serverlist"`
-	DNSCryptVersion int               `json:"dnscrypt_version"`
+	Protos          []string             `json:"protos"`
+	ServerList      []DNSEncryptedServer `json:"serverlist"`
+	DNSCryptVersion int                  `json:"dnscrypt_version"`
 }
 
-// EncryptedServer is a server for mode "secure" with Proto "DoH", "DNSCrypt" or "oDoH".
+// DNSEncryptedServer is a server for mode "secure" with Proto "DoH", "DNSCrypt" or "oDoH".
 // Name is the value for SetDNSConfigRequest.Server.
-type EncryptedServer struct {
+type DNSEncryptedServer struct {
 	Name     string `json:"name"`
 	Proto    string `json:"proto"`
 	DNSSEC   bool   `json:"dnssec"`

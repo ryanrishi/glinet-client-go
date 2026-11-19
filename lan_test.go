@@ -238,20 +238,20 @@ func TestLANConfigsDecodeRouterFixture(t *testing.T) {
 	}
 	checkLossless(t, map[string]any{"interfaces": configs}, fixtureResult(t, "lan.get_config_list.json"))
 
-	guest, err := c.LAN.GetConfig(ctx, "guest")
+	guest, err := c.LAN.FindConfig(ctx, "guest")
 	if err != nil {
-		t.Fatalf("GetConfig guest: %v", err)
+		t.Fatalf("FindConfig guest: %v", err)
 	}
-	if guest == nil || guest.IP != "192.168.9.1" || guest.Enable != 0 || guest.APIsolate != 1 || guest.TransferEnable == nil {
-		t.Errorf("GetConfig guest = %+v", guest)
+	if guest == nil || guest.IP != "192.168.9.1" || guest.DHCPEnabled || !guest.APIsolate || guest.TransferEnable == nil {
+		t.Errorf("FindConfig guest = %+v", guest)
 	}
 	if lan := configs[0]; lan.Interface != "lan" || lan.TransferEnable != nil || lan.LeaseTime != "12h" {
 		t.Errorf("lan = %+v, want no transfer_enable and leasetime 12h", lan)
 	}
 
-	none, err := c.LAN.GetConfig(ctx, "wan")
+	none, err := c.LAN.FindConfig(ctx, "wan")
 	if err != nil || none != nil {
-		t.Errorf("GetConfig wan = %+v, %v, want nil, nil", none, err)
+		t.Errorf("FindConfig wan = %+v, %v, want nil, nil", none, err)
 	}
 }
 
@@ -266,7 +266,7 @@ func TestLANSetAddressAndDHCP(t *testing.T) {
 		return setConfig(params)
 	})
 
-	if err := c.LAN.SetAddress(ctx, glinet.LANAddress{Interface: "lan", IP: "198.51.100.1", Netmask: "255.255.255.0", APIsolate: 1, WANIsolate: 1}); err != nil {
+	if err := c.LAN.SetAddress(ctx, glinet.LANAddress{Interface: "lan", IP: "198.51.100.1", Netmask: "255.255.255.0", APIsolate: true, WANIsolate: true}); err != nil {
 		t.Fatalf("SetAddress lan: %v", err)
 	}
 	want := map[string]any{"interface": "lan", "ip": "198.51.100.1", "netmask": "255.255.255.0", "ap_isolate": float64(1)}
@@ -274,7 +274,7 @@ func TestLANSetAddressAndDHCP(t *testing.T) {
 		t.Errorf("SetAddress lan params = %v, want %v", sent, want)
 	}
 
-	if err := c.LAN.SetAddress(ctx, glinet.LANAddress{Interface: "guest", IP: "192.168.10.1", Netmask: "255.255.255.0", WANIsolate: 1}); err != nil {
+	if err := c.LAN.SetAddress(ctx, glinet.LANAddress{Interface: "guest", IP: "192.168.10.1", Netmask: "255.255.255.0", WANIsolate: true}); err != nil {
 		t.Fatalf("SetAddress: %v", err)
 	}
 	want = map[string]any{"interface": "guest", "ip": "192.168.10.1", "netmask": "255.255.255.0", "ap_isolate": float64(0), "wan_isolate": float64(1)}
@@ -282,7 +282,7 @@ func TestLANSetAddressAndDHCP(t *testing.T) {
 		t.Errorf("SetAddress params = %v, want %v", sent, want)
 	}
 
-	dhcp := glinet.LANDHCP{Interface: "guest", Enable: 1, Start: "192.168.10.100", End: "192.168.10.200", LeaseTime: "120m"}
+	dhcp := glinet.LANDHCP{Interface: "guest", Enabled: true, Start: "192.168.10.100", End: "192.168.10.200", LeaseTime: "120m"}
 	if err := c.LAN.SetDHCP(ctx, dhcp); err != nil {
 		t.Fatalf("SetDHCP: %v", err)
 	}
@@ -306,18 +306,18 @@ func TestLANSetAddressAndDHCP(t *testing.T) {
 		t.Errorf("SetDHCP without LPR: lpr = %v, want []", lpr)
 	}
 
-	guest, err := c.LAN.GetConfig(ctx, "guest")
+	guest, err := c.LAN.FindConfig(ctx, "guest")
 	if err != nil {
-		t.Fatalf("GetConfig: %v", err)
+		t.Fatalf("FindConfig: %v", err)
 	}
 	zero := 0
 	wantGuest := glinet.LANConfig{
-		Interface: "guest", IP: "192.168.10.1", Netmask: "255.255.255.0", WANIsolate: 1, Enable: 1,
+		Interface: "guest", IP: "192.168.10.1", Netmask: "255.255.255.0", WANIsolate: true, DHCPEnabled: true,
 		Start: "192.168.10.100", End: "192.168.10.200", LeaseTime: "120m",
 		DNS: []string{}, LPR: []string{}, TransferEnable: &zero,
 	}
 	if !reflect.DeepEqual(*guest, wantGuest) {
-		t.Errorf("GetConfig = %+v, want %+v", *guest, wantGuest)
+		t.Errorf("FindConfig = %+v, want %+v", *guest, wantGuest)
 	}
 
 	if err := c.LAN.SetDHCP(ctx, glinet.LANDHCP{Interface: "guest", Start: "192.168.10.2"}); err != nil {

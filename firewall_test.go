@@ -159,8 +159,8 @@ func TestFirewallRules(t *testing.T) {
 		t.Fatalf("ListRules = %+v, want empty", rules)
 	}
 
-	drop := glinet.Rule{Name: "drop", Src: "wan", Dest: "lan", DestIP: "192.168.8.50", DestPort: "50001", Proto: "tcp", Target: "DROP", Enabled: true}
-	input := glinet.Rule{Name: "input", Src: "wan", SrcIP: "203.0.113.5", SrcMAC: "02:00:00:aa:bb:01", SrcPort: "50002", DestPort: "50003-50004", Proto: "tcp udp", Target: "ACCEPT"}
+	drop := glinet.FirewallRule{Name: "drop", Src: "wan", Dest: "lan", DestIP: "192.168.8.50", DestPort: "50001", Proto: "tcp", Target: "DROP", Enabled: true}
+	input := glinet.FirewallRule{Name: "input", Src: "wan", SrcIP: "203.0.113.5", SrcMAC: "02:00:00:aa:bb:01", SrcPort: "50002", DestPort: "50003-50004", Proto: "tcp udp", Target: "ACCEPT"}
 
 	dropID, err := c.Firewall.AddRule(ctx, drop)
 	if err != nil {
@@ -174,7 +174,7 @@ func TestFirewallRules(t *testing.T) {
 		t.Errorf("IDs = %q, %q, want %q, %q", dropID, inputID, glinettest.RuleID(0), glinettest.RuleID(1))
 	}
 
-	wantState := []glinettest.Rule{
+	wantState := []glinettest.FirewallRule{
 		{Name: "drop", Src: "wan", Dest: "lan", DestIP: "192.168.8.50", DestPort: "50001", Proto: "tcp", Target: "DROP", Enabled: true},
 		{Name: "input", Src: "wan", SrcIP: "203.0.113.5", SrcMAC: "02:00:00:aa:bb:01", SrcPort: "50002", DestPort: "50003-50004", Proto: "tcp udp", Target: "ACCEPT"},
 	}
@@ -207,7 +207,7 @@ func TestFirewallRules(t *testing.T) {
 		t.Fatalf("ListRules: %v", err)
 	}
 	input.ID = dropID
-	if want := []glinet.Rule{input}; !slices.Equal(rules, want) {
+	if want := []glinet.FirewallRule{input}; !slices.Equal(rules, want) {
 		t.Errorf("ListRules after remove = %+v, want %+v (the ID of the next rule changes)", rules, want)
 	}
 
@@ -220,7 +220,7 @@ func TestFirewallRules(t *testing.T) {
 func TestFirewallRulesAndPortForwardsShareIDs(t *testing.T) {
 	c, _ := newClient(t)
 	ctx := context.Background()
-	rule := glinet.Rule{Name: "rule", Src: "wan", Dest: "lan", DestIP: "192.168.8.50", DestPort: "50001", Target: "DROP"}
+	rule := glinet.FirewallRule{Name: "rule", Src: "wan", Dest: "lan", DestIP: "192.168.8.50", DestPort: "50001", Target: "DROP"}
 	forward := glinet.PortForward{Name: "forward", Proto: "tcp", Src: "wan", SrcDport: "50002", Dest: "lan", DestIP: "192.168.8.50", DestPort: "50002"}
 
 	ruleID, err := c.Firewall.AddRule(ctx, rule)
@@ -251,7 +251,7 @@ func TestFirewallRulesAndPortForwardsShareIDs(t *testing.T) {
 func TestFirewallRuleErrors(t *testing.T) {
 	c, srv := newClient(t)
 	ctx := context.Background()
-	rules := []glinettest.Rule{
+	rules := []glinettest.FirewallRule{
 		{Name: "no-dest-port", Src: "wan", Dest: "lan", DestIP: "192.168.8.50", Target: "DROP", Enabled: true},
 	}
 	forwards := []glinettest.PortForward{
@@ -260,11 +260,11 @@ func TestFirewallRuleErrors(t *testing.T) {
 	srv.Firewall.SetRules(rules)
 	srv.Firewall.SetPortForwards(forwards)
 
-	if err := c.Firewall.SetRule(ctx, glinet.Rule{ID: glinettest.RuleID(5), Name: "x"}); err != nil {
+	if err := c.Firewall.SetRule(ctx, glinet.FirewallRule{ID: glinettest.RuleID(5), Name: "x"}); err != nil {
 		t.Errorf("SetRule unknown ID: %v", err)
 	}
 
-	err := c.Firewall.SetRule(ctx, glinet.Rule{Name: "x"})
+	err := c.Firewall.SetRule(ctx, glinet.FirewallRule{Name: "x"})
 	var rpcErr *glinet.RPCError
 	if !errors.As(err, &rpcErr) || rpcErr.Code != glinet.CodeInvalidParams || rpcErr.Err != "id: string required" {
 		t.Errorf("SetRule without ID: error %v, want %d id: string required", err, glinet.CodeInvalidParams)
@@ -311,8 +311,8 @@ func TestFirewallRemoveAll(t *testing.T) {
 		{Name: "a", Proto: "tcp", Src: "wan", SrcDport: "50002", Dest: "lan", DestIP: "192.168.8.50", DestPort: "50002"},
 		{Name: "b", Proto: "udp", Src: "wan", SrcDport: "50003", Dest: "lan", DestIP: "192.168.8.51", DestPort: "50003"},
 	})
-	rule := glinettest.Rule{Name: "r", Src: "wan", Proto: "tcp", DestPort: "50004", Target: "ACCEPT"}
-	srv.Firewall.SetRules([]glinettest.Rule{rule})
+	rule := glinettest.FirewallRule{Name: "r", Src: "wan", Proto: "tcp", DestPort: "50004", Target: "ACCEPT"}
+	srv.Firewall.SetRules([]glinettest.FirewallRule{rule})
 
 	if err := c.Firewall.RemoveAllPortForwards(ctx); err != nil {
 		t.Fatalf("RemoveAllPortForwards: %v", err)
@@ -324,7 +324,7 @@ func TestFirewallRemoveAll(t *testing.T) {
 	if got := srv.Firewall.PortForwards(); len(got) != 0 {
 		t.Errorf("server port forwards = %+v, want empty", got)
 	}
-	if got := srv.Firewall.Rules(); !slices.Equal(got, []glinettest.Rule{rule}) {
+	if got := srv.Firewall.Rules(); !slices.Equal(got, []glinettest.FirewallRule{rule}) {
 		t.Errorf("server rules = %+v, want %+v", got, rule)
 	}
 

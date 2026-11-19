@@ -40,11 +40,11 @@ func TestParentalControlConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetConfig: %v", err)
 	}
-	if got.Enable || len(got.Groups) != 0 || len(got.Rules) != 2 || got.Rules[0].ID != glinet.ParentalControlRuleDrop || !got.Rules[1].Preset {
+	if got.Enabled || len(got.Groups) != 0 || len(got.Rules) != 2 || got.Rules[0].ID != glinet.ParentalControlRuleDrop || !got.Rules[1].Preset {
 		t.Errorf("GetConfig = %+v", *got)
 	}
 
-	if err := c.ParentalControl.SetConfig(ctx, glinet.ParentalControlSettings{Enable: true, DropAnonymous: true}); err != nil {
+	if err := c.ParentalControl.SetConfig(ctx, glinet.ParentalControlSettings{Enabled: true, DropAnonymous: true}); err != nil {
 		t.Fatalf("SetConfig: %v", err)
 	}
 	checkSent(t, sent, `set_config {"enable":true,"drop_anonymous":true,"auto_update":false}`)
@@ -53,7 +53,7 @@ func TestParentalControlConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetConfig: %v", err)
 	}
-	if !got.Enable || !got.DropAnonymous || got.AutoUpdate {
+	if !got.Enabled || !got.DropAnonymous || got.AutoUpdate {
 		t.Errorf("GetConfig = %+v", *got)
 	}
 }
@@ -166,7 +166,7 @@ func TestParentalControlGroups(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetBrief: %v", err)
 	}
-	if !brief.Enable || brief.ManualStop || brief.Time != "21:15" || brief.RuleID != glinet.ParentalControlRuleAccept {
+	if !brief.Enabled || brief.ManualStop || brief.Time != "21:15" || brief.RuleID != glinet.ParentalControlRuleAccept {
 		t.Errorf("GetBrief = %+v", *brief)
 	}
 	status, err := c.ParentalControl.GetStatus(ctx)
@@ -194,7 +194,7 @@ func TestParentalControlGroups(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetBrief: %v", err)
 	}
-	if brief.Enable {
+	if brief.Enabled {
 		t.Errorf("GetBrief after StopBrief = %+v", *brief)
 	}
 	checkSent(t, sent,

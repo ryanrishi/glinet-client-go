@@ -32,7 +32,7 @@ func TestRouterReadOnly(t *testing.T) {
 	}
 	t.Logf("system.get_timezone_config: %+v", *tz)
 
-	ag, err := c.AdGuard.GetAdGuardConfig(ctx)
+	ag, err := c.AdGuardHome.GetConfig(ctx)
 	if err != nil {
 		t.Fatalf("adguardhome.get_config: %v", err)
 	}

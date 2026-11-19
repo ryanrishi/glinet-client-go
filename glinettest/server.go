@@ -57,8 +57,11 @@ type Method func(params json.RawMessage) (any, error)
 
 // Server is a fake router. It serves the JSON-RPC API at URL.
 type Server struct {
-	URL      string
+	// URL is the base URL of the server, for example http://127.0.0.1:12345.
+	URL string
+	// Username is the user that can log in.
 	Username string
+	// Password is the password of Username.
 	Password string
 	// HashMethod is the hash-method of the challenge: "" (MD5, firmware 4.7.0) or "sha256".
 	HashMethod string

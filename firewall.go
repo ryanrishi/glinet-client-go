@@ -118,8 +118,8 @@ var removeAllParams = struct {
 	All bool `json:"all"`
 }{All: true}
 
-// Rule is a traffic rule that applies Target to the traffic from the Src zone to the Dest zone.
-// A rule without Dest is for traffic to the router itself.
+// FirewallRule is a traffic rule that applies Target to the traffic from the Src zone to the Dest
+// zone. A rule without Dest is for traffic to the router itself.
 //
 // The router gives the ID. It is the position of the rule in the firewall configuration
 // (for example "cfg2392bd"), which rules share with port forwards, so the IDs of the rules
@@ -132,7 +132,7 @@ var removeAllParams = struct {
 // AddRule was tested on firmware 4.8.3 with an IPv6 SrcIP or DestIP, IPv4 and IPv6 CIDR blocks,
 // the Proto values "esp" and "icmpv6", and an upper-case SrcMAC. The router accepted each rule,
 // and its nftables rule set (fw4) then had a correct rule.
-type Rule struct {
+type FirewallRule struct {
 	ID       string `json:"id,omitempty"`
 	Name     string `json:"name"`
 	Src      string `json:"src"`
@@ -148,9 +148,9 @@ type Rule struct {
 }
 
 // ListRules returns the rules in the order of the firewall configuration.
-func (s *FirewallService) ListRules(ctx context.Context) ([]Rule, error) {
+func (s *FirewallService) ListRules(ctx context.Context) ([]FirewallRule, error) {
 	var res struct {
-		Res []Rule `json:"res"`
+		Res []FirewallRule `json:"res"`
 	}
 	if err := s.client.Call(ctx, "firewall", "get_rule_list", nil, &res); err != nil {
 		return nil, err
@@ -161,7 +161,7 @@ func (s *FirewallService) ListRules(ctx context.Context) ([]Rule, error) {
 
 // FindRule returns the rule with the ID id.
 // It returns nil and no error when there is no such rule.
-func (s *FirewallService) FindRule(ctx context.Context, id string) (*Rule, error) {
+func (s *FirewallService) FindRule(ctx context.Context, id string) (*FirewallRule, error) {
 	rules, err := s.ListRules(ctx)
 	if err != nil {
 		return nil, err
@@ -178,7 +178,7 @@ func (s *FirewallService) FindRule(ctx context.Context, id string) (*Rule, error
 
 // AddRule adds rule at the end of the list and returns its ID. It ignores rule.ID.
 // Enabled false adds a disabled rule. AddPortForward can change the ID later.
-func (s *FirewallService) AddRule(ctx context.Context, rule Rule) (string, error) {
+func (s *FirewallService) AddRule(ctx context.Context, rule FirewallRule) (string, error) {
 	rule.ID = ""
 	var res struct {
 		ID string `json:"id"`
@@ -197,7 +197,7 @@ func (s *FirewallService) AddRule(ctx context.Context, rule Rule) (string, error
 //
 // Firmware 4.8.3 cannot change a rule that has no dest_port: it returns HTTP status 500 with a Lua
 // error page, not a JSON-RPC error. See RemoveRule.
-func (s *FirewallService) SetRule(ctx context.Context, rule Rule) error {
+func (s *FirewallService) SetRule(ctx context.Context, rule FirewallRule) error {
 	return s.client.Call(ctx, "firewall", "set_rule", rule, nil)
 }
 

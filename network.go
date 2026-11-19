@@ -1,6 +1,9 @@
 package glinet
 
-import "context"
+import (
+	"context"
+	"encoding/json"
+)
 
 // NetworkService calls the network module.
 type NetworkService service
@@ -46,18 +49,39 @@ func (s *NetworkService) ListARPEntries(ctx context.Context) ([]ARPEntry, error)
 }
 
 // NetworkAdvancedConfig is the result of network get_advance_config and the params of
-// network set_advance_config (web UI view netadvanced). Each value is 1 (enabled) or 0
-// (disabled):
-//   - FullConeNAT (nat_enable) enables Full Cone NAT.
-//   - SIPALG (sip_enable) enables the SIP ALG.
+// network set_advance_config (web UI view netadvanced). The router value of each field is 1
+// (true) or 0 (false); the client decodes and encodes these numbers:
+//   - FullConeNATEnabled (nat_enable) enables Full Cone NAT.
+//   - SIPALGEnabled (sip_enable) enables the SIP ALG.
 //
 // The fields and the values are from the web UI code of firmware 4.8.3. The test router did not
 // give a get_advance_config result: the web UI reads a missing value as 0, and compares the values
 // with the numbers 1 and 0, so the router is expected to give numbers. Other fields of the result
 // are not known.
 type NetworkAdvancedConfig struct {
-	FullConeNAT int `json:"nat_enable"`
-	SIPALG      int `json:"sip_enable"`
+	FullConeNATEnabled bool `json:"nat_enable"`
+	SIPALGEnabled      bool `json:"sip_enable"`
+}
+
+type networkAdvancedConfigJSON struct {
+	FullConeNATEnabled flag `json:"nat_enable"`
+	SIPALGEnabled      flag `json:"sip_enable"`
+}
+
+// MarshalJSON encodes c as the router does, with 0 or 1 for each field.
+func (c NetworkAdvancedConfig) MarshalJSON() ([]byte, error) {
+	return json.Marshal(networkAdvancedConfigJSON{flag(c.FullConeNATEnabled), flag(c.SIPALGEnabled)})
+}
+
+// UnmarshalJSON decodes the result of network get_advance_config. Each field accepts 0, 1, false
+// and true.
+func (c *NetworkAdvancedConfig) UnmarshalJSON(data []byte) error {
+	var v networkAdvancedConfigJSON
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	*c = NetworkAdvancedConfig{bool(v.FullConeNATEnabled), bool(v.SIPALGEnabled)}
+	return nil
 }
 
 // GetAdvancedConfig returns the advanced network settings.

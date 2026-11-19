@@ -22,9 +22,9 @@ type PortForward struct {
 	Enabled  bool   `json:"enabled"`
 }
 
-// Rule is a traffic rule of the firewall module. An empty string means the router has no
+// FirewallRule is a traffic rule of the firewall module. An empty string means the router has no
 // value for that field. The ID is not stored: the router gives it from the position in the list.
-type Rule struct {
+type FirewallRule struct {
 	Name     string `json:"name,omitempty"`
 	Src      string `json:"src,omitempty"`
 	SrcIP    string `json:"src_ip,omitempty"`
@@ -150,15 +150,15 @@ func (m *Firewall) SetPortForwards(forwards []PortForward) {
 }
 
 // Rules returns a copy of the rules.
-func (m *Firewall) Rules() []Rule {
+func (m *Firewall) Rules() []FirewallRule {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return sectionsOf[Rule](m.sections, ruleSuffix)
+	return sectionsOf[FirewallRule](m.sections, ruleSuffix)
 }
 
 // SetRules replaces the rules. The new rules go after the port forwards
 // and before the DMZ section.
-func (m *Firewall) SetRules(rules []Rule) {
+func (m *Firewall) SetRules(rules []FirewallRule) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.sections = replaceSections(m.sections, ruleSuffix, rules)

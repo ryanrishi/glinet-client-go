@@ -11,6 +11,7 @@ type CableService service
 // SecondWANPort only on such a router.
 type WANPort int
 
+// The wired WAN ports.
 const (
 	FirstWANPort WANPort = iota
 	SecondWANPort

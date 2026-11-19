@@ -28,7 +28,7 @@ func TestReadsDecodeFirmware483Fixtures(t *testing.T) {
 		{"system.get_status", func(ctx context.Context, c *glinet.Client) (any, error) { return c.System.GetStatus(ctx) }, nil},
 		{"system.disk_info", func(ctx context.Context, c *glinet.Client) (any, error) { return c.System.GetDiskInfo(ctx) }, nil},
 		{"system.get_timezone_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.System.GetTimezoneConfig(ctx) }, nil},
-		{"adguardhome.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.AdGuard.GetAdGuardConfig(ctx) }, nil},
+		{"adguardhome.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.AdGuardHome.GetConfig(ctx) }, nil},
 		{"black_white_list.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.AccessControl.GetConfig(ctx) }, nil},
 		{"cable.get_status", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Cable.GetStatus(ctx) }, nil},
 		{"cable.get_config", func(ctx context.Context, c *glinet.Client) (any, error) {
@@ -61,7 +61,7 @@ func TestReadsDecodeFirmware483Fixtures(t *testing.T) {
 		{"netmode.get_mode", func(ctx context.Context, c *glinet.Client) (any, error) { return c.NetworkMode.GetMode(ctx) }, nil},
 		{"network.get_arp_list", list("entries", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Network.ListARPEntries(ctx) }), nil},
 		{"switch-button.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.SwitchButton.GetConfig(ctx) }, nil},
-		{"switch-button.get_funcs", list("funcs", func(ctx context.Context, c *glinet.Client) (any, error) { return c.SwitchButton.GetFuncs(ctx) }), nil},
+		{"switch-button.get_funcs", list("funcs", func(ctx context.Context, c *glinet.Client) (any, error) { return c.SwitchButton.ListFuncs(ctx) }), nil},
 		{"repeater.get_config", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Repeater.GetConfig(ctx) }, nil},
 		{"repeater.get_saved_ap_list", list("res", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Repeater.ListSavedNetworks(ctx) }), nil},
 		{"repeater.get_status", func(ctx context.Context, c *glinet.Client) (any, error) { return c.Repeater.GetStatus(ctx) }, nil},

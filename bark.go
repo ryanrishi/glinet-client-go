@@ -13,8 +13,8 @@ type BarkService service
 
 // BarkConfig is the configuration of the Bark client.
 type BarkConfig struct {
-	Enable     bool `json:"enable"`
-	IPv6Enable bool `json:"ipv6_enable"`
+	Enabled     bool `json:"enable"`
+	IPv6Enabled bool `json:"ipv6_enable"`
 }
 
 // BarkStatus is the status of the Bark client. Status is 1 connecting, 2 ready or 3 online.

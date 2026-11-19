@@ -41,7 +41,7 @@ func TestNetworkWANCableDecodesRouterFixture(t *testing.T) {
 func TestNetworkARPListDecodesRouterFixture(t *testing.T) {
 	c, srv := newClient(t)
 	arpList := fixtureResult(t, "network.get_arp_list.json")
-	srv.Network.SetARPList(arpList)
+	srv.Network.SetARPEntries(arpList)
 
 	got, err := c.Network.ListARPEntries(context.Background())
 	if err != nil {
@@ -68,7 +68,7 @@ func TestNetworkAdvancedConfig(t *testing.T) {
 		t.Errorf("GetAdvancedConfig = %+v, want both disabled", *got)
 	}
 
-	for _, config := range []glinet.NetworkAdvancedConfig{{FullConeNAT: 1, SIPALG: 0}, {FullConeNAT: 0, SIPALG: 1}} {
+	for _, config := range []glinet.NetworkAdvancedConfig{{FullConeNATEnabled: true}, {SIPALGEnabled: true}} {
 		if err := c.Network.SetAdvancedConfig(ctx, config); err != nil {
 			t.Fatalf("SetAdvancedConfig: %v", err)
 		}

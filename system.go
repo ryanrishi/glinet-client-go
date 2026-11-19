@@ -5,59 +5,78 @@ import "context"
 // SystemService calls the system module.
 type SystemService service
 
-// GetSystemStatusResponse is the result of system get_status. Most values are runtime values.
+// SystemStatus is the result of system get_status. Most values are runtime values.
 // Wifi[].Passwd is the Wi-Fi key of that interface, which is a secret.
-type GetSystemStatusResponse struct {
-	Network []struct {
-		Online    bool   `json:"online"`
-		Up        bool   `json:"up"`
-		Interface string `json:"interface"`
-	} `json:"network"`
-	Wifi []struct {
-		Guest      bool   `json:"guest"`
-		Ssid       string `json:"ssid"`
-		Up         bool   `json:"up"`
-		Channel    int    `json:"channel"`
-		Band       string `json:"band"`
-		Name       string `json:"name"`
-		Passwd     string `json:"passwd"`
-		Encryption string `json:"encryption"`
-		Hidden     bool   `json:"hidden"`
-		MLD        bool   `json:"mld"`
-	} `json:"wifi"`
-	Service []struct {
-		Status  int    `json:"status"`
-		PeerID  int64  `json:"peer_id,omitempty"`
-		Name    string `json:"name"`
-		GroupID int64  `json:"group_id,omitempty"`
-	} `json:"service"`
-	Client []struct {
-		CableTotal    int `json:"cable_total"`
-		WirelessTotal int `json:"wireless_total"`
-	} `json:"client"`
-	System struct {
-		LanIP           string    `json:"lan_ip"`
-		LanNetmask      string    `json:"lan_netmask"`
-		DDNSEnabled     bool      `json:"ddns_enabled"`
-		TZOffset        string    `json:"tzoffset"`
-		GuestIP         string    `json:"guest_ip"`
-		GuestNetmask    string    `json:"guest_netmask"`
-		NetNATEnabled   bool      `json:"netnat_enabled"`
-		FlashApp        int64     `json:"flash_app"`
-		FlashTotal      int64     `json:"flash_total"`
-		MemoryTotal     int64     `json:"memory_total"`
-		MemoryFree      int64     `json:"memory_free"`
-		Ipv6Enabled     bool      `json:"ipv6_enabled"`
-		MemoryBuffCache int64     `json:"memory_buff_cache"`
-		Uptime          float64   `json:"uptime"`
-		LoadAverage     []float64 `json:"load_average"`
-		CPU             struct {
-			Temperature int `json:"temperature"`
-		} `json:"cpu"`
-		Mode      int   `json:"mode"`
-		FlashFree int64 `json:"flash_free"`
-		Timestamp int64 `json:"timestamp"`
-	} `json:"system"`
+type SystemStatus struct {
+	Network []SystemStatusNetwork `json:"network"`
+	Wifi    []SystemStatusWifi    `json:"wifi"`
+	Service []SystemStatusService `json:"service"`
+	Client  []SystemStatusClients `json:"client"`
+	System  SystemStatusSystem    `json:"system"`
+}
+
+// SystemStatusNetwork is the state of an uplink interface in SystemStatus.
+type SystemStatusNetwork struct {
+	Online    bool   `json:"online"`
+	Up        bool   `json:"up"`
+	Interface string `json:"interface"`
+}
+
+// SystemStatusWifi is the state of a Wi-Fi interface in SystemStatus. Passwd is the Wi-Fi key, a
+// secret.
+type SystemStatusWifi struct {
+	Guest      bool   `json:"guest"`
+	SSID       string `json:"ssid"`
+	Up         bool   `json:"up"`
+	Channel    int    `json:"channel"`
+	Band       string `json:"band"`
+	Name       string `json:"name"`
+	Passwd     string `json:"passwd"`
+	Encryption string `json:"encryption"`
+	Hidden     bool   `json:"hidden"`
+	MLD        bool   `json:"mld"`
+}
+
+// SystemStatusService is the state of a service in SystemStatus, for example a VPN client.
+type SystemStatusService struct {
+	Status  int    `json:"status"`
+	PeerID  int64  `json:"peer_id,omitempty"`
+	Name    string `json:"name"`
+	GroupID int64  `json:"group_id,omitempty"`
+}
+
+// SystemStatusClients is the number of wired and wireless clients in SystemStatus.
+type SystemStatusClients struct {
+	CableTotal    int `json:"cable_total"`
+	WirelessTotal int `json:"wireless_total"`
+}
+
+// SystemStatusSystem is the state of the router in SystemStatus.
+type SystemStatusSystem struct {
+	LANIP           string          `json:"lan_ip"`
+	LANNetmask      string          `json:"lan_netmask"`
+	DDNSEnabled     bool            `json:"ddns_enabled"`
+	TZOffset        string          `json:"tzoffset"`
+	GuestIP         string          `json:"guest_ip"`
+	GuestNetmask    string          `json:"guest_netmask"`
+	NetNATEnabled   bool            `json:"netnat_enabled"`
+	FlashApp        int64           `json:"flash_app"`
+	FlashTotal      int64           `json:"flash_total"`
+	MemoryTotal     int64           `json:"memory_total"`
+	MemoryFree      int64           `json:"memory_free"`
+	IPv6Enabled     bool            `json:"ipv6_enabled"`
+	MemoryBuffCache int64           `json:"memory_buff_cache"`
+	Uptime          float64         `json:"uptime"`
+	LoadAverage     []float64       `json:"load_average"`
+	CPU             SystemStatusCPU `json:"cpu"`
+	Mode            int             `json:"mode"`
+	FlashFree       int64           `json:"flash_free"`
+	Timestamp       int64           `json:"timestamp"`
+}
+
+// SystemStatusCPU is the CPU state in SystemStatusSystem.
+type SystemStatusCPU struct {
+	Temperature int `json:"temperature"`
 }
 
 // SystemInfo is the result of system get_info: facts about the device and its firmware.
@@ -156,8 +175,8 @@ type DiskUsage struct {
 	Free  int64 `json:"free"`
 }
 
-// GetSystemTimezoneConfigResponse is the result of system get_timezone_config.
-type GetSystemTimezoneConfigResponse struct {
+// TimezoneConfig is the result of system get_timezone_config.
+type TimezoneConfig struct {
 	Zonename            string `json:"zonename"`
 	TZOffset            string `json:"tzoffset"`
 	AutoTimezoneEnabled bool   `json:"autotimezone_enabled"`
@@ -166,8 +185,8 @@ type GetSystemTimezoneConfigResponse struct {
 	Timezone            string `json:"timezone"`
 }
 
-// SetSystemTimezoneRequest is the params of system set_timezone_config.
-type SetSystemTimezoneRequest struct {
+// SetTimezoneConfigRequest is the params of system set_timezone_config.
+type SetTimezoneConfigRequest struct {
 	Zonename string `json:"zonename"`
 	Timezone string `json:"timezone"`
 	// Localtime is a UTC Unix time. The router sets its clock to it. Nil leaves the clock as it is.
@@ -195,8 +214,8 @@ func (s *SystemService) GetDiskInfo(ctx context.Context) (*DiskInfo, error) {
 }
 
 // GetStatus returns the router status.
-func (s *SystemService) GetStatus(ctx context.Context) (*GetSystemStatusResponse, error) {
-	var res GetSystemStatusResponse
+func (s *SystemService) GetStatus(ctx context.Context) (*SystemStatus, error) {
+	var res SystemStatus
 	if err := s.client.Call(ctx, "system", "get_status", nil, &res); err != nil {
 		return nil, err
 	}
@@ -205,8 +224,8 @@ func (s *SystemService) GetStatus(ctx context.Context) (*GetSystemStatusResponse
 }
 
 // GetTimezoneConfig returns the time zone configuration.
-func (s *SystemService) GetTimezoneConfig(ctx context.Context) (*GetSystemTimezoneConfigResponse, error) {
-	var res GetSystemTimezoneConfigResponse
+func (s *SystemService) GetTimezoneConfig(ctx context.Context) (*TimezoneConfig, error) {
+	var res TimezoneConfig
 	if err := s.client.Call(ctx, "system", "get_timezone_config", nil, &res); err != nil {
 		return nil, err
 	}
@@ -246,6 +265,6 @@ func (s *SystemService) SetUSB3Disabled(ctx context.Context, disabled bool) erro
 }
 
 // SetTimezoneConfig sets the time zone configuration.
-func (s *SystemService) SetTimezoneConfig(ctx context.Context, config *SetSystemTimezoneRequest) error {
+func (s *SystemService) SetTimezoneConfig(ctx context.Context, config SetTimezoneConfigRequest) error {
 	return s.client.Call(ctx, "system", "set_timezone_config", config, nil)
 }

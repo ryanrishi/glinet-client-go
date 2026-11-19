@@ -1,3 +1,11 @@
+// Package glinet is a client for the JSON-RPC API of GL.iNet routers with v4 firmware.
+//
+// NewClient and NewClientWithHost log in to the router. Each service field of Client calls one
+// module of the router, for example Client.System calls the system module.
+// Client.Call calls a module method that has no typed method. The router errors are *RPCError,
+// and an HTTP status that is not 200 is *HTTPError.
+//
+// The package glinettest has a fake router for tests.
 package glinet
 
 import (
@@ -27,7 +35,9 @@ const (
 
 // Client calls the JSON-RPC API of a GL.iNet router.
 type Client struct {
-	BaseURL   *url.URL
+	// BaseURL is the address of the router, for example http://192.168.8.1.
+	BaseURL *url.URL
+	// UserAgent is the User-Agent header of each request.
 	UserAgent string
 	common    service // Reuse a single struct instead of allocating one for each service on the heap.
 
@@ -44,7 +54,7 @@ type Client struct {
 
 	// services
 	AccessControl   *AccessControlService
-	AdGuard         *AdGuardService
+	AdGuardHome     *AdGuardHomeService
 	Bark            *BarkService
 	Cable           *CableService
 	Clients         *ClientsService
@@ -142,7 +152,7 @@ func newClient(host string, opts []Option) (*Client, error) {
 	}
 
 	c.AccessControl = (*AccessControlService)(&c.common)
-	c.AdGuard = (*AdGuardService)(&c.common)
+	c.AdGuardHome = (*AdGuardHomeService)(&c.common)
 	c.Bark = (*BarkService)(&c.common)
 	c.Cable = (*CableService)(&c.common)
 	c.Clients = (*ClientsService)(&c.common)
@@ -176,8 +186,8 @@ func newClient(host string, opts []Option) (*Client, error) {
 	return c, nil
 }
 
-// GetSid returns the current session ID.
-func (c *Client) GetSid() string {
+// SessionID returns the current session ID.
+func (c *Client) SessionID() string {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return c.sid
@@ -192,7 +202,7 @@ func (c *Client) Call(ctx context.Context, module, method string, params, result
 		params = struct{}{}
 	}
 
-	sid := c.GetSid()
+	sid := c.SessionID()
 	err := c.call(ctx, sid, module, method, params, result)
 
 	var rpcErr *RPCError
@@ -204,7 +214,7 @@ func (c *Client) Call(ctx context.Context, module, method string, params, result
 		return err
 	}
 
-	return c.call(ctx, c.GetSid(), module, method, params, result)
+	return c.call(ctx, c.SessionID(), module, method, params, result)
 }
 
 func (c *Client) call(ctx context.Context, sid, module, method string, params, result any) error {
@@ -231,7 +241,7 @@ func (c *Client) login(ctx context.Context, staleSid string) error {
 		return fmt.Errorf("glinet: login: %w", err)
 	}
 
-	c.sid = res.Sid
+	c.sid = res.SID
 	return nil
 }
 

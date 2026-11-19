@@ -208,7 +208,7 @@ func TestDNSGetInfo(t *testing.T) {
 	if len(info.Protos) != 4 || info.DNSCryptVersion != 2 || len(info.ServerList) == 0 {
 		t.Errorf("GetInfo = %+v", *info)
 	}
-	want := glinet.EncryptedServer{Name: "example-doh", Proto: "DoH", DNSSEC: true, NoFilter: true, NoLog: true}
+	want := glinet.DNSEncryptedServer{Name: "example-doh", Proto: "DoH", DNSSEC: true, NoFilter: true, NoLog: true}
 	if info.ServerList[0] != want {
 		t.Errorf("ServerList[0] = %+v, want %+v", info.ServerList[0], want)
 	}

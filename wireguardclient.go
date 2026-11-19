@@ -21,18 +21,18 @@ const wgClientModule = "wg-client"
 
 // WireGuard client group types.
 const (
-	WireGuardGroupProvider = 1 // a preset of a VPN service provider; the router gets its peers from the provider
-	WireGuardGroupCustom   = 2 // a group of the user ("manual" in the web UI); only these can be renamed or removed
-	WireGuardGroupFromApp  = 3 // peers from the GL.iNet app; the web UI shows it only when it has peers
+	WireGuardClientGroupProvider = 1 // a preset of a VPN service provider; the router gets its peers from the provider
+	WireGuardClientGroupCustom   = 2 // a group of the user ("manual" in the web UI); only these can be renamed or removed
+	WireGuardClientGroupFromApp  = 3 // peers from the GL.iNet app; the web UI shows it only when it has peers
 )
 
-// WireGuardGroup is a group of WireGuard client peers.
+// WireGuardClientGroup is a group of WireGuard client peers.
 //
 // ID is a number that the router gives the group. It did not change in 5 days on the test router.
 // How the router makes the ID, and its range, are not known.
 // AuthType, Procedure, Username and Password are for the account of a provider group; Password is
 // a secret. Their values are not documented.
-type WireGuardGroup struct {
+type WireGuardClientGroup struct {
 	ID        int64  `json:"group_id"`
 	Name      string `json:"group_name"`
 	Type      int    `json:"group_type"`
@@ -43,28 +43,28 @@ type WireGuardGroup struct {
 	Password  string `json:"password"`
 }
 
-// WireGuardPeer is a WireGuard client configuration in a group.
+// WireGuardClientPeer is a WireGuard client configuration in a group.
 //
 // ID is a number that the router gives the peer. It did not change in 5 days on the test router.
 // How the router makes the ID, and its range, are not known.
 // PrivateKey and PresharedKey are secrets.
 //
 //   - AddressV4 and AddressV6 are the tunnel addresses of the router, with a prefix length, for
-//     example "10.0.0.2/32". IPv6Enable enables AddressV6.
+//     example "10.0.0.2/32". IPv6Enabled enables AddressV6.
 //   - AllowedIPs and DNS are lists in one string, separated by commas, for example
 //     "0.0.0.0/0, ::/0".
 //   - Endpoint is "host:port" of the server; PublicKey is the key of the server.
 //   - ListenPort, PersistentKeepalive and MTU are 0 when not set. The router leaves some empty
 //     fields out of a read, for example ListenPort or AddressV6.
-type WireGuardPeer struct {
+type WireGuardClientPeer struct {
 	ID                  int64  `json:"peer_id"`
 	Name                string `json:"name"`
 	AddressV4           string `json:"address_v4"`
 	AddressV6           string `json:"address_v6"`
-	IPv6Enable          bool   `json:"ipv6_enable"`
+	IPv6Enabled         bool   `json:"ipv6_enable"`
 	PrivateKey          string `json:"private_key"`
 	PublicKey           string `json:"public_key"`
-	PresharedKeyEnable  bool   `json:"presharedkey_enable"`
+	PresharedKeyEnabled bool   `json:"presharedkey_enable"`
 	PresharedKey        string `json:"preshared_key"`
 	AllowedIPs          string `json:"allowed_ips"`
 	Endpoint            string `json:"end_point"`
@@ -74,16 +74,16 @@ type WireGuardPeer struct {
 	MTU                 int    `json:"mtu"`
 }
 
-// WireGuardGroupPeers is a group with its peers, an item of the result of get_all_config_list.
-// Firmware 4.7.0 does not send Type, so it is 0 there.
-type WireGuardGroupPeers struct {
-	ID       int64           `json:"group_id"`
-	Name     string          `json:"group_name"`
-	Type     int             `json:"group_type"`
-	AuthType int             `json:"auth_type"`
-	Username string          `json:"username"`
-	Password string          `json:"password"`
-	Peers    []WireGuardPeer `json:"peers"`
+// WireGuardClientGroupPeers is a group with its peers, an item of the result of
+// get_all_config_list. Firmware 4.7.0 does not send Type, so it is 0 there.
+type WireGuardClientGroupPeers struct {
+	ID       int64                 `json:"group_id"`
+	Name     string                `json:"group_name"`
+	Type     int                   `json:"group_type"`
+	AuthType int                   `json:"auth_type"`
+	Username string                `json:"username"`
+	Password string                `json:"password"`
+	Peers    []WireGuardClientPeer `json:"peers"`
 }
 
 // WireGuardClientStatus is the status of the WireGuard client tunnel.
@@ -133,9 +133,9 @@ func (s *WireGuardClientService) GetStatus(ctx context.Context) (*WireGuardClien
 }
 
 // ListGroups returns the groups.
-func (s *WireGuardClientService) ListGroups(ctx context.Context) ([]WireGuardGroup, error) {
+func (s *WireGuardClientService) ListGroups(ctx context.Context) ([]WireGuardClientGroup, error) {
 	var res struct {
-		Groups []WireGuardGroup `json:"groups"`
+		Groups []WireGuardClientGroup `json:"groups"`
 	}
 	if err := s.client.Call(ctx, wgClientModule, "get_group_list", nil, &res); err != nil {
 		return nil, err
@@ -145,9 +145,9 @@ func (s *WireGuardClientService) ListGroups(ctx context.Context) ([]WireGuardGro
 }
 
 // ListAllPeers returns all groups with their peers in one call.
-func (s *WireGuardClientService) ListAllPeers(ctx context.Context) ([]WireGuardGroupPeers, error) {
+func (s *WireGuardClientService) ListAllPeers(ctx context.Context) ([]WireGuardClientGroupPeers, error) {
 	var res struct {
-		ConfigList []WireGuardGroupPeers `json:"config_list"`
+		ConfigList []WireGuardClientGroupPeers `json:"config_list"`
 	}
 	if err := s.client.Call(ctx, wgClientModule, "get_all_config_list", nil, &res); err != nil {
 		return nil, err
@@ -157,9 +157,9 @@ func (s *WireGuardClientService) ListAllPeers(ctx context.Context) ([]WireGuardG
 }
 
 // ListPeers returns the peers of the group groupID.
-func (s *WireGuardClientService) ListPeers(ctx context.Context, groupID int64) ([]WireGuardPeer, error) {
+func (s *WireGuardClientService) ListPeers(ctx context.Context, groupID int64) ([]WireGuardClientPeer, error) {
 	var res struct {
-		Peers []WireGuardPeer `json:"peers"`
+		Peers []WireGuardClientPeer `json:"peers"`
 	}
 	params := struct {
 		GroupID int64 `json:"group_id"`
@@ -173,7 +173,7 @@ func (s *WireGuardClientService) ListPeers(ctx context.Context, groupID int64) (
 
 // FindPeer returns the peer peerID of the group groupID. It returns nil and no error when there is
 // no such peer.
-func (s *WireGuardClientService) FindPeer(ctx context.Context, groupID, peerID int64) (*WireGuardPeer, error) {
+func (s *WireGuardClientService) FindPeer(ctx context.Context, groupID, peerID int64) (*WireGuardClientPeer, error) {
 	peers, err := s.ListPeers(ctx, groupID)
 	if err != nil {
 		return nil, err
@@ -254,7 +254,7 @@ func (s *WireGuardClientService) RemoveGroup(ctx context.Context, groupID int64)
 // Not verified on a router: the parameters come from the web UI code. It sends the fields of
 // SetPeer without peer_id, and listen_port, persistent_keepalive and mtu only when they are not 0,
 // as the web UI does for a new peer.
-func (s *WireGuardClientService) AddPeer(ctx context.Context, groupID int64, peer WireGuardPeer) (int64, error) {
+func (s *WireGuardClientService) AddPeer(ctx context.Context, groupID int64, peer WireGuardClientPeer) (int64, error) {
 	s.client.wgAddMu.Lock()
 	defer s.client.wgAddMu.Unlock()
 
@@ -284,13 +284,13 @@ func (s *WireGuardClientService) AddPeer(ctx context.Context, groupID int64, pee
 //
 // Not verified on a router: the parameters come from the web UI code. Like the web UI, it sends
 // name, address_v4, address_v6, ipv6_enable, private_key, public_key, allowed_ips, end_point and
-// presharedkey_enable; preshared_key only when PresharedKeyEnable is true; dns only when it is not
+// presharedkey_enable; preshared_key only when PresharedKeyEnabled is true; dns only when it is not
 // empty; and listen_port, persistent_keepalive and mtu, with "" for 0. The web UI sends "" for
 // these three when the user empties the input, and does not send an input that the user did not
 // fill, so SetPeer can remove a value. What the router does with "", and whether it keeps a field
 // that is not sent, is not known. The web UI requires Name (1-64 characters), AddressV4, Endpoint,
 // PrivateKey and PublicKey (44 characters of base64), PersistentKeepalive 1-65535 and MTU 576-65535.
-func (s *WireGuardClientService) SetPeer(ctx context.Context, groupID int64, peer WireGuardPeer) error {
+func (s *WireGuardClientService) SetPeer(ctx context.Context, groupID int64, peer WireGuardClientPeer) error {
 	params := wgPeerParams(groupID, peer)
 	params["peer_id"] = peer.ID
 	params["listen_port"] = numberOrEmpty(peer.ListenPort)
@@ -400,20 +400,20 @@ func wgRouteParams(groupID, peerID int64, route VPNRoute) map[string]any {
 	return p
 }
 
-func wgPeerParams(groupID int64, peer WireGuardPeer) map[string]any {
+func wgPeerParams(groupID int64, peer WireGuardClientPeer) map[string]any {
 	p := map[string]any{
 		"group_id":            groupID,
 		"name":                peer.Name,
 		"address_v4":          peer.AddressV4,
 		"address_v6":          peer.AddressV6,
-		"ipv6_enable":         peer.IPv6Enable,
+		"ipv6_enable":         peer.IPv6Enabled,
 		"private_key":         peer.PrivateKey,
 		"public_key":          peer.PublicKey,
 		"allowed_ips":         peer.AllowedIPs,
 		"end_point":           peer.Endpoint,
-		"presharedkey_enable": peer.PresharedKeyEnable,
+		"presharedkey_enable": peer.PresharedKeyEnabled,
 	}
-	if peer.PresharedKeyEnable {
+	if peer.PresharedKeyEnabled {
 		p["preshared_key"] = peer.PresharedKey
 	}
 	if peer.DNS != "" {
@@ -431,7 +431,7 @@ func wgPeerParams(groupID int64, peer WireGuardPeer) map[string]any {
 	return p
 }
 
-func groupIDs(groups []WireGuardGroup) []int64 {
+func groupIDs(groups []WireGuardClientGroup) []int64 {
 	ids := make([]int64, len(groups))
 	for i, g := range groups {
 		ids[i] = g.ID
@@ -439,7 +439,7 @@ func groupIDs(groups []WireGuardGroup) []int64 {
 	return ids
 }
 
-func peerIDs(peers []WireGuardPeer) []int64 {
+func peerIDs(peers []WireGuardClientPeer) []int64 {
 	ids := make([]int64, len(peers))
 	for i, p := range peers {
 		ids[i] = p.ID

@@ -102,7 +102,7 @@ func rpcCode(t *testing.T, err error) int {
 func TestLogin(t *testing.T) {
 	c, _, rec := newRecordedClient(t)
 
-	if c.GetSid() == "" {
+	if c.SessionID() == "" {
 		t.Error("session ID is empty")
 	}
 	if got, want := rec.Methods(), []string{"challenge", "login"}; !slices.Equal(got, want) {
@@ -118,7 +118,7 @@ func TestLoginSHA256(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if c.GetSid() == "" {
+	if c.SessionID() == "" {
 		t.Error("session ID is empty")
 	}
 }
@@ -162,7 +162,7 @@ func TestLoginUnsupportedAlgorithm(t *testing.T) {
 
 func TestSessionRenewal(t *testing.T) {
 	c, srv, rec := newRecordedClient(t)
-	oldSid := c.GetSid()
+	oldSid := c.SessionID()
 	rec.Reset()
 	srv.ExpireSessions()
 
@@ -174,7 +174,7 @@ func TestSessionRenewal(t *testing.T) {
 	if got := rec.Methods(); !slices.Equal(got, want) {
 		t.Errorf("methods = %v, want %v", got, want)
 	}
-	if c.GetSid() == oldSid {
+	if c.SessionID() == oldSid {
 		t.Error("session ID did not change")
 	}
 }
@@ -365,7 +365,7 @@ func TestSystemTimezoneConfig(t *testing.T) {
 	ctx := context.Background()
 	initial := srv.System.TimezoneConfig()
 
-	err := c.System.SetTimezoneConfig(ctx, &glinet.SetSystemTimezoneRequest{
+	err := c.System.SetTimezoneConfig(ctx, glinet.SetTimezoneConfigRequest{
 		Zonename: "Europe/Berlin",
 		Timezone: "CET-1CEST,M3.5.0,M10.5.0/3",
 	})
@@ -382,7 +382,7 @@ func TestSystemTimezoneConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetTimezoneConfig: %v", err)
 	}
-	want := glinet.GetSystemTimezoneConfigResponse{
+	want := glinet.TimezoneConfig{
 		Zonename:            "Europe/Berlin",
 		TZOffset:            "+0100",
 		AutoTimezoneEnabled: true,
@@ -400,7 +400,7 @@ func TestSystemTimezoneConfigLocaltime(t *testing.T) {
 	ctx := context.Background()
 
 	localtime := int64(1700000100)
-	err := c.System.SetTimezoneConfig(ctx, &glinet.SetSystemTimezoneRequest{
+	err := c.System.SetTimezoneConfig(ctx, glinet.SetTimezoneConfigRequest{
 		Zonename:  "UTC",
 		Timezone:  "UTC0",
 		Localtime: &localtime,
@@ -450,16 +450,16 @@ func TestAdGuardConfig(t *testing.T) {
 	c, srv := newClient(t)
 	ctx := context.Background()
 
-	res, err := c.AdGuard.GetAdGuardConfig(ctx)
+	res, err := c.AdGuardHome.GetConfig(ctx)
 	if err != nil {
-		t.Fatalf("GetAdGuardConfig: %v", err)
+		t.Fatalf("GetConfig: %v", err)
 	}
 	if res.Enabled || !res.DNSEnabled {
-		t.Errorf("GetAdGuardConfig = %+v, want enabled=false dns_enabled=true", *res)
+		t.Errorf("GetConfig = %+v, want enabled=false dns_enabled=true", *res)
 	}
 
-	if err := c.AdGuard.SetAdGuardConfig(ctx, &glinet.SetAdGuardConfigRequest{Enabled: true, DNSEnabled: false}); err != nil {
-		t.Fatalf("SetAdGuardConfig: %v", err)
+	if err := c.AdGuardHome.SetConfig(ctx, glinet.AdGuardHomeConfig{Enabled: true, DNSEnabled: false}); err != nil {
+		t.Fatalf("SetConfig: %v", err)
 	}
 	if got := srv.AdGuardHome.Config(); !got.Enabled || got.DNSEnabled {
 		t.Errorf("server state = %+v, want enabled=true dns_enabled=false", got)
