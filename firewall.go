@@ -63,7 +63,8 @@ func (s *FirewallService) FindPortForward(ctx context.Context, id string) (*Port
 // forwards that were after the DMZ section change (firmware 4.7.0). Thus the returned ID can be
 // different from the ID of the new forward in the list. Do not keep the returned ID for a later
 // write: find the forward in ListPortForwards before each SetPortForward or RemovePortForward.
-// SetPortForward with a wrong ID changes nothing and gives no error, and RemovePortForward with
+// SetPortForward with an ID that no forward has changes nothing and gives no error. An ID that
+// another forward now has makes SetPortForward replace that forward, and RemovePortForward with
 // the ID of a rule removes that rule.
 func (s *FirewallService) AddPortForward(ctx context.Context, forward PortForward) (string, error) {
 	forward.ID = ""

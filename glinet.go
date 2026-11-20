@@ -100,7 +100,8 @@ type Option func(*Client)
 // that the web UI waits for the answer of a method of this client (NetworkModeService.SetMode).
 // The time limit is not for a full call: the login is two requests (challenge and login), and a
 // call with an expired session is four requests (call, challenge, login and call again). The
-// deadline of the context of a call applies to all its requests.
+// deadline of the context of a call applies to all its requests, but not to the wait for a session
+// renewal that another call of the same client started.
 //
 // The default HTTP client follows a redirect only to the same host name, and not from HTTPS to
 // HTTP, because the request body has the session ID. httpClient follows redirects as its
