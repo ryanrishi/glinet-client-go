@@ -24,7 +24,7 @@ import (
 
 // Version is the version of this client. It is in the default User-Agent.
 const (
-	Version          = "v1.1.0"
+	Version          = "v1.1.1"
 	defaultBaseURL   = "http://192.168.8.1"
 	defaultUserAgent = "glinet-client-go" + "/" + Version
 
@@ -95,10 +95,17 @@ type service struct {
 type Option func(*Client)
 
 // WithHTTPClient sets the HTTP client that sends the requests to the router. The Timeout of
-// httpClient applies, and a zero Timeout gives no time limit. Without this option, or with a nil
-// httpClient, each request (also the login) has a time limit of 60 s, the longest time that the
-// web UI waits for the answer of a method of this client (NetworkModeService.SetMode). The
-// deadline of the context of a call also applies.
+// httpClient applies to each HTTP request, and a zero Timeout gives no time limit. Without this
+// option, or with a nil httpClient, each HTTP request has a time limit of 60 s, the longest time
+// that the web UI waits for the answer of a method of this client (NetworkModeService.SetMode).
+// The time limit is not for a full call: the login is two requests (challenge and login), and a
+// call with an expired session is four requests (call, challenge, login and call again). The
+// deadline of the context of a call applies to all its requests, but not to the wait for a session
+// renewal that another call of the same client started.
+//
+// The default HTTP client follows a redirect only to the same host name, and not from HTTPS to
+// HTTP, because the request body has the session ID. httpClient follows redirects as its
+// CheckRedirect sets; the client does not change it.
 func WithHTTPClient(httpClient *http.Client) Option {
 	return func(c *Client) {
 		if httpClient != nil {
@@ -117,7 +124,8 @@ func WithLoginContext(ctx context.Context) Option {
 	}
 }
 
-// NewClient returns a client for the default host and logs in.
+// NewClient returns a client for the default host and logs in. The default host uses HTTP, so the
+// session ID and the parameters of each call go over the network without encryption.
 func NewClient(username string, password []byte, opts ...Option) (*Client, error) {
 	return NewClientWithHost(defaultBaseURL, username, password, opts...)
 }
@@ -156,7 +164,12 @@ func newClient(host string, opts []Option) (*Client, error) {
 		return nil, fmt.Errorf("glinet: parse host %q: %w", host, err)
 	}
 
-	c := &Client{BaseURL: baseURL, UserAgent: defaultUserAgent, httpClient: &http.Client{Timeout: defaultTimeout}, loginContext: context.Background()}
+	c := &Client{
+		BaseURL:      baseURL,
+		UserAgent:    defaultUserAgent,
+		httpClient:   &http.Client{Timeout: defaultTimeout, CheckRedirect: checkRedirect},
+		loginContext: context.Background(),
+	}
 	c.common.client = c
 	for _, opt := range opts {
 		opt(c)
@@ -197,6 +210,23 @@ func newClient(host string, opts []Option) (*Client, error) {
 	return c, nil
 }
 
+// checkRedirect refuses a redirect to another host name or from HTTPS to HTTP. A redirect to
+// another port or from HTTP to HTTPS on the same host name is followed, because the router can
+// redirect HTTP to HTTPS (LocalAccessConfig.RedirectHTTPS). It is not known if the router
+// redirects the requests to /rpc, and with which HTTP status.
+func checkRedirect(req *http.Request, via []*http.Request) error {
+	if len(via) >= 10 {
+		return errors.New("glinet: stopped after 10 redirects")
+	}
+	if !strings.EqualFold(req.URL.Hostname(), via[0].URL.Hostname()) {
+		return fmt.Errorf("glinet: redirect to another host refused: %s", req.URL.Host)
+	}
+	if via[len(via)-1].URL.Scheme == "https" && req.URL.Scheme != "https" {
+		return fmt.Errorf("glinet: redirect from HTTPS to %s refused", req.URL.Scheme)
+	}
+	return nil
+}
+
 // SessionID returns the current session ID.
 func (c *Client) SessionID() string {
 	c.mu.Lock()
@@ -206,7 +236,8 @@ func (c *Client) SessionID() string {
 
 // Call calls method of module on the router and decodes the result into result.
 // A nil params sends an empty object. A nil result discards the response.
-// A result object with a non-zero err_code is an *RPCError. An HTTP status that is not 200 is an *HTTPError.
+// A result object with a non-zero err_code is an *RPCError, also when its err_msg is not a string.
+// A response with no result and no error is an error. An HTTP status that is not 200 is an *HTTPError.
 // If the session is not valid, Call logs in again one time and repeats the call.
 func (c *Client) Call(ctx context.Context, module, method string, params, result any) error {
 	if params == nil {
@@ -299,13 +330,16 @@ func (c *Client) rpc(ctx context.Context, method string, params, result any) err
 	if rpcRes.Error != nil {
 		return rpcRes.Error
 	}
+	if rpcRes.Result == nil {
+		return fmt.Errorf("glinet: %s: response has no result and no error", method)
+	}
 
 	var resErr struct {
-		Code    int    `json:"err_code"`
-		Message string `json:"err_msg"`
+		Code    int             `json:"err_code"`
+		Message json.RawMessage `json:"err_msg"`
 	}
 	if json.Unmarshal(rpcRes.Result, &resErr) == nil && resErr.Code != 0 {
-		return &RPCError{Code: resErr.Code, Message: resErr.Message}
+		return &RPCError{Code: resErr.Code, Message: resultErrorMessage(resErr.Message)}
 	}
 
 	if result == nil {
@@ -317,4 +351,14 @@ func (c *Client) rpc(ctx context.Context, method string, params, result any) err
 	}
 
 	return nil
+}
+
+// resultErrorMessage returns the err_msg of a result: the string, or the JSON text of a value that
+// is not a string.
+func resultErrorMessage(raw json.RawMessage) string {
+	var msg string
+	if json.Unmarshal(raw, &msg) != nil {
+		return string(raw)
+	}
+	return msg
 }

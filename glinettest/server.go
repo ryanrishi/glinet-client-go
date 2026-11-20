@@ -53,6 +53,7 @@ var ErrInternalServerError = errors.New("internal server error")
 
 // Method handles one module method. params is the fourth element of the call params.
 // A returned *Error goes to the client as is. Other errors become -32603.
+// A nil result with a nil error sends the result [], as the router does for most writes.
 type Method func(params json.RawMessage) (any, error)
 
 // Server is a fake router. It serves the JSON-RPC API at URL.
@@ -238,6 +239,9 @@ func (s *Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, ErrInternalServerError) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+	if result == nil {
+		result = writeResult
 	}
 	res := response{ID: req.ID, JSONRPC: "2.0", Result: result}
 	if err != nil {

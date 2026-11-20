@@ -32,7 +32,7 @@ if err != nil {
 tz, err := client.System.GetTimezoneConfig(ctx)
 ```
 
-Each HTTP request, also the login, has a time limit of 60 s: the longest time that the web UI waits for the answer of a method of this client (`NetworkMode.SetMode`). To use a different limit or HTTP client, give `glinet.WithHTTPClient` to the constructor. Its `Timeout` then applies, and a zero `Timeout` gives no time limit. The deadline of the context of a call also applies. The login in the constructor has no call context: give `glinet.WithLoginContext` to the constructor to cancel it or to set its deadline.
+Each HTTP request has a time limit of 60 s: the longest time that the web UI waits for the answer of a method of this client (`NetworkMode.SetMode`). The limit is for one HTTP request, not for a full call. The login is two requests (`challenge` and `login`). A call with an expired session is four requests (the call, `challenge`, `login` and the call again), so it can take up to 4 × 60 s. To limit a full call, give it a context with a deadline: the deadline applies to all requests of the call. The deadline does not stop the wait for a session renewal that another call of the same client started: that wait ends when the requests of the renewal end. To use a different limit or HTTP client, give `glinet.WithHTTPClient` to the constructor. Its `Timeout` then applies to each request, and a zero `Timeout` gives no time limit. The default HTTP client follows a redirect only to the same host name and not from HTTPS to HTTP, because the request body has the session ID. A client from `glinet.WithHTTPClient` follows redirects as its `CheckRedirect` sets. The login in the constructor has no call context: give `glinet.WithLoginContext` to the constructor to cancel it or to set its deadline.
 
 ```go
 client, err := glinet.NewClientWithHost("192.168.8.1", "root", []byte(password),
@@ -54,7 +54,7 @@ var res struct {
 err := client.Call(ctx, "repeater", "get_status", nil, &res)
 ```
 
-Router errors are `*glinet.RPCError`. This includes a result with a non-zero `err_code`, which some write methods return:
+Router errors are `*glinet.RPCError`. This includes a result with a non-zero `err_code`, which some write methods return. A response with no `result` and no `error` is an error:
 
 ```go
 var rpcErr *glinet.RPCError
