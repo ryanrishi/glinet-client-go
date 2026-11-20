@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"log"
 	"os"
 
@@ -17,6 +15,5 @@ func main() {
 		log.Fatal("Error running login example: ", err)
 	}
 
-	buf, _ := json.Marshal(login)
-	log.Printf("Login: %s", bytes.NewBuffer(buf))
+	log.Printf("Logged in as %s", login.Username)
 }

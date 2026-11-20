@@ -35,6 +35,11 @@ jobs:
     - name: Run go vet
       run: go vet ./...
 
+    - name: Run go vet for 32-bit platforms
+      run: |
+        GOOS=linux GOARCH=386 go vet ./...
+        GOOS=linux GOARCH=arm go vet ./...
+
     - name: Install staticcheck
       run: go install honnef.co/go/tools/cmd/staticcheck@latest
       env:

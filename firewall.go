@@ -60,7 +60,11 @@ func (s *FirewallService) FindPortForward(ctx context.Context, id string) (*Port
 // After the first SetDMZ, the firewall configuration has a DMZ section, and the router moves it
 // to the end after each AddPortForward. When the DMZ section was before the new forward, the
 // returned ID is one more than the ID of the forward in the list, and the IDs of the rules and
-// forwards that were after the DMZ section change. Read the list to get the IDs.
+// forwards that were after the DMZ section change (firmware 4.7.0). Thus the returned ID can be
+// different from the ID of the new forward in the list. Do not keep the returned ID for a later
+// write: find the forward in ListPortForwards before each SetPortForward or RemovePortForward.
+// SetPortForward with a wrong ID changes nothing and gives no error, and RemovePortForward with
+// the ID of a rule removes that rule.
 func (s *FirewallService) AddPortForward(ctx context.Context, forward PortForward) (string, error) {
 	forward.ID = ""
 	var res struct {

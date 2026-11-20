@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"hash"
 
@@ -58,6 +59,7 @@ func (s *DigestService) Challenge(ctx context.Context, username string) (*Challe
 }
 
 // Login gets a challenge and logs in with its nonce. The router accepts the nonce for 1000 ms.
+// A login result without a session ID is an error.
 func (s *DigestService) Login(ctx context.Context, username string, password []byte) (*LoginResponse, error) {
 	challenge, err := s.Challenge(ctx, username)
 	if err != nil {
@@ -82,6 +84,9 @@ func (s *DigestService) Login(ctx context.Context, username string, password []b
 	err = s.client.rpc(ctx, "login", loginRequest{Username: username, Hash: hex.EncodeToString(h.Sum(nil))}, &res)
 	if err != nil {
 		return nil, err
+	}
+	if res.SID == "" {
+		return nil, errors.New("glinet: login: no session ID in the result")
 	}
 
 	return &res, nil
